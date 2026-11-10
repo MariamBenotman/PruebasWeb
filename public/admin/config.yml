@@ -1,0 +1,21 @@
+backend:
+  name: github
+  repo: MariamBenotman/PruebasWeb
+  branch: main
+
+# Ruta donde se guardarán las fotos subidas desde el panel
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+# Colección de contenidos editables por los miembros
+collections:
+  - name: "paginas"
+    label: "Páginas del sitio"
+    folder: "src/content/paginas"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Título", name: "title", widget: "string" }
+      - { label: "Descripción", name: "description", widget: "string" }
+      - { label: "Imagen principal", name: "thumbnail", widget: "image", required: false }
+      - { label: "Contenido de la página", name: "body", widget: "markdown" }
