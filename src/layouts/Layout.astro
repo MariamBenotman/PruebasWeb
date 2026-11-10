@@ -1,23 +1,102 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+---
+// src/layouts/BaseLayout.astro
+const { title = "Web Asociación" } = Astro.props;
+---
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <!-- Cabecera global con menú -->
+    <header class="header">
+      <div class="header-content">
+        <a href="/" class="logo">Mi Asociación</a>
+    <nav class="nav">
+  <a href="/">Inicio</a>
+  <a href="/quienes-somos">Quiénes Somos</a>
+  <a href="/proyectos">Proyectos</a>
+  <a href="/noticias">Noticias</a>
+  <a href="/contacto">Contacto</a>
+</nav>
+      </div>
+    </header>
+
+    <!-- El contenido de cada página en Markdown se inyecta en <slot /> -->
+    <main class="container">
+      <slot />
+    </main>
+
+    <!-- Pie de página global -->
+    <footer class="footer">
+      <p>© 2026 Asociación. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Estilos base sencillos -->
+    <style is:global>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #2d3748;
+        background-color: #f7fafc;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .header {
+        background-color: #1a365d;
+        color: white;
+        padding: 1rem 0;
+      }
+      .header-content {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .logo {
+        color: white;
+        font-weight: bold;
+        font-size: 1.25rem;
+        text-decoration: none;
+      }
+      .nav a {
+        color: #e2e8f0;
+        text-decoration: none;
+        margin-left: 1.5rem;
+        font-weight: 500;
+      }
+      .nav a:hover {
+        color: white;
+      }
+      .container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        flex: 1;
+      }
+      .footer {
+        background-color: #e2e8f0;
+        text-align: center;
+        padding: 1.5rem 0;
+        color: #4a5568;
+        font-size: 0.9rem;
+      }
+      /* Estilos automáticos para el contenido escrito en Markdown */
+      .container img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+      }
+      .container h1 { color: #1a365d; }
+      .container h2 { color: #2b6cb0; margin-top: 1.5rem; }
+      .container p { line-height: 1.6; }
+    </style>
+  </body>
+</html>
