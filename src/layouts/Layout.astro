@@ -17,8 +17,35 @@ const { title = "Web Asociación" } = Astro.props;
         <a href="/" class="logo">Mi Asociación</a>
 <nav class="nav" id="nav-menu">
   <a href={`${import.meta.env.BASE_URL}`}>Inicio</a>
+  <a href={`${import.meta.env.BASE_URL}/noticias`}>Noticias</a>
   <a href={`${import.meta.env.BASE_URL}/quienes-somos`}>Quiénes Somos</a>
-  <a href={`${import.meta.env.BASE_URL}/contacto`}>Contacto</a>
+  
+<!-- Desplegable Proyectos -->
+<div class="dropdown">
+  <span class="dropbtn">Proyectos ▾</span>
+  <div class="dropdown-content">
+    
+    <!-- Submenú anidado: Proyectos Activos -->
+    <div class="dropdown-submenu">
+      <span class="submenu-btn">Proyectos Activos ▸</span>
+      <div class="submenu-content">
+        <a href={`${import.meta.env.BASE_URL}/proyectos/activos/piano`}>Piano</a>
+        <!-- Añade aquí los nuevos proyectos markdown conforme los crees -->
+      </div>
+    </div>
+
+    <!-- Histórico de Proyectos -->
+    <a href={`${import.meta.env.BASE_URL}/archivo/antiguos-proyectos`}>Histórico de Proyectos</a>
+  </div>
+</div>
+ <!-- Desplegable Cybertech-->
+  <div class="dropdown">
+    <span class="dropbtn">Cybertech ▾</span>
+    <div class="dropdown-content">
+      <a href={`${import.meta.env.BASE_URL}/cybertech/2027`}>Cybertech 2027</a>
+      <a href={`${import.meta.env.BASE_URL}/cybertech/ediciones-pasadas`}>Ediciones pasadas Cybertech</a>
+    </div>
+  </div>
 </nav>
       </div>
     </header>
@@ -86,6 +113,121 @@ const { title = "Web Asociación" } = Astro.props;
         color: #4a5568;
         font-size: 0.9rem;
       }
+/* 1. Contenedor de la barra de navegación (alineación en línea recta) */
+.nav {
+  display: flex;
+  align-items: center; /* Alinea verticalmente todos los botones en la misma línea */
+  gap: 1.5rem;
+}
+
+/* 2. Contenedor del desplegable (debe ser el punto de referencia) */
+.dropdown {
+  position: relative; /* ¡CLAVE! Hace que el submenú se posicione respecto a este botón */
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 3. Botón de Proyectos */
+.dropbtn {
+  color: #e2e8f0;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 0;
+}
+
+.dropbtn:hover {
+  color: white;
+}
+
+/* 4. Submenú Flotante (Fuera del flujo normal del documento) */
+.dropdown-content {
+  display: none;
+  position: absolute; /* ¡CLAVE! Lo saca del flujo para no empujar la cabecera */
+  top: 100%;          /* Se posiciona justo debajo de "Proyectos ▾" */
+  right: 0;           /* Se alinea hacia el borde derecho */
+  background-color: #0f2942; /* O el color exacto de tu cabecera */
+  min-width: 200px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  z-index: 1000;      /* Se superpone al resto de la web */
+}
+.dropdown:hover > .dropdown-content {
+  display: block;
+}
+/* 5. Enlaces internos del submenú */
+.dropdown-content > a,
+.submenu-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1.2rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dropdown-content > a:hover,
+.submenu-btn:hover {
+  background-color: #1a365d;
+  color: white;
+}
+
+/* --- ESTILOS DEL SEGUNDO NIVEL (Submenú Anidado) --- */
+.dropdown-submenu {
+  position: relative; /* Clave para posicionar el menú hijo a su derecha */
+}
+
+.submenu-content {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 100%; /* Despliega hacia la izquierda si no cabe a la derecha, o usas left: 100% */
+  background-color: #0d2137;
+  min-width: 180px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  border-radius: 8px;
+  padding: 0.5rem 0;
+  z-index: 1001;
+}
+
+/* Muestra el submenú al hacer hover en "Proyectos Activos" */
+.dropdown-submenu:hover .submenu-content {
+  display: block;
+}
+
+.submenu-content a {
+  display: block;
+  padding: 0.6rem 1.2rem;
+  color: #e2e8f0;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.submenu-content a:hover {
+  background-color: #2b6cb0;
+  color: white;
+}
+
+.dropdown-content a:hover {
+  background-color: #1a365d;
+  color: white;
+}
+
+/* 6. Mostrar submenú en hover */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+/* 7. Asegurar que la cabecera no recorte elementos que sobresalgan */
+.header {
+  overflow: visible !important;
+}
+
+
       /* Estilos automáticos para el contenido escrito en Markdown */
       .container img {
         max-width: 100%;

@@ -1,0 +1,154 @@
+---
+// src/components/Navbar.astro
+---
+
+<header class="navbar">
+  <div class="nav-container">
+    <a href="/" class="logo">
+      <span class="logo-bold">RESET</span> <span class="logo-sub">ETSII UPM</span>
+    </a>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="Abrir Menú">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+
+    <nav class="nav-links" id="nav-links">
+      <a href="/noticias">Noticias</a>
+      
+      <!-- Desplegable Cybertech -->
+      <div class="dropdown">
+        <a href="/cybertech" class="dropbtn">Cybertech ▾</a>
+        <div class="dropdown-content">
+          <a href="/cybertech">Cybertech 2026 (Actual)</a>
+          <a href="/archivo/cybertech-2023">Cybertech 2023</a>
+          <a href="/archivo/cybertech-2022">Cybertech 2022</a>
+          <a href="/archivo/historico-cybertech">Ediciones Anteriores (2017-2021)</a>
+        </div>
+      </div>
+
+      <!-- Desplegable Proyectos -->
+      <div class="dropdown">
+        <a href="/proyectos" class="dropbtn">Proyectos ▾</a>
+        <div class="dropdown-content">
+          <a href="/proyectos">Proyectos Activos</a>
+          <a href="/archivo/antiguos-proyectos">Histórico de Proyectos</a>
+        </div>
+      </div>
+
+      <a href="/talleres">Talleres</a>
+
+      <!-- Desplegable Servicios -->
+      <div class="dropdown">
+        <a href="/servicios" class="dropbtn">Servicios ▾</a>
+        <div class="dropdown-content">
+          <a href="/servicios/impresion-3d">Impresión 3D</a>
+          <a href="/servicios/taller">Taller / Espacio</a>
+          <a href="/servicios/prestamos">Préstamos</a>
+          <a href="/servicios/tutoriales">Tutoriales Web</a>
+        </div>
+      </div>
+
+      <!-- Desplegable Conócenos -->
+      <div class="dropdown">
+        <a href="/contacto" class="dropbtn">Conócenos ▾</a>
+        <div class="dropdown-content">
+          <a href="/contacto">Contacto y Ubicación</a>
+          <a href="/participa">Participa en RESET</a>
+          <a href="/archivo/miembros">Histórico de Miembros</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .navbar {
+    background-color: #1a202c;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  }
+  .nav-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo {
+    color: white;
+    text-decoration: none;
+    font-size: 1.3rem;
+  }
+  .logo-bold { font-weight: 800; color: #3182ce; }
+  .logo-sub { font-weight: 300; font-size: 0.95rem; opacity: 0.85; }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .nav-links a {
+    color: #e2e8f0;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.4rem 0.6rem;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: #63b3ed; }
+
+  /* Menú desplegable (Dropdown) */
+  .dropdown { position: relative; }
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #2d3748;
+    min-width: 210px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .dropdown-content a {
+    display: block;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .dropdown:hover .dropdown-content { display: block; }
+
+  /* Adaptación Responsive */
+  .menu-toggle { display: none; background: none; border: none; cursor: pointer; flex-direction: column; gap: 4px; }
+  .menu-toggle .bar { width: 25px; height: 3px; background: white; border-radius: 2px; }
+
+  @media (max-width: 768px) {
+    .menu-toggle { display: flex; }
+    .nav-links {
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background-color: #1a202c;
+      padding: 1rem 0;
+    }
+    .nav-links.is-active { display: flex; }
+    .dropdown-content { position: static; display: block; background-color: #1a202c; padding-left: 1rem; }
+  }
+</style>
+
+<script>
+  const btn = document.getElementById('menu-toggle');
+  const nav = document.getElementById('nav-links');
+  if (btn && nav) {
+    btn.addEventListener('click', () => nav.classList.toggle('is-active'));
+  }
+</script>
