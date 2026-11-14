@@ -1,0 +1,24 @@
+---
+/**
+ * Logo de Reset. Busca, en orden: el SVG oficial, el PNG oficial y (en blanco) el logo rescatado del archive.
+ * Si no existe ninguno, muestra el nombre en texto.
+ */
+import { href } from '../lib/data';
+interface Props { variante?: 'horizontal' | 'simbolo'; tono?: 'color' | 'blanco'; class?: string }
+const { variante = 'horizontal', tono = 'color', class: cls = '' } = Astro.props;
+const name = `reset-${variante === 'horizontal' ? 'logo-horizontal' : 'simbolo'}${tono === 'blanco' ? '-blanco' : ''}`;
+const fallbacks = [href(`marca/${name}.png`), ...(tono === 'blanco' ? [href('marca/archivo-logo-reset.png')] : [])].join('|');
+---
+<span class:list={['logo', `logo-${tono}`, cls]}>
+	<img src={href(`marca/${name}.svg`)} data-fb={fallbacks} alt="Reset" onerror="__img(this)" />
+	<span class="logo-txt" aria-hidden="true">RESET<i>●</i></span>
+</span>
+
+<style>
+	.logo { display: inline-flex; align-items: center; height: 100%; }
+	.logo img { height: 100%; width: auto; }
+	.logo img + .logo-txt { display: none; }
+	.logo-txt { font-family: var(--f-display); font-stretch: 125%; font-weight: 900; font-size: 1.65rem; letter-spacing: -.03em; line-height: 1; color: var(--azul); }
+	.logo-txt i { font-style: normal; color: var(--naranja); font-size: .45em; vertical-align: .9em; margin-left: .1em; }
+	.logo-blanco .logo-txt { color: var(--blanco); }
+</style>

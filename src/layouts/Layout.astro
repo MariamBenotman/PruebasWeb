@@ -1,9 +1,67 @@
 ---
-import ResetLayout from './ResetLayout.astro';
+import '../styles/global.css';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import sitio from '../data/sitio.json';
+import { href } from '../lib/data';
 
-const { title = 'Reset - Asociación de Estudiantes' } = Astro.props;
+interface Props { title?: string; description?: string }
+const { title, description = 'Asociación de Estudiantes Reset · ETSII-UPM. Robótica, electrónica, automática e informática. Organizadores de Cybertech.' } = Astro.props;
+const fullTitle = title ? `${title} · Reset` : 'Reset · Asociación de Estudiantes ETSII-UPM';
+const gh = sitio.github;
 ---
 
-<ResetLayout title={title}>
-	<slot />
-</ResetLayout>
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#0b3558" />
+		<meta name="description" content={description} />
+		<title>{fullTitle}</title>
+		<link rel="icon" href={href('marca/favicon.png')} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+		<style set:html={`@font-face{font-family:'LTAtomatic';src:url('${href('fuentes/LTAtomatic.woff2')}') format('woff2');font-display:swap}`}></style>
+		<script is:inline define:vars={{ gh, base: href('') }}>
+			document.documentElement.classList.add('js');
+			window.__site = { gh, base };
+			try { if (localStorage.getItem('reset-admin-token')) document.documentElement.classList.add('is-admin'); } catch {}
+			// Si una imagen no existe: prueba alternativas (data-fb="a|b"); si no, se quita y queda el hueco de reserva.
+			window.__img = function (el) {
+				if (window.__imgAdmin && window.__imgAdmin(el)) return;
+				var fb = (el.getAttribute('data-fb') || '').split('|').filter(Boolean);
+				if (fb.length) { el.src = fb.shift(); el.setAttribute('data-fb', fb.join('|')); return; }
+				var p = el.parentElement; el.remove(); if (p) p.classList.add('is-missing');
+			};
+		</script>
+	</head>
+	<body>
+		<a class="skip" href="#contenido">Saltar al contenido</a>
+		<Navbar />
+		<main id="contenido">
+			<slot />
+		</main>
+		<Footer />
+		<script>
+			// Animación de aparición al hacer scroll
+			const io = new IntersectionObserver((entries) => {
+				for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+			}, { rootMargin: '0px 0px -8% 0px' });
+			const watch = () => document.querySelectorAll('.reveal:not(.is-in)').forEach((el) => io.observe(el));
+			watch();
+			document.addEventListener('reset:rendered', watch);
+
+			// Modo edición: solo se descarga si hay sesión iniciada
+			if (document.documentElement.classList.contains('is-admin')) import('../admin/main');
+		</script>
+	</body>
+</html>
+
+<style is:global>
+	.skip { position: absolute; left: 1rem; top: -4rem; z-index: 100; padding: .7rem 1rem; background: var(--negro); color: var(--blanco); }
+	.skip:focus { top: 1rem; }
+	.adm-only { display: none !important; }
+	html.is-admin .adm-only { display: revert !important; }
+</style>

@@ -1,309 +1,77 @@
 ---
-import { getCollection, render, type CollectionEntry } from 'astro:content';
+/** Páginas fijas heredadas de la web antigua (definidas en src/data/paginas.ts). */
 import Layout from '../layouts/Layout.astro';
-import { archiveUrl, legacyPages, pathFor, type LegacyPage } from '../data/legacy-site';
+import { paginas, hijasDe, contacto, type Pagina } from '../data/paginas';
+import { href } from '../lib/data';
+import { md } from '../lib/render';
 
-type ManagedEntry = CollectionEntry<'miembros'> | CollectionEntry<'cybertech'> | CollectionEntry<'noticias'>;
-
-export async function getStaticPaths() {
-	const [memberEntries, cybertechEntries, newsEntries] = await Promise.all([
-		getCollection('miembros'),
-		getCollection('cybertech'),
-		getCollection('noticias'),
-	]);
-	const managedPages = [
-		...memberEntries.map((entry) => ({
-			slug: `contacto/${entry.id}`,
-			page: { slug: `contacto/${entry.id}`, title: entry.data.title, section: 'Conócenos', archivePath: `/contacto/${entry.id}/`, intro: entry.data.introduction ?? '', kind: 'article' as const },
-			entry,
-		})),
-		...cybertechEntries.map((entry) => ({
-			slug: `cybertech/${entry.id}`,
-			page: { slug: `cybertech/${entry.id}`, title: entry.data.title, section: 'Cybertech', archivePath: `/cybertech/${entry.id}/`, intro: entry.data.summary, kind: 'article' as const },
-			entry,
-		})),
-		...newsEntries.map((entry) => ({
-			slug: `noticias/${entry.id}`,
-			page: { slug: `noticias/${entry.id}`, title: entry.data.title, section: entry.data.category ?? 'Noticias', archivePath: `/noticias/${entry.id}/`, intro: entry.data.summary, kind: 'article' as const },
-			entry,
-		})),
-	];
-	const managedSlugs = new Set(managedPages.map(({ slug }) => slug));
-	const newsDirectory: LegacyPage = {
-		slug: 'noticias',
-		title: 'Noticias',
-		section: 'Noticias',
-		archivePath: '/noticias/',
-		intro: 'Actualidad, actividades y proyectos de la Asociación de Estudiantes Reset.',
-		kind: 'listing',
-	};
-
-	return [
-		{ params: { slug: newsDirectory.slug }, props: { page: newsDirectory } },
-		...legacyPages.filter((page) => !managedSlugs.has(page.slug)).map((page) => ({ params: { slug: page.slug }, props: { page } })),
-		...managedPages.map(({ slug, page, entry }) => ({ params: { slug }, props: { page, entry } })),
-	];
+export function getStaticPaths() {
+	return paginas.map((p) => ({ params: { slug: p.slug }, props: { p } }));
 }
-
-const { page, entry } = Astro.props as { page: LegacyPage; entry?: ManagedEntry };
-const rendered = entry ? await render(entry) : undefined;
-const Content = rendered?.Content;
-const pageDepth = page.slug.split('/').length;
-const childPages = legacyPages.filter((candidate) =>
-	candidate.slug.startsWith(`${page.slug}/`) && candidate.slug.split('/').length === pageDepth + 1,
-);
-const newsEntries = page.slug === 'noticias'
-	? (await getCollection('noticias')).sort((first, second) => second.data.pubDate.valueOf() - first.data.pubDate.valueOf())
-	: [];
-const cards = page.slug === 'noticias'
-	? newsEntries.map((article) => ({ title: article.data.title, section: article.data.category ?? 'Noticias', intro: article.data.summary, slug: `noticias/${article.id}` }))
-	: page.kind === 'listing' ? childPages : [];
-const calendarView = page.slug.endsWith('/lista') ? 'lista' : page.slug.endsWith('/hoy') ? 'hoy' : 'mes';
+const { p } = Astro.props as { p: Pagina };
+const hijas = hijasDe(p.slug);
+const padre = p.slug.includes('/') ? paginas.find((x) => x.slug === p.slug.split('/').slice(0, -1).join('/')) : undefined;
+const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
-<Layout title={`${page.title} - Reset`}>
-	<div class="page-banner">
-		<div class="page-width"><p>{page.section}</p><h1>{page.title}</h1></div>
+<Layout title={p.titulo} description={p.intro}>
+	<div class="wrap gp">
+		<header class="pg-head">
+			<p class="kicker">{padre ? <a href={href(padre.slug)}>{padre.titulo}</a> : <span>{p.seccion}</span>}<span>{p.titulo}</span></p>
+			<h1 class="display gp-t">{p.titulo}</h1>
+			<p class="lede gp-lede">{p.intro}</p>
+		</header>
+
+		{p.cuerpo && <div class="prose gp-body" set:html={md(p.cuerpo)} />}
+
+		{p.slug === 'contacto' && (
+			<dl class="gp-contact">
+				<div><dt>Correo</dt><dd><a href={`mailto:${contacto.email}`}>{contacto.email}</a></dd></div>
+				<div><dt>Dirección</dt><dd>{contacto.direccion}<br />{contacto.escuela}</dd></div>
+				<div><dt>Redes</dt><dd>{contacto.redes.map((r) => <a href={r.url} target="_blank" rel="noopener">{r.nombre}</a>)}</dd></div>
+			</dl>
+		)}
+		{p.slug === 'calendario' && (
+			<p class="gp-body"><a class="btn primary" href={contacto.redes[0].url} target="_blank" rel="noopener">Ver novedades en Instagram <span class="arr">→</span></a></p>
+		)}
+		{p.slug === 'participa' && (
+			<p class="gp-body"><a class="btn primary" href={`mailto:${contacto.email}?subject=Quiero%20participar%20en%20Reset`}>Escribir a {contacto.email} <span class="arr">→</span></a></p>
+		)}
+
+		{hijas.length > 0 && (
+			<ul class="gp-kids">
+				{hijas.map((h, i) => (
+					<li class="reveal" style={`--d:${i}`}>
+						<a href={href(h.slug)}>
+							<span class="idx">{pad(i + 1)}</span>
+							<h2>{h.titulo}</h2>
+							<p>{h.intro}</p>
+							<span class="gp-arr" aria-hidden="true">→</span>
+						</a>
+					</li>
+				))}
+			</ul>
+		)}
 	</div>
-	{page.kind === 'calendar' ? (
-		<section class="page-width calendar-page">
-			<p class="page-intro">{page.intro}</p>
-			<div class="calendar-toolbar">
-				<div class="calendar-month-controls">
-					<button type="button" data-calendar-previous aria-label="Mes anterior">←</button>
-					<strong data-calendar-label aria-live="polite">marzo 2023</strong>
-					<button type="button" data-calendar-next aria-label="Mes siguiente">→</button>
-					<button type="button" data-calendar-current>Este mes</button>
-				</div>
-				<label class="calendar-date-label">Seleccionar fecha <input type="date" data-calendar-date value="2023-03-28" /></label>
-			</div>
-			<div class="calendar-search">
-				<label for="event-search">Buscar eventos</label>
-				<div><input id="event-search" type="search" placeholder="Introduce la palabra clave" /><button type="button" data-event-search>Buscar Eventos</button></div>
-				<p data-event-message aria-live="polite">La copia archivada no conserva eventos cargados para esta fecha.</p>
-			</div>
-			<div class="calendar-views" aria-label="Vistas del calendario">
-				<a class:list={{ active: calendarView === 'mes' }} aria-current={calendarView === 'mes' ? 'page' : undefined} href={pathFor('calendario/mes')}>Mes</a>
-				<a class:list={{ active: calendarView === 'lista' }} aria-current={calendarView === 'lista' ? 'page' : undefined} href={pathFor('calendario/lista')}>Lista</a>
-				<a class:list={{ active: calendarView === 'hoy' }} aria-current={calendarView === 'hoy' ? 'page' : undefined} href={pathFor('calendario/hoy')}>Día</a>
-			</div>
-			{calendarView === 'lista' ? (
-				<div class="empty-events">No hay eventos archivados para mostrar.</div>
-			) : calendarView === 'hoy' ? (
-				<div class="empty-events">No hay eventos archivados para este día.</div>
-			) : (
-				<div class="calendar-grid-wrap">
-					<div class="calendar-grid" data-calendar-grid role="grid" aria-label="Calendario de eventos"></div>
-				</div>
-			)}
-		</section>
-	) : (
-		entry ? (
-			<section class="page-width content-page editable-page">
-				<p class="page-intro">{page.intro}</p>
-				{entry.collection === 'noticias' && <p class="event-date">{entry.data.pubDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })} · {entry.data.category ?? 'Noticias'}</p>}
-				{entry.collection === 'cybertech' && entry.data.eventDate && <p class="event-date">{entry.data.eventDate} · ETSII-UPM</p>}
-				{entry.collection === 'miembros' && entry.data.members.length > 0 && (
-					<div class="members-grid">
-						{entry.data.members.map((member) => (
-							<article class="member-card">
-								<button class="member-photo-toggle" type="button" data-member-photo-toggle aria-label={`Cambiar fotos de ${member.name}`} aria-pressed="false" title="Pasa el cursor o toca para ver la otra foto">
-									{member.photo ? <img class="member-photo-primary" src={member.photo} alt={member.name} loading="lazy" /> : <span class="member-photo-placeholder">{member.name}</span>}
-									{member.photoHover && <img class="member-photo-alternate" src={member.photoHover} alt="" aria-hidden="true" />}
-								</button>
-								<h2>{member.name}</h2>
-								{member.role && <p>{member.role}</p>}
-							</article>
-						))}
-					</div>
-				)}
-				{entry.collection === 'miembros' && entry.data.members.length === 0 && <p class="members-empty">Este equipo aún no tiene integrantes publicados.</p>}
-				{(entry.collection === 'cybertech' || entry.collection === 'noticias') && entry.data.image && <img class="entry-image" src={entry.data.image} alt={entry.data.title} />}
-				{Content && <div class="entry-body"><Content /></div>}
-			</section>
-		) : (
-		<section class="page-width content-page">
-			<p class="page-intro">{page.intro}</p>
-			{cards.length > 0 ? (
-				<div class="directory-grid">
-					{cards.map((card) => (
-						<article class="directory-card">
-							<p>{card.section}</p>
-							<h2><a href={pathFor(card.slug)}>{card.title}</a></h2>
-							<p class="directory-summary">{card.intro}</p>
-							<a class="directory-link" href={pathFor(card.slug)}>Leer más <span aria-hidden="true">↗</span></a>
-						</article>
-					))}
-				</div>
-			) : (
-				<article class="recovery-note">
-					<p>Estamos recuperando el contenido de esta página a partir del respaldo de 2023.</p>
-					{page.slug === 'contacto' && <a class="contact-email" href="mailto:aereset@gmail.com">aereset@gmail.com</a>}
-					<a class="archive-link" href={archiveUrl(page.archivePath)} target="_blank" rel="noreferrer">Consultar la captura archivada <span aria-hidden="true">↗</span></a>
-				</article>
-			)}
-					{page.kind === 'article' && <p class="article-note">El texto completo y sus galerías no están presentes en el repositorio. <a href={archiveUrl(page.archivePath)} target="_blank" rel="noreferrer">Ver captura de 2023</a>.</p>}
-		</section>
-				)
-	)}
 </Layout>
 
 <style>
-	.page-width { width: min(1180px, calc(100% - 3rem)); margin: 0 auto; }
-	.page-banner { padding: 3.6rem 0 3.1rem; color: white; background: #142a38; border-bottom: 5px solid var(--orange); }
-	.page-banner p { margin: 0 0 .8rem; color: #ff9a76; font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
-	.page-banner h1 { max-width: 920px; margin: 0; color: white; font-size: 3.6rem; line-height: 1.04; }
-	.content-page, .calendar-page { padding-top: 2.4rem; padding-bottom: 4rem; }
-	.page-intro { max-width: 760px; margin: 0 0 2rem; color: #46545b; font-size: 1.05rem; line-height: 1.7; }
-	.directory-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
-	.directory-card { display: flex; flex-direction: column; min-height: 230px; padding: 1.4rem; border: 1px solid var(--line); border-top: 3px solid var(--blue); background: white; }
-	.directory-card > p:first-child { margin: 0 0 .75rem; color: var(--blue); font-size: .7rem; font-weight: 800; text-transform: uppercase; }
-	.directory-card h2 { margin: 0; font-size: 1.25rem; line-height: 1.3; }
-	.directory-card h2 a { color: var(--ink); text-decoration: none; }
-	.directory-card h2 a:hover { color: var(--blue); }
-	.directory-summary { flex: 1; color: #56636a; font-size: .9rem; line-height: 1.55; }
-	.directory-link, .archive-link { display: inline-flex; align-items: center; gap: .7rem; width: fit-content; color: var(--blue); font-size: .78rem; font-weight: 800; text-decoration: none; text-transform: uppercase; }
-	.recovery-note { max-width: 760px; padding: 1.5rem; border-left: 4px solid var(--orange); background: #e9eeee; }
-	.recovery-note p { margin: 0 0 1.2rem; color: #45545a; line-height: 1.6; }
-	.contact-email { display: block; margin: 0 0 1.2rem; color: var(--blue); font-weight: 700; }
-	.archive-link { text-transform: none; }
-	.article-note { max-width: 760px; margin-top: 2rem; color: var(--muted); font-size: .9rem; }
-	.article-note a { color: var(--blue); }
-	.editable-page { padding-bottom: 5rem; }
-	.event-date { width: fit-content; margin: -1rem 0 2rem; padding: .55rem .8rem; color: #74351f; background: #ffe4d9; font-size: .82rem; font-weight: 750; }
-	.entry-image { display: block; max-width: 100%; max-height: 520px; margin: 0 0 2rem; object-fit: cover; }
-	.entry-body { max-width: 820px; color: #34434a; font-size: 1.02rem; line-height: 1.8; }
-	.entry-body :global(h2) { margin-top: 2rem; color: var(--ink); font-size: 1.6rem; }
-	.members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 260px)); justify-content: start; gap: 1rem; margin: 2rem 0; }
-	.member-card { width: 100%; max-width: 260px; min-width: 0; padding: 1.1rem; border: 1px solid var(--line); background: white; }
-	.member-photo-toggle { position: relative; display: block; width: 100%; aspect-ratio: 3 / 4; padding: 0; overflow: hidden; border: 0; background: repeating-linear-gradient(135deg, #e1e9e9 0 18px, #d6e0e1 19px 20px); cursor: pointer; }
-	.member-photo-toggle img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; transition: opacity 520ms var(--ease-out), transform 760ms var(--ease-out); }
-	.member-photo-primary { opacity: 1; }
-	.member-photo-alternate { opacity: 0; transform: scale(1.025); }
-	.member-photo-placeholder { position: absolute; inset: 0; display: grid; place-items: center; padding: 1rem; color: #31596c; font-weight: 850; text-align: center; }
-	.member-card h2 { margin: .9rem 0 .2rem; font-size: 1.1rem; }
-	.member-card p, .members-empty { color: var(--muted); }
-	.calendar-page { max-width: 1180px; }
-	.calendar-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; border: 1px solid var(--line); background: white; }
-	.calendar-month-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem; }
-	.calendar-month-controls strong { min-width: 130px; text-align: center; text-transform: capitalize; }
-	.calendar-month-controls button, .calendar-search button { min-height: 40px; padding: .55rem .75rem; border: 1px solid #b9c3c6; color: var(--ink); background: white; cursor: pointer; }
-	.calendar-month-controls button:hover { border-color: var(--blue); color: var(--blue); }
-	.calendar-month-controls button[data-calendar-current] { margin-left: .35rem; }
-	.calendar-date-label { display: flex; align-items: center; gap: .6rem; color: #4a585f; font-size: .85rem; }
-	.calendar-date-label input, .calendar-search input { min-height: 40px; padding: .5rem; border: 1px solid #b9c3c6; background: white; }
-	.calendar-search { margin: 1.2rem 0; padding: 1.2rem; border: 1px solid var(--line); background: white; }
-	.calendar-search label { display: block; margin-bottom: .5rem; font-weight: 700; }
-	.calendar-search > div { display: flex; max-width: 590px; }
-	.calendar-search input { flex: 1; min-width: 0; }
-	.calendar-search button { color: white; border-color: var(--blue); background: var(--blue); font-weight: 700; }
-	.calendar-search p { margin: .7rem 0 0; color: var(--muted); font-size: .85rem; }
-	.calendar-views { display: flex; gap: .3rem; margin-bottom: 1rem; border-bottom: 1px solid var(--line); }
-	.calendar-views a { padding: .7rem 1rem; color: #526168; text-decoration: none; }
-	.calendar-views a.active { color: var(--blue); border-bottom: 3px solid var(--blue); font-weight: 800; }
-	.calendar-grid-wrap { overflow-x: auto; border: 1px solid var(--line); background: white; }
-	.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(100px, 1fr)); min-width: 700px; }
-	.calendar-day-name, .calendar-day { min-height: 88px; padding: .6rem; border-right: 1px solid #e0e5e5; border-bottom: 1px solid #e0e5e5; }
-	.calendar-day-name { min-height: 42px; color: #5b686e; background: #f0f3f2; font-size: .75rem; font-weight: 800; text-align: center; }
-	.calendar-day { display: flex; align-items: start; justify-content: space-between; color: var(--ink); background: white; text-align: left; cursor: pointer; }
-	.calendar-day:hover, .calendar-day.selected { outline: 2px solid var(--blue); outline-offset: -2px; }
-	.calendar-day.outside-month { color: #9da8aa; background: #f8f9f8; }
-	.empty-events { padding: 2rem 1rem; border: 1px solid var(--line); color: var(--muted); background: white; text-align: center; }
-	@media (max-width: 760px) { .page-width { width: min(100% - 2rem, 560px); } .directory-grid { grid-template-columns: 1fr; } .members-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .member-card { max-width: none; } .page-banner { padding: 2.5rem 0; } .page-banner h1 { font-size: 2.5rem; } .calendar-toolbar { align-items: start; } .calendar-month-controls { width: 100%; } .calendar-date-label { justify-content: space-between; width: 100%; } .calendar-date-label input { max-width: 55%; } }
-	@media (prefers-reduced-motion: reduce) { .member-photo-toggle img { transition: none; } }
+	.gp { padding-bottom: 6rem; }
+	.gp-t { font-size: clamp(2.6rem, 7vw, 5.8rem); }
+	.gp-lede { max-width: 56ch; margin-top: 1.8rem; }
+	.kicker a { text-decoration: none; }
+	.kicker a + span::before { content: '/'; margin-right: .9rem; color: var(--naranja); }
+	.gp-body { margin-bottom: 3rem; }
+	.gp-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0; border: 1px solid var(--negro); background: var(--blanco); }
+	.gp-contact div { padding: 1.4rem; border-right: 1px solid var(--linea); }
+	.gp-contact div:last-child { border-right: 0; }
+	.gp-contact dt { font-family: var(--f-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--naranja); margin-bottom: .5rem; }
+	.gp-contact dd { margin: 0; display: flex; flex-direction: column; gap: .2rem; }
+	.gp-contact a { color: var(--azul); }
+	.gp-kids { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.4rem; margin: 0; padding: 0; list-style: none; }
+	.gp-kids a { position: relative; display: block; height: 100%; padding: 1.5rem 1.5rem 3.2rem; border: 1px solid var(--negro); background: var(--blanco); text-decoration: none; transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+	.gp-kids a:hover { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+	.gp-kids h2 { margin: .6rem 0 .4rem; font-size: 1.3rem; }
+	.gp-kids p { margin: 0; color: var(--gris); font-size: .93rem; }
+	.gp-arr { position: absolute; left: 1.5rem; bottom: 1.1rem; color: var(--naranja); }
 </style>
-
-{entry?.collection === 'miembros' && (
-	<script>
-		document.querySelectorAll<HTMLButtonElement>('[data-member-photo-toggle]').forEach((toggle) => {
-			const setPhotoState = (showAlternate: boolean) => {
-				const primary = toggle.querySelector<HTMLImageElement>('.member-photo-primary');
-				const alternate = toggle.querySelector<HTMLImageElement>('.member-photo-alternate');
-				if (primary) primary.style.opacity = showAlternate ? '0' : '1';
-				if (alternate) {
-					alternate.style.opacity = showAlternate ? '1' : '0';
-					alternate.style.transform = showAlternate ? 'scale(1)' : 'scale(1.025)';
-				}
-			};
-			toggle.addEventListener('pointerenter', () => setPhotoState(true));
-			toggle.addEventListener('pointerleave', () => setPhotoState(toggle.getAttribute('aria-pressed') === 'true'));
-			toggle.addEventListener('focus', () => setPhotoState(true));
-			toggle.addEventListener('blur', () => setPhotoState(toggle.getAttribute('aria-pressed') === 'true'));
-			toggle.addEventListener('click', () => {
-				const pressed = toggle.getAttribute('aria-pressed') === 'true';
-				toggle.setAttribute('aria-pressed', String(!pressed));
-				setPhotoState(!pressed);
-			});
-		});
-	</script>
-)}
-
-{page.kind === 'calendar' && calendarView === 'mes' && (
-	<script>
-		const grid = document.querySelector<HTMLElement>('[data-calendar-grid]');
-		const label = document.querySelector<HTMLElement>('[data-calendar-label]');
-		const dateInput = document.querySelector<HTMLInputElement>('[data-calendar-date]');
-		if (grid && label) {
-			let shownMonth = new Date(2023, 2, 1);
-			let selectedDate = new Date(2023, 2, 28);
-			const weekdays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-			const renderCalendar = () => {
-				grid.replaceChildren();
-				label.textContent = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(shownMonth);
-				weekdays.forEach((weekday) => {
-					const heading = document.createElement('div');
-					heading.className = 'calendar-day-name';
-					heading.setAttribute('role', 'columnheader');
-					heading.textContent = weekday;
-					grid.append(heading);
-				});
-				const firstWeekday = (new Date(shownMonth.getFullYear(), shownMonth.getMonth(), 1).getDay() + 6) % 7;
-				const daysInMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth() + 1, 0).getDate();
-				const previousMonthDays = new Date(shownMonth.getFullYear(), shownMonth.getMonth(), 0).getDate();
-				const totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
-				for (let index = 0; index < totalCells; index += 1) {
-					const date = new Date(shownMonth.getFullYear(), shownMonth.getMonth(), index - firstWeekday + 1);
-					const day = document.createElement('button');
-					day.type = 'button';
-					day.className = 'calendar-day';
-					day.setAttribute('role', 'gridcell');
-					day.textContent = String(date.getDate());
-					if (index < firstWeekday || index >= firstWeekday + daysInMonth) {
-						day.classList.add('outside-month');
-						day.textContent = String(index < firstWeekday ? previousMonthDays - firstWeekday + index + 1 : index - firstWeekday - daysInMonth + 1);
-					}
-					if (date.toDateString() === selectedDate.toDateString()) day.classList.add('selected');
-					day.setAttribute('aria-label', new Intl.DateTimeFormat('es-ES', { dateStyle: 'full' }).format(date));
-					day.addEventListener('click', () => {
-						selectedDate = date;
-						shownMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-						if (dateInput) dateInput.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-						renderCalendar();
-					});
-					grid.append(day);
-				}
-			};
-			const moveMonth = (amount: number) => { shownMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth() + amount, 1); renderCalendar(); };
-			document.querySelector('[data-calendar-previous]')?.addEventListener('click', () => moveMonth(-1));
-			document.querySelector('[data-calendar-next]')?.addEventListener('click', () => moveMonth(1));
-			document.querySelector('[data-calendar-current]')?.addEventListener('click', () => {
-				const today = new Date();
-				shownMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-				selectedDate = today;
-				renderCalendar();
-			});
-			dateInput?.addEventListener('change', () => {
-				if (!dateInput.value) return;
-				selectedDate = new Date(`${dateInput.value}T12:00:00`);
-				shownMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
-				renderCalendar();
-			});
-			document.querySelector('[data-event-search]')?.addEventListener('click', () => {
-				const query = document.querySelector<HTMLInputElement>('#event-search')?.value.trim();
-				const message = document.querySelector<HTMLElement>('[data-event-message]');
-				if (message) message.textContent = query ? `No hay eventos archivados que coincidan con «${query}».` : 'La copia archivada no conserva eventos cargados para esta fecha.';
-			});
-			renderCalendar();
-		}
-	</script>
-)}

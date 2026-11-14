@@ -1,0 +1,105 @@
+{
+  "anio": 2022,
+  "lema": "La mayor competición de robótica de la UPM",
+  "tematica": "Cómo entrenar a tu robot",
+  "fechas": "26–29 de abril de 2022",
+  "lugar": "Pabellón de deportes de la ETSII",
+  "portada": "fotos/cybertech/2022/portada.jpg",
+  "intro": "Cybertech es la competición de robótica más grande de la [UPM](http://www.upm.es/), con suculentos premios (**¡3000 € en premios y créditos ECTS!**). Se celebra en la [Escuela Técnica Superior de Ingenieros Industriales](http://www.etsii.upm.es/), está organizada por la asociación de estudiantes Reset y cuenta con el apoyo del [Departamento de Automática, Ingeniería Eléctrica y Electrónica e Informática Industrial](http://www.disam.upm.es/).\n\nCybertech 2022 tuvo lugar en el pabellón de deportes de la ETSII entre el 26 y el 29 de abril de 2022.\n\nEl concurso tuvo tres categorías: Classic, Sumo y Pro.",
+  "datos": [
+    {
+      "valor": "3000 €",
+      "etiqueta": "en premios y créditos ECTS"
+    },
+    {
+      "valor": "3",
+      "etiqueta": "categorías"
+    },
+    {
+      "valor": "26–29 abr",
+      "etiqueta": "de 2022"
+    }
+  ],
+  "categorias": [
+    {
+      "nombre": "Classic",
+      "descripcion": "Destinada a quienes nunca han participado: un tutor guía al equipo a lo largo de diversos talleres y Reset proporciona el material para competir en dos pruebas, Laberinto y Rastreador/Siguelíneas.",
+      "media": "fotos/cybertech/2022/classic.jpg",
+      "pruebas": [
+        {
+          "nombre": "Siguelíneas",
+          "descripcion": "Los robots deben recorrer un circuito de cinta negra, sorteando obstáculos, cambiando de carril e incluso haciendo adelantamientos.",
+          "media": ""
+        },
+        {
+          "nombre": "Laberinto",
+          "descripcion": "Los robots deben abrirse paso, de forma completamente autónoma, a través de diversos laberintos, tanto conocidos como desconocidos.",
+          "media": ""
+        }
+      ]
+    },
+    {
+      "nombre": "Pro",
+      "descripcion": "**¡Nueva temática de Pro 2022: Cómo entrenar a tu robot!** Además de los clásicos Siguelíneas Velocista y laberinto Micromouse, inspirados en las normas internacionales, hubo nuevas pruebas *made in Reset*.",
+      "media": "fotos/cybertech/2022/pro.mp4",
+      "pruebas": [
+        {
+          "nombre": "Siguelíneas Velocista",
+          "descripcion": "Prueba clásica inspirada en las normas internacionales.",
+          "media": ""
+        },
+        {
+          "nombre": "Micromouse",
+          "descripcion": "Laberinto clásico inspirado en las normas internacionales.",
+          "media": ""
+        },
+        {
+          "nombre": "¡Ovejas al redil!",
+          "descripcion": "Prueba *made in Reset* de la temática de este año.",
+          "media": ""
+        },
+        {
+          "nombre": "Baby Dragons Plane",
+          "descripcion": "Prueba *made in Reset* de la temática de este año.",
+          "media": ""
+        }
+      ]
+    },
+    {
+      "nombre": "Sumo",
+      "descripcion": "Los robots teleoperados luchan en combates 1 contra 1 y todos contra todos, siguiendo un sistema suizo, tratando de inmovilizar o sacar del escenario al robot contrario. El escenario de batalla incluye un foso de piedras, pinchos metálicos y una ruleta de la muerte.",
+      "media": "fotos/cybertech/2022/sumo.jpg",
+      "pruebas": []
+    }
+  ],
+  "secciones": [
+    {
+      "titulo": "Inscripción",
+      "contenido": "La categoría Classic está limitada a estudiantes de la UPM; a Pro y Sumo puede presentarse cualquier estudiante.\n\nLas inscripciones cerraron el 25 de abril de 2022.",
+      "media": ""
+    },
+    {
+      "titulo": "Talleres",
+      "contenido": "Talleres exclusivos para la categoría Classic, impartidos en la ETSII.\n\n- **Programación en C**: introducción a C (condicionales, bucles y funciones) para asentar las bases de quienes no tienen experiencia programando.\n- **Entrega de maletines e introducción a Arduino**: reparto de material, asignación de tutores e introducción a [Arduino](https://www.arduino.cc/en/Main/Software).\n- **Soldadura y sensores**: aprendemos a soldar con estaño y a usar los distintos tipos de sensores que existen.\n- **Motores**: aprendemos a utilizar la Motor Shield de Arduino.\n- **Diseño**: consejos para diseñar y construir el robot.\n- **Lógica**: los principales reguladores y cómo ajustarlos.\n\nPara convalidar los créditos ECTS es obligatoria la asistencia a los talleres.",
+      "media": "fotos/cybertech/2022/taller-c.jpg"
+    },
+    {
+      "titulo": "Vídeos de los talleres",
+      "contenido": "- [Taller 1: Entrega de maletines e introducción a Arduino](https://youtu.be/BI5E4wcPxOg)\n- [Taller: Soldadura y Sensores](https://youtu.be/uFDn3jJJPqw)\n- [Taller: Motores](https://youtu.be/OLmkQH0R2FM)",
+      "media": ""
+    },
+    {
+      "titulo": "Checkpoints",
+      "contenido": "Solo para Classic. A lo largo del curso, cada equipo debe superar tres checkpoints:\n\n1. **Primer checkpoint**: el robot se mueve de forma autónoma, controlando los motores desde la etapa de potencia, y realiza un giro en cada sentido.\n2. **Segundo checkpoint**: el robot detecta (de la forma que elija el equipo) la línea negra sobre fondo blanco.\n3. **Tercer checkpoint**: el robot detecta paredes u obstáculos, o mide distancias; de nuevo, el equipo elige cómo demostrarlo.\n\nLos checkpoints pueden pasarse presencialmente en la salita de Reset o enviando un vídeo al tutor del equipo.",
+      "media": ""
+    },
+    {
+      "titulo": "Eliminatorias",
+      "contenido": "Los equipos de Classic deben superar unas pruebas eliminatorias el 22 de abril: recorrer un circuito ovalado de cinta negra muy sencillo y entrar y salir de forma autónoma de un pequeño laberinto en forma de L. Los detalles están en las bases de la competición.",
+      "media": ""
+    }
+  ],
+  "galeria": [
+    "fotos/cybertech/2022/pro.jpg"
+  ]
+}

@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCursos, BASE } from '../../lib/data';
+import { renderCurso, cursoCorto } from '../../lib/render';
+
+export async function getStaticPaths() {
+	const cursos = await getCursos();
+	return cursos.map((c) => ({ params: { curso: c.id }, props: { id: c.id } }));
+}
+
+const cursos = await getCursos();
+const actual = cursos.find((c) => c.id === Astro.props.id)!;
+const html = renderCurso(actual.data, { base: BASE });
+---
+
+<Layout title={`Miembros ${cursoCorto(actual.data.curso)}`} description={`Equipo de la Asociación de Estudiantes Reset durante el curso ${actual.data.curso}.`}>
+	<nav class="yearbar" aria-label="Cursos">
+		<div class="wrap">
+			<span class="lbl">Cursos</span>
+			{cursos.map((c) => <a href={c.url} aria-current={c.id === actual.id ? 'page' : undefined}>{cursoCorto(c.data.curso)}</a>)}
+		</div>
+	</nav>
+	<div id="page-root" data-kind="miembros" data-id={actual.id} set:html={html} />
+</Layout>

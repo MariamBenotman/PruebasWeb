@@ -1,0 +1,36 @@
+---
+import { render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { getNoticias, href, fecha } from '../../lib/data';
+
+export async function getStaticPaths() {
+	const noticias = await getNoticias();
+	return noticias.map((n) => ({ params: { slug: n.id }, props: { n } }));
+}
+const { n } = Astro.props;
+const { Content } = await render(n);
+const img = n.data.image ? (/^(https?:|\/)/.test(n.data.image) ? n.data.image : href(n.data.image)) : '';
+---
+
+<Layout title={n.data.title} description={n.data.summary}>
+	<article class="wrap art">
+		<header class="pg-head">
+			<p class="kicker"><a href={href('noticias')}>Noticias</a>{n.data.category && <span>{n.data.category}</span>}<span><time datetime={n.data.pubDate.toISOString()}>{fecha(n.data.pubDate)}</time></span></p>
+			<h1 class="art-t">{n.data.title}</h1>
+			<p class="lede">{n.data.summary}</p>
+		</header>
+		{img && <figure class="frame wide art-img"><img src={img} alt="" onerror="__img(this)" /></figure>}
+		<div class="prose art-body"><Content /></div>
+		<p class="back"><a class="btn" href={href('noticias')}>← Todas las noticias</a></p>
+	</article>
+</Layout>
+
+<style>
+	.kicker a { text-decoration: none; }
+	.kicker a + span::before { content: '/'; margin-right: .9rem; color: var(--naranja); }
+	.art-t { margin: 0; max-width: 22ch; font-family: var(--f-display); font-stretch: 112%; font-weight: 800; font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1; letter-spacing: -.03em; }
+	.art .lede { max-width: 60ch; margin-top: 1.5rem; }
+	.art-img { margin-bottom: 3rem; }
+	.art-body { font-size: 1.08rem; }
+	.back { margin: 4rem 0 6rem; }
+</style>

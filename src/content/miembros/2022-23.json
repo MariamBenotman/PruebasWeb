@@ -1,0 +1,234 @@
+{
+  "curso": "2022/23",
+  "intro": "",
+  "fotoGrupo": "",
+  "secciones": [
+    {
+      "titulo": "Junta",
+      "miembros": [
+        {
+          "nombre": "Antonio Cameo",
+          "roles": [
+            "Presidente"
+          ],
+          "foto": "fotos/miembros/2022-23/antonio-cameo.jpg",
+          "fotoHover": "fotos/miembros/2022-23/antonio-cameo-2.jpg"
+        },
+        {
+          "nombre": "Jaime Bravo",
+          "roles": [
+            "Vicepresidente"
+          ],
+          "foto": "fotos/miembros/2022-23/jaime-bravo.jpg",
+          "fotoHover": "fotos/miembros/2022-23/jaime-bravo-2.jpg"
+        },
+        {
+          "nombre": "Mariam Benotman",
+          "roles": [
+            "Secretaria"
+          ],
+          "foto": "fotos/miembros/2022-23/mariam-benotman.jpg",
+          "fotoHover": "fotos/miembros/2022-23/mariam-benotman-2.jpg"
+        },
+        {
+          "nombre": "Adrián Rieker",
+          "roles": [
+            "Tesorero"
+          ],
+          "foto": "fotos/miembros/2022-23/adrian-rieker.jpg",
+          "fotoHover": "fotos/miembros/2022-23/adrian-rieker-2.jpg"
+        },
+        {
+          "nombre": "Elena Muñoz-Bellido",
+          "roles": [
+            "Logista"
+          ],
+          "foto": "fotos/miembros/2022-23/elena-munoz-bellido.jpg",
+          "fotoHover": "fotos/miembros/2022-23/elena-munoz-bellido-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Vocales",
+      "miembros": [
+        {
+          "nombre": "Jorge Martínez",
+          "roles": [
+            "Vocal de Impresiones"
+          ],
+          "foto": "fotos/miembros/2022-23/jorge-martinez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/jorge-martinez-2.jpg"
+        },
+        {
+          "nombre": "Javier Martínez",
+          "roles": [
+            "Vocal de Marketing"
+          ],
+          "foto": "fotos/miembros/2022-23/javier-martinez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/javier-martinez-2.jpg"
+        },
+        {
+          "nombre": "Eduardo Palou",
+          "roles": [
+            "Vocal Web"
+          ],
+          "foto": "fotos/miembros/2022-23/eduardo-palou.jpg",
+          "fotoHover": "fotos/miembros/2022-23/eduardo-palou-2.jpg"
+        },
+        {
+          "nombre": "Alberto Sevilla",
+          "roles": [
+            "Vocal de Cybertech"
+          ],
+          "foto": "fotos/miembros/2022-23/alberto-sevilla.jpg",
+          "fotoHover": "fotos/miembros/2022-23/alberto-sevilla-2.jpg"
+        },
+        {
+          "nombre": "David Pastor",
+          "roles": [
+            "Vocal de Cybertech"
+          ],
+          "foto": "fotos/miembros/2022-23/david-pastor.jpg",
+          "fotoHover": "fotos/miembros/2022-23/david-pastor-2.jpg"
+        },
+        {
+          "nombre": "Celia Ibáñez",
+          "roles": [
+            "Vocal de Redes Sociales"
+          ],
+          "foto": "fotos/miembros/2022-23/celia-ibanez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/celia-ibanez-2.jpg"
+        },
+        {
+          "nombre": "Rocío García",
+          "roles": [
+            "Vocal de Taller"
+          ],
+          "foto": "fotos/miembros/2022-23/rocio-garcia.jpg",
+          "fotoHover": "fotos/miembros/2022-23/rocio-garcia-2.jpg"
+        },
+        {
+          "nombre": "Lucía Honrubia",
+          "roles": [
+            "Vocal de Eventos"
+          ],
+          "foto": "fotos/miembros/2022-23/lucia-honrubia.jpg",
+          "fotoHover": "fotos/miembros/2022-23/lucia-honrubia-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Miembros",
+      "miembros": [
+        {
+          "nombre": "Alfonso Salcedo",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/alfonso-salcedo.jpg",
+          "fotoHover": "fotos/miembros/2022-23/alfonso-salcedo-2.jpg"
+        },
+        {
+          "nombre": "Lorenzo Prat",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/lorenzo-prat.jpg",
+          "fotoHover": "fotos/miembros/2022-23/lorenzo-prat-2.jpg"
+        },
+        {
+          "nombre": "Miguel Ángel García",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/miguel-angel-garcia.jpg",
+          "fotoHover": "fotos/miembros/2022-23/miguel-angel-garcia-2.jpg"
+        },
+        {
+          "nombre": "Carola Adrados",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/carola-adrados.jpg",
+          "fotoHover": "fotos/miembros/2022-23/carola-adrados-2.jpg"
+        },
+        {
+          "nombre": "Miguel González",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/miguel-gonzalez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/miguel-gonzalez-2.jpg"
+        },
+        {
+          "nombre": "Ricardo Estremera",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/ricardo-estremera.jpg",
+          "fotoHover": "fotos/miembros/2022-23/ricardo-estremera-2.jpg"
+        },
+        {
+          "nombre": "Clara Molina",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/clara-molina.jpg",
+          "fotoHover": "fotos/miembros/2022-23/clara-molina-2.jpg"
+        },
+        {
+          "nombre": "Irene Rodríguez",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/irene-rodriguez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/irene-rodriguez-2.jpg"
+        },
+        {
+          "nombre": "Luis Lagerqvist",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/luis-lagerqvist.jpg",
+          "fotoHover": "fotos/miembros/2022-23/luis-lagerqvist-2.jpg"
+        },
+        {
+          "nombre": "Valentín Musat",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/valentin-musat.jpg",
+          "fotoHover": "fotos/miembros/2022-23/valentin-musat-2.jpg"
+        },
+        {
+          "nombre": "Lourdes Sánchez",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/lourdes-sanchez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/lourdes-sanchez-2.jpg"
+        },
+        {
+          "nombre": "Marina Lara",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/marina-lara.jpg",
+          "fotoHover": "fotos/miembros/2022-23/marina-lara-2.jpg"
+        },
+        {
+          "nombre": "Nicolas Brault",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/nicolas-brault.jpg",
+          "fotoHover": "fotos/miembros/2022-23/nicolas-brault-2.jpg"
+        },
+        {
+          "nombre": "Eduardo Clavijo",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/eduardo-clavijo.jpg",
+          "fotoHover": "fotos/miembros/2022-23/eduardo-clavijo-2.jpg"
+        },
+        {
+          "nombre": "Raúl Molina",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/raul-molina.jpg",
+          "fotoHover": "fotos/miembros/2022-23/raul-molina-2.jpg"
+        },
+        {
+          "nombre": "Juan Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/juan-martinez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/juan-martinez-2.jpg"
+        },
+        {
+          "nombre": "Miguel «el macarrone»",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/miguel-el-macarrone.jpg",
+          "fotoHover": "fotos/miembros/2022-23/miguel-el-macarrone-2.jpg"
+        },
+        {
+          "nombre": "Victoria",
+          "roles": [],
+          "foto": "fotos/miembros/2022-23/victoria.jpg",
+          "fotoHover": "fotos/miembros/2022-23/victoria-2.jpg"
+        }
+      ]
+    }
+  ]
+}

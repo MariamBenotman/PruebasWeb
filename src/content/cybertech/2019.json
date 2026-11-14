@@ -1,0 +1,98 @@
+{
+  "anio": 2019,
+  "lema": "La mayor competición de robótica de la UPM",
+  "tematica": "Medieval",
+  "fechas": "23–26 de abril de 2019",
+  "lugar": "Pabellón de deportes de la ETSII",
+  "portada": "",
+  "intro": "Cybertech es la competición de robótica más grande de la [UPM](http://www.upm.es/), con suculentos premios (**¡3000 € en premios y créditos ECTS!**). Se celebra en la [Escuela Técnica Superior de Ingenieros Industriales](http://www.etsii.upm.es/), está organizada por la asociación de estudiantes Reset y cuenta con el apoyo del [Departamento de Automática, Ingeniería Electrónica e Informática Industrial](http://www.disam.upm.es/).\n\nCybertech 2019 tuvo lugar en el pabellón de deportes de la ETSII entre el 23 y el 26 de abril de 2019.\n\nEl concurso tuvo tres categorías: Classic, Sumo y Medieval.\n\nPuedes ver el [vídeo resumen de la edición](https://www.youtube.com/watch?v=28y0wBhcOTQ) en YouTube.",
+  "datos": [
+    {
+      "valor": "3000 €",
+      "etiqueta": "en premios y créditos ECTS"
+    },
+    {
+      "valor": "3",
+      "etiqueta": "categorías"
+    },
+    {
+      "valor": "23–26 abr",
+      "etiqueta": "de 2019"
+    }
+  ],
+  "categorias": [
+    {
+      "nombre": "Classic",
+      "descripcion": "Destinada a quienes nunca han participado: un tutor guía al equipo a lo largo de diversos talleres y Reset proporciona el material para competir en dos pruebas, Laberinto y Rastreador/Siguelíneas.",
+      "media": "",
+      "pruebas": [
+        {
+          "nombre": "Siguelíneas",
+          "descripcion": "Los robots deben recorrer un circuito de cinta negra, sorteando obstáculos, cambiando de carril e incluso haciendo adelantamientos. [Ver vídeo](https://www.youtube.com/watch?v=zxWNHWfHQ8Q)",
+          "media": ""
+        },
+        {
+          "nombre": "Laberinto",
+          "descripcion": "Los robots deben abrirse paso, de forma completamente autónoma, a través de diversos laberintos, tanto conocidos como desconocidos. [Ver vídeo](https://www.youtube.com/watch?v=tky4wlc0GPc)",
+          "media": ""
+        }
+      ]
+    },
+    {
+      "nombre": "Medieval",
+      "descripcion": "Este año la modalidad más avanzada tuvo temática medieval. Se mantuvieron las pruebas con normativa internacional de Laberinto Micromouse y Siguelíneas, pero con un toque medieval, y se añadieron dos pruebas nuevas *made in Reset*.",
+      "media": "",
+      "pruebas": [
+        {
+          "nombre": "Rescata a la Princesa",
+          "descripcion": "Laberinto Micromouse con normativa internacional.",
+          "media": ""
+        },
+        {
+          "nombre": "Escapa del Castillo",
+          "descripcion": "Siguelíneas con normativa internacional.",
+          "media": ""
+        },
+        {
+          "nombre": "Asalto al Castillo",
+          "descripcion": "El robot debe disparar 3 proyectiles al malvado castillo Reset.",
+          "media": ""
+        },
+        {
+          "nombre": "Ataque al Dragón",
+          "descripcion": "Un circuito especializado que hay que completar lo antes posible para derrotar al dragón.",
+          "media": ""
+        }
+      ]
+    },
+    {
+      "nombre": "Sumo",
+      "descripcion": "Los robots teleoperados luchan en combates 1 contra 1 y todos contra todos, siguiendo un sistema suizo, tratando de inmovilizar o sacar del escenario al robot contrario. El escenario de batalla incluye un foso de piedras, pinchos metálicos y una ruleta de la muerte. [Ver vídeo](https://www.youtube.com/watch?v=vxJdzQc_eYw)",
+      "media": "",
+      "pruebas": []
+    }
+  ],
+  "secciones": [
+    {
+      "titulo": "Inscripción",
+      "contenido": "La categoría Classic está limitada a estudiantes de la UPM; a Pro y Sumo puede presentarse cualquier estudiante.",
+      "media": ""
+    },
+    {
+      "titulo": "Talleres",
+      "contenido": "Talleres exclusivos para la categoría Classic, impartidos en la ETSII.\n\n- **Programación en C**: introducción a C (condicionales, bucles y funciones) para asentar las bases de quienes no tienen experiencia programando.\n- **Entrega de maletines e introducción a Arduino**: reparto de material, asignación de tutores e introducción a [Arduino](https://www.arduino.cc/en/Main/Software).\n- **Soldadura y sensores**: aprendemos a soldar con estaño y a usar los distintos tipos de sensores que existen.\n- **Motores**: aprendemos a utilizar la Motor Shield de Arduino.\n- **Diseño**: consejos para diseñar y construir el robot.\n- **Lógica**: los principales reguladores y cómo ajustarlos.",
+      "media": ""
+    },
+    {
+      "titulo": "Checkpoints",
+      "contenido": "Solo para Classic. A lo largo del curso, cada equipo debe superar tres checkpoints:\n\n1. **Primer checkpoint**: el robot se mueve de forma autónoma, controlando los motores desde la etapa de potencia, y realiza un giro en cada sentido.\n2. **Segundo checkpoint**: el robot detecta (de la forma que elija el equipo) la línea negra sobre fondo blanco.\n3. **Tercer checkpoint**: el robot detecta paredes u obstáculos, o mide distancias; de nuevo, el equipo elige cómo demostrarlo.",
+      "media": ""
+    },
+    {
+      "titulo": "Eliminatorias",
+      "contenido": "Los equipos de Classic deben superar unas pruebas eliminatorias los días 11 y 12 de abril: recorrer un circuito ovalado de cinta negra muy sencillo y entrar y salir de forma autónoma de un pequeño laberinto en forma de L. Los detalles están en las bases de la competición.",
+      "media": ""
+    }
+  ],
+  "galeria": []
+}

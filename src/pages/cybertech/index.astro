@@ -1,0 +1,5 @@
+---
+import { getEdiciones } from '../../lib/data';
+const [ultima] = await getEdiciones();
+return Astro.redirect(ultima?.url ?? import.meta.env.BASE_URL);
+---

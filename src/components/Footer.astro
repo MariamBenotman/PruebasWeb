@@ -1,0 +1,50 @@
+---
+import Logo from './Logo.astro';
+import { getCursos, getEdiciones, href } from '../lib/data';
+import { contacto } from '../data/paginas';
+const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
+const cols: { t: string; l: [string, string][] }[] = [
+	{ t: 'Cybertech', l: ediciones.slice(0, 5).map((e) => [e.label, e.url]) },
+	{ t: 'Conócenos', l: [...cursos.slice(0, 3).map((c): [string, string] => [c.label, c.url]), ['Colaboradores', href('colaboradores')], ['Participa', href('participa')]] },
+	{ t: 'Reset', l: [['Proyectos', href('proyectos')], ['Talleres', href('talleres')], ['Servicios', href('servicios')], ['Noticias', href('noticias')], ['Buscar', href('buscar')]] },
+];
+---
+<footer class="ft">
+	<div class="wrap ft-in">
+		<div class="ft-brand">
+			<div class="ft-logo"><Logo tono="blanco" /></div>
+			<p>Asociación de estudiantes sin ánimo de lucro de la ETSII-UPM, dedicada a la robótica, la electrónica, la automática y la informática.</p>
+			<address>
+				<a href={`mailto:${contacto.email}`}>{contacto.email}</a><br />
+				{contacto.direccion}
+			</address>
+		</div>
+		{cols.map((c) => (
+			<div class="ft-col">
+				<h2>{c.t}</h2>
+				<ul>{c.l.map(([t, u]) => <li><a href={u}>{t}</a></li>)}</ul>
+			</div>
+		))}
+	</div>
+	<div class="wrap ft-bottom">
+		<span>© {new Date().getFullYear()} Asociación de Estudiantes Reset</span>
+		<span class="ft-social">{contacto.redes.map((r) => <a href={r.url} target="_blank" rel="noopener">{r.nombre}</a>)}</span>
+		<a class="ft-admin" href={href('admin')}>Acceso editores</a>
+	</div>
+</footer>
+
+<style>
+	.ft { background: var(--azul-hondo); color: #c3d4e4; margin-top: auto; border-top: 6px solid var(--naranja); }
+	.ft-in { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 2.5rem; padding-block: 4rem 3rem; }
+	.ft-logo { height: 40px; margin-bottom: 1.4rem; }
+	.ft-brand p { max-width: 38ch; margin: 0 0 1.2rem; font-size: .95rem; }
+	address { font-style: normal; font-family: var(--f-mono); font-size: .8rem; line-height: 1.8; }
+	.ft a { text-decoration: none; }
+	.ft a:hover { color: var(--naranja-vivo); }
+	.ft-col h2 { margin: 0 0 1rem; font-family: var(--f-mono); font-size: .72rem; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; color: var(--naranja-vivo); }
+	.ft-col ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .45rem; font-size: .93rem; }
+	.ft-bottom { display: flex; flex-wrap: wrap; gap: 1rem 2rem; padding-block: 1.2rem 1.6rem; border-top: 1px solid #1d4468; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+	.ft-social { display: flex; gap: 1.2rem; }
+	.ft-admin { margin-left: auto; opacity: .5; }
+	@media (max-width: 860px) { .ft-in { grid-template-columns: 1fr 1fr; } .ft-brand { grid-column: 1 / -1; } }
+</style>

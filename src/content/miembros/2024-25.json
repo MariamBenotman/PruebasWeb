@@ -1,0 +1,216 @@
+{
+  "curso": "2024/25",
+  "intro": "",
+  "fotoGrupo": "",
+  "secciones": [
+    {
+      "titulo": "Junta",
+      "miembros": [
+        {
+          "nombre": "Miguel Ángel García de Vicente",
+          "roles": [
+            "Presidente"
+          ],
+          "foto": "fotos/miembros/2024-25/miguel-angel-garcia-de-vicente.jpg",
+          "fotoHover": "fotos/miembros/2024-25/miguel-angel-garcia-de-vicente-2.jpg"
+        },
+        {
+          "nombre": "Miguel Plaza",
+          "roles": [
+            "Vicepresidente"
+          ],
+          "foto": "fotos/miembros/2024-25/miguel-plaza.jpg",
+          "fotoHover": "fotos/miembros/2024-25/miguel-plaza-2.jpg"
+        },
+        {
+          "nombre": "Fernando Torres-Quevedo Paz",
+          "roles": [
+            "Secretario"
+          ],
+          "foto": "fotos/miembros/2024-25/fernando-torres-quevedo-paz.jpg",
+          "fotoHover": "fotos/miembros/2024-25/fernando-torres-quevedo-paz-2.jpg"
+        },
+        {
+          "nombre": "Juan Martínez",
+          "roles": [
+            "Tesorero"
+          ],
+          "foto": "fotos/miembros/2024-25/juan-martinez.jpg",
+          "fotoHover": "fotos/miembros/2024-25/juan-martinez-2.jpg"
+        },
+        {
+          "nombre": "Marina Lara",
+          "roles": [
+            "Logista"
+          ],
+          "foto": "fotos/miembros/2024-25/marina-lara.jpg",
+          "fotoHover": "fotos/miembros/2024-25/marina-lara-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Vocales",
+      "miembros": [
+        {
+          "nombre": "Eduardo Clavijo",
+          "roles": [
+            "Vocal de Marketing"
+          ],
+          "foto": "fotos/miembros/2024-25/eduardo-clavijo.jpg",
+          "fotoHover": "fotos/miembros/2024-25/eduardo-clavijo-2.jpg"
+        },
+        {
+          "nombre": "Clara Molina",
+          "roles": [
+            "Vocal de Cybertech"
+          ],
+          "foto": "fotos/miembros/2024-25/clara-molina.jpg",
+          "fotoHover": "fotos/miembros/2024-25/clara-molina-2.jpg"
+        },
+        {
+          "nombre": "Gonzalo Castiñera",
+          "roles": [
+            "Vocal de Impresiones"
+          ],
+          "foto": "fotos/miembros/2024-25/gonzalo-castinera.jpg",
+          "fotoHover": "fotos/miembros/2024-25/gonzalo-castinera-2.jpg"
+        },
+        {
+          "nombre": "Claudia",
+          "roles": [
+            "Vocal de Redes"
+          ],
+          "foto": "fotos/miembros/2024-25/claudia.jpg",
+          "fotoHover": "fotos/miembros/2024-25/claudia-2.jpg"
+        },
+        {
+          "nombre": "Mariam Benotman",
+          "roles": [
+            "Vocal de Eventos"
+          ],
+          "foto": "fotos/miembros/2024-25/mariam-benotman.jpg",
+          "fotoHover": "fotos/miembros/2024-25/mariam-benotman-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Miembros",
+      "miembros": [
+        {
+          "nombre": "Adrián Rieker",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/adrian-rieker.jpg",
+          "fotoHover": "fotos/miembros/2024-25/adrian-rieker-2.jpg"
+        },
+        {
+          "nombre": "David Pastor",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/david-pastor.jpg",
+          "fotoHover": "fotos/miembros/2024-25/david-pastor-2.jpg"
+        },
+        {
+          "nombre": "Carola Adrados",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/carola-adrados.jpg",
+          "fotoHover": "fotos/miembros/2024-25/carola-adrados-2.jpg"
+        },
+        {
+          "nombre": "Antonio Cameo",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/antonio-cameo.jpg",
+          "fotoHover": "fotos/miembros/2024-25/antonio-cameo-2.jpg"
+        },
+        {
+          "nombre": "Jorge Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/jorge-martinez.jpg",
+          "fotoHover": "fotos/miembros/2024-25/jorge-martinez-2.jpg"
+        },
+        {
+          "nombre": "Mara Sánchez",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/mara-sanchez.jpg",
+          "fotoHover": "fotos/miembros/2024-25/mara-sanchez-2.jpg"
+        },
+        {
+          "nombre": "Rocío García",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/rocio-garcia.jpg",
+          "fotoHover": "fotos/miembros/2024-25/rocio-garcia-2.jpg"
+        },
+        {
+          "nombre": "Celia Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/celia-martinez.jpg",
+          "fotoHover": "fotos/miembros/2024-25/celia-martinez-2.jpg"
+        },
+        {
+          "nombre": "Celia",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/celia.jpg",
+          "fotoHover": "fotos/miembros/2024-25/celia-2.jpg"
+        },
+        {
+          "nombre": "Victoria",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/victoria.jpg",
+          "fotoHover": "fotos/miembros/2024-25/victoria-2.jpg"
+        },
+        {
+          "nombre": "Miguel",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/miguel.jpg",
+          "fotoHover": "fotos/miembros/2024-25/miguel-2.jpg"
+        },
+        {
+          "nombre": "Sofia",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/sofia.jpg",
+          "fotoHover": "fotos/miembros/2024-25/sofia-2.jpg"
+        },
+        {
+          "nombre": "Luis Lagerqvist",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/luis-lagerqvist.jpg",
+          "fotoHover": "fotos/miembros/2024-25/luis-lagerqvist-2.jpg"
+        },
+        {
+          "nombre": "Ricardo Estremera",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/ricardo-estremera.jpg",
+          "fotoHover": "fotos/miembros/2024-25/ricardo-estremera-2.jpg"
+        },
+        {
+          "nombre": "Irene Rodríguez",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/irene-rodriguez.jpg",
+          "fotoHover": "fotos/miembros/2024-25/irene-rodriguez-2.jpg"
+        },
+        {
+          "nombre": "Diego Lavín Hall",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/diego-lavin-hall.jpg",
+          "fotoHover": "fotos/miembros/2024-25/diego-lavin-hall-2.jpg"
+        },
+        {
+          "nombre": "Jaime Vicente",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/jaime-vicente.jpg",
+          "fotoHover": "fotos/miembros/2024-25/jaime-vicente-2.jpg"
+        },
+        {
+          "nombre": "Eduardo Palou",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/eduardo-palou.jpg",
+          "fotoHover": "fotos/miembros/2024-25/eduardo-palou-2.jpg"
+        },
+        {
+          "nombre": "Alberto Sevilla",
+          "roles": [],
+          "foto": "fotos/miembros/2024-25/alberto-sevilla.jpg",
+          "fotoHover": "fotos/miembros/2024-25/alberto-sevilla-2.jpg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+{
+  "curso": "2021/22",
+  "intro": "",
+  "fotoGrupo": "",
+  "secciones": [
+    {
+      "titulo": "Junta",
+      "miembros": [
+        {
+          "nombre": "Lorenzo Prat",
+          "roles": [
+            "Presidente"
+          ],
+          "foto": "fotos/miembros/2021-22/lorenzo-prat.jpg",
+          "fotoHover": "fotos/miembros/2021-22/lorenzo-prat-2.jpg"
+        },
+        {
+          "nombre": "Miguel Prieto",
+          "roles": [
+            "Vicepresidente"
+          ],
+          "foto": "fotos/miembros/2021-22/miguel-prieto.jpg",
+          "fotoHover": "fotos/miembros/2021-22/miguel-prieto-2.jpg"
+        },
+        {
+          "nombre": "Antonio Cameo",
+          "roles": [
+            "Secretario"
+          ],
+          "foto": "fotos/miembros/2021-22/antonio-cameo.jpg",
+          "fotoHover": "fotos/miembros/2021-22/antonio-cameo-2.jpg"
+        },
+        {
+          "nombre": "Lucía Honrubia",
+          "roles": [
+            "Tesorera"
+          ],
+          "foto": "fotos/miembros/2021-22/lucia-honrubia.jpg",
+          "fotoHover": "fotos/miembros/2021-22/lucia-honrubia-2.jpg"
+        },
+        {
+          "nombre": "Jaime Portolés",
+          "roles": [
+            "Logista"
+          ],
+          "foto": "fotos/miembros/2021-22/jaime-portoles.jpg",
+          "fotoHover": "fotos/miembros/2021-22/jaime-portoles-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Miembros",
+      "miembros": [
+        {
+          "nombre": "Héctor Gutiérrez",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/hector-gutierrez.jpg",
+          "fotoHover": "fotos/miembros/2021-22/hector-gutierrez-2.jpg"
+        },
+        {
+          "nombre": "Carlos Polvorinos",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/carlos-polvorinos.jpg",
+          "fotoHover": "fotos/miembros/2021-22/carlos-polvorinos-2.jpg"
+        },
+        {
+          "nombre": "Alejandro Martín",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/alejandro-martin.jpg",
+          "fotoHover": "fotos/miembros/2021-22/alejandro-martin-2.jpg"
+        },
+        {
+          "nombre": "Alfonso Salcedo",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/alfonso-salcedo.jpg",
+          "fotoHover": "fotos/miembros/2021-22/alfonso-salcedo-2.jpg"
+        },
+        {
+          "nombre": "Elena Muñoz-Bellido",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/elena-munoz-bellido.jpg",
+          "fotoHover": "fotos/miembros/2021-22/elena-munoz-bellido-2.jpg"
+        },
+        {
+          "nombre": "Diego Efler",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/diego-efler.jpg",
+          "fotoHover": "fotos/miembros/2021-22/diego-efler-2.jpg"
+        },
+        {
+          "nombre": "Marta Centeno",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/marta-centeno.jpg",
+          "fotoHover": "fotos/miembros/2021-22/marta-centeno-2.jpg"
+        },
+        {
+          "nombre": "David Pastor",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/david-pastor.jpg",
+          "fotoHover": "fotos/miembros/2021-22/david-pastor-2.jpg"
+        },
+        {
+          "nombre": "Javier Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/javier-martinez.jpg",
+          "fotoHover": "fotos/miembros/2021-22/javier-martinez-2.jpg"
+        },
+        {
+          "nombre": "Adrián Rieker",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/adrian-rieker.jpg",
+          "fotoHover": "fotos/miembros/2021-22/adrian-rieker-2.jpg"
+        },
+        {
+          "nombre": "Jaime Bravo",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/jaime-bravo.jpg",
+          "fotoHover": "fotos/miembros/2021-22/jaime-bravo-2.jpg"
+        },
+        {
+          "nombre": "Miguel Ángel García",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/miguel-angel-garcia.jpg",
+          "fotoHover": "fotos/miembros/2021-22/miguel-angel-garcia-2.jpg"
+        },
+        {
+          "nombre": "Mariam Benotman",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/mariam-benotman.jpg",
+          "fotoHover": "fotos/miembros/2021-22/mariam-benotman-2.jpg"
+        },
+        {
+          "nombre": "Clara Molina",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/clara-molina.jpg",
+          "fotoHover": "fotos/miembros/2021-22/clara-molina-2.jpg"
+        },
+        {
+          "nombre": "Ricardo Ramos",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/ricardo-ramos.jpg",
+          "fotoHover": "fotos/miembros/2021-22/ricardo-ramos-2.jpg"
+        },
+        {
+          "nombre": "Luis Lagerqvist",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/luis-lagerqvist.jpg",
+          "fotoHover": "fotos/miembros/2021-22/luis-lagerqvist-2.jpg"
+        },
+        {
+          "nombre": "Daniel Serrano",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/daniel-serrano.jpg",
+          "fotoHover": "fotos/miembros/2021-22/daniel-serrano-2.jpg"
+        },
+        {
+          "nombre": "Marina",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/marina.jpg",
+          "fotoHover": "fotos/miembros/2021-22/marina-2.jpg"
+        },
+        {
+          "nombre": "Carola Adrados",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/carola-adrados.jpg",
+          "fotoHover": "fotos/miembros/2021-22/carola-adrados-2.jpg"
+        },
+        {
+          "nombre": "Jorge Martínez de la Mata",
+          "roles": [],
+          "foto": "fotos/miembros/2021-22/jorge-martinez-de-la-mata.jpg",
+          "fotoHover": "fotos/miembros/2021-22/jorge-martinez-de-la-mata-2.jpg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,258 @@
+{
+  "curso": "2023/24",
+  "intro": "",
+  "fotoGrupo": "",
+  "secciones": [
+    {
+      "titulo": "Junta",
+      "miembros": [
+        {
+          "nombre": "Mariam Benotman",
+          "roles": [
+            "Presidenta"
+          ],
+          "foto": "fotos/miembros/2023-24/mariam-benotman.jpg",
+          "fotoHover": "fotos/miembros/2023-24/mariam-benotman-2.jpg"
+        },
+        {
+          "nombre": "Ricardo Estremera",
+          "roles": [
+            "Vicepresidente"
+          ],
+          "foto": "fotos/miembros/2023-24/ricardo-estremera.jpg",
+          "fotoHover": "fotos/miembros/2023-24/ricardo-estremera-2.jpg"
+        },
+        {
+          "nombre": "Miguel Ángel García",
+          "roles": [
+            "Secretario"
+          ],
+          "foto": "fotos/miembros/2023-24/miguel-angel-garcia.jpg",
+          "fotoHover": "fotos/miembros/2023-24/miguel-angel-garcia-2.jpg"
+        },
+        {
+          "nombre": "Eduardo Clavijo",
+          "roles": [
+            "Tesorero"
+          ],
+          "foto": "fotos/miembros/2023-24/eduardo-clavijo.jpg",
+          "fotoHover": "fotos/miembros/2023-24/eduardo-clavijo-2.jpg"
+        },
+        {
+          "nombre": "Clara Molina",
+          "roles": [
+            "Logista"
+          ],
+          "foto": "fotos/miembros/2023-24/clara-molina.jpg",
+          "fotoHover": "fotos/miembros/2023-24/clara-molina-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Vocales",
+      "miembros": [
+        {
+          "nombre": "Miguel González",
+          "roles": [
+            "Vocal de Taller"
+          ],
+          "foto": "fotos/miembros/2023-24/miguel-gonzalez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/miguel-gonzalez-2.jpg"
+        },
+        {
+          "nombre": "Alberto Sevilla",
+          "roles": [
+            "Vocal de Marketing"
+          ],
+          "foto": "fotos/miembros/2023-24/alberto-sevilla.jpg",
+          "fotoHover": "fotos/miembros/2023-24/alberto-sevilla-2.jpg"
+        },
+        {
+          "nombre": "Eduardo Palou",
+          "roles": [
+            "Vocal Web"
+          ],
+          "foto": "fotos/miembros/2023-24/eduardo-palou.jpg",
+          "fotoHover": "fotos/miembros/2023-24/eduardo-palou-2.jpg"
+        },
+        {
+          "nombre": "Irene Rodríguez",
+          "roles": [
+            "Vocal de Cybertech"
+          ],
+          "foto": "fotos/miembros/2023-24/irene-rodriguez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/irene-rodriguez-2.jpg"
+        },
+        {
+          "nombre": "Juan Martínez",
+          "roles": [
+            "Vocal de Impresiones"
+          ],
+          "foto": "fotos/miembros/2023-24/juan-martinez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/juan-martinez-2.jpg"
+        },
+        {
+          "nombre": "Miguel «el macarrone»",
+          "roles": [
+            "Vocal de Eventos"
+          ],
+          "foto": "fotos/miembros/2023-24/miguel-el-macarrone.jpg",
+          "fotoHover": "fotos/miembros/2023-24/miguel-el-macarrone-2.jpg"
+        },
+        {
+          "nombre": "Claudia",
+          "roles": [
+            "Vocal de Redes"
+          ],
+          "foto": "fotos/miembros/2023-24/claudia.jpg",
+          "fotoHover": "fotos/miembros/2023-24/claudia-2.jpg"
+        },
+        {
+          "nombre": "Luis Lagerqvist",
+          "roles": [
+            "Vocal de Cybertech"
+          ],
+          "foto": "fotos/miembros/2023-24/luis-lagerqvist.jpg",
+          "fotoHover": "fotos/miembros/2023-24/luis-lagerqvist-2.jpg"
+        }
+      ]
+    },
+    {
+      "titulo": "Miembros",
+      "miembros": [
+        {
+          "nombre": "Jaime Bravo",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/jaime-bravo.jpg",
+          "fotoHover": "fotos/miembros/2023-24/jaime-bravo-2.jpg"
+        },
+        {
+          "nombre": "Lucía Honrubia",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/lucia-honrubia.jpg",
+          "fotoHover": "fotos/miembros/2023-24/lucia-honrubia-2.jpg"
+        },
+        {
+          "nombre": "Lorenzo Prat",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/lorenzo-prat.jpg",
+          "fotoHover": "fotos/miembros/2023-24/lorenzo-prat-2.jpg"
+        },
+        {
+          "nombre": "Adrián Rieker",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/adrian-rieker.jpg",
+          "fotoHover": "fotos/miembros/2023-24/adrian-rieker-2.jpg"
+        },
+        {
+          "nombre": "David Pastor",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/david-pastor.jpg",
+          "fotoHover": "fotos/miembros/2023-24/david-pastor-2.jpg"
+        },
+        {
+          "nombre": "Carola Adrados",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/carola-adrados.jpg",
+          "fotoHover": "fotos/miembros/2023-24/carola-adrados-2.jpg"
+        },
+        {
+          "nombre": "Valentín Musat",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/valentin-musat.jpg",
+          "fotoHover": "fotos/miembros/2023-24/valentin-musat-2.jpg"
+        },
+        {
+          "nombre": "Antonio Cameo",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/antonio-cameo.jpg",
+          "fotoHover": "fotos/miembros/2023-24/antonio-cameo-2.jpg"
+        },
+        {
+          "nombre": "Nicolas Brault",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/nicolas-brault.jpg",
+          "fotoHover": "fotos/miembros/2023-24/nicolas-brault-2.jpg"
+        },
+        {
+          "nombre": "Jorge Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/jorge-martinez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/jorge-martinez-2.jpg"
+        },
+        {
+          "nombre": "Lourdes Sánchez",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/lourdes-sanchez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/lourdes-sanchez-2.jpg"
+        },
+        {
+          "nombre": "Javier Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/javier-martinez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/javier-martinez-2.jpg"
+        },
+        {
+          "nombre": "Marina Lara",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/marina-lara.jpg",
+          "fotoHover": "fotos/miembros/2023-24/marina-lara-2.jpg"
+        },
+        {
+          "nombre": "Elena Muñoz-Bellido",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/elena-munoz-bellido.jpg",
+          "fotoHover": "fotos/miembros/2023-24/elena-munoz-bellido-2.jpg"
+        },
+        {
+          "nombre": "Rocío García",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/rocio-garcia.jpg",
+          "fotoHover": "fotos/miembros/2023-24/rocio-garcia-2.jpg"
+        },
+        {
+          "nombre": "Celia",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/celia.jpg",
+          "fotoHover": "fotos/miembros/2023-24/celia-2.jpg"
+        },
+        {
+          "nombre": "Celia Martínez",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/celia-martinez.jpg",
+          "fotoHover": "fotos/miembros/2023-24/celia-martinez-2.jpg"
+        },
+        {
+          "nombre": "Victoria",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/victoria.jpg",
+          "fotoHover": "fotos/miembros/2023-24/victoria-2.jpg"
+        },
+        {
+          "nombre": "Gonzalo",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/gonzalo.jpg",
+          "fotoHover": "fotos/miembros/2023-24/gonzalo-2.jpg"
+        },
+        {
+          "nombre": "Gema",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/gema.jpg",
+          "fotoHover": "fotos/miembros/2023-24/gema-2.jpg"
+        },
+        {
+          "nombre": "Sofia",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/sofia.jpg",
+          "fotoHover": "fotos/miembros/2023-24/sofia-2.jpg"
+        },
+        {
+          "nombre": "Jean Paul Sulca",
+          "roles": [],
+          "foto": "fotos/miembros/2023-24/jean-paul-sulca.jpg",
+          "fotoHover": "fotos/miembros/2023-24/jean-paul-sulca-2.jpg"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+---
+/**
+ * Página para crear un curso o una edición NUEVA desde el modo edición.
+ * (Una página nueva no existe en la web hasta que se publica, así que se dibuja aquí
+ * con exactamente el mismo diseño.)
+ */
+import Layout from '../layouts/Layout.astro';
+import { href } from '../lib/data';
+---
+
+<Layout title="Nuevo contenido">
+	<div id="page-root" data-kind="nuevo">
+		<div class="wrap editar-aviso">
+			<p class="kicker"><span>Modo edición</span></p>
+			<h1 class="display">Acceso <em>restringido</em></h1>
+			<p>Esta página sirve para crear contenido nuevo. <a href={href('admin')}>Inicia sesión como editor</a> para usarla.</p>
+		</div>
+	</div>
+</Layout>
+
+<style>
+	.editar-aviso { padding: 6rem 0; }
+	.editar-aviso p:last-child { margin-top: 2rem; font-size: 1.1rem; }
+</style>

@@ -1,5 +1,5 @@
 {
-  "name": "mi-web-asociacion",
+  "name": "web-reset",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -7,15 +7,13 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "cms:local": "decap-server",
     "build": "astro build",
     "preview": "astro preview",
+    "fotos": "node scripts/fotos-pendientes.mjs",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^7.4.9"
-  },
-  "devDependencies": {
-    "decap-server": "^3.11.6"
+    "astro": "^7.4.9",
+    "marked": "^15.0.12"
   }
 }

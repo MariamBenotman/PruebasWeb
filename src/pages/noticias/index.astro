@@ -1,0 +1,44 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getNoticias, href, fecha } from '../../lib/data';
+const noticias = await getNoticias();
+const img = (p?: string) => (p ? (/^(https?:|\/)/.test(p) ? p : href(p)) : '');
+---
+
+<Layout title="Noticias">
+	<div class="wrap">
+		<header class="pg-head">
+			<p class="kicker"><span>Reset</span><span>Actualidad</span></p>
+			<h1 class="display">Noti<em>cias</em></h1>
+		</header>
+		<ol class="nl">
+			{noticias.map((n, i) => (
+				<li class="reveal" style={`--d:${i % 6}`}>
+					<a href={href(`noticias/${n.id}`)}>
+						<figure class="frame" data-label={n.data.category ?? 'Reset'}>
+							{n.data.image && <img src={img(n.data.image)} alt="" loading="lazy" onerror="__img(this)" />}
+						</figure>
+						<div>
+							<p class="meta"><time datetime={n.data.pubDate.toISOString()}>{fecha(n.data.pubDate)}</time>{n.data.category && <span>{n.data.category}</span>}</p>
+							<h2>{n.data.title}</h2>
+							<p class="sum">{n.data.summary}</p>
+						</div>
+					</a>
+				</li>
+			))}
+		</ol>
+	</div>
+</Layout>
+
+<style>
+	.nl { margin: 0 0 6rem; padding: 0; list-style: none; border-top: 1px solid var(--negro); }
+	.nl li { border-bottom: 1px solid var(--linea); }
+	.nl a { display: grid; grid-template-columns: 220px 1fr; gap: 2rem; padding: 1.8rem 0; text-decoration: none; }
+	.nl .frame { aspect-ratio: 3 / 2; --mark: transparent; }
+	.meta { display: flex; gap: 1rem; margin: 0 0 .5rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	.meta span { color: var(--naranja); }
+	h2 { margin: 0 0 .6rem; font-size: clamp(1.2rem, 2.2vw, 1.6rem); line-height: 1.2; }
+	.sum { margin: 0; color: #4a4943; max-width: 70ch; }
+	.nl a:hover h2 { text-decoration: underline; text-decoration-color: var(--naranja); text-underline-offset: .2em; }
+	@media (max-width: 640px) { .nl a { grid-template-columns: 1fr; gap: 1rem; } }
+</style>

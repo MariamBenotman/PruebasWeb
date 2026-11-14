@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+import sitio from '../data/sitio.json';
+import { getCursos, getEdiciones, href } from '../lib/data';
+const { owner, repo } = sitio.github;
+const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
+---
+
+<Layout title="Acceso editores">
+	<div class="wrap adm-login">
+		<div class="adm-login-l">
+			<p class="kicker"><span>Reset</span><span>Editores</span></p>
+			<h1 class="display">Modo <em>edición</em></h1>
+
+			<div class="logged" hidden>
+				<p class="lede">Sesión iniciada en este ordenador. Navega por la web y verás los controles de edición abajo.</p>
+				<div class="go">
+					{cursos[0] && <a class="btn" href={cursos[0].url}>Editar {cursos[0].label} <span class="arr">→</span></a>}
+					{ediciones[0] && <a class="btn" href={ediciones[0].url}>Editar {ediciones[0].label} <span class="arr">→</span></a>}
+					<a class="btn primary" href={href('editar?tipo=miembros')}>+ Nuevo curso</a>
+					<a class="btn primary" href={href('editar?tipo=cybertech')}>+ Nueva edición de Cybertech</a>
+				</div>
+				<button type="button" class="logout">Cerrar sesión en este ordenador</button>
+			</div>
+
+			<form class="login" hidden>
+				<p class="lede">Pega la clave de acceso (token de GitHub) de la cuenta de Reset. Solo hace falta hacerlo una vez en cada ordenador.</p>
+				<label for="tk">Clave de acceso</label>
+				<div class="row">
+					<input id="tk" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" required />
+					<button class="btn primary" type="submit">Entrar <span class="arr">→</span></button>
+				</div>
+				<p class="msg" aria-live="polite"></p>
+			</form>
+		</div>
+
+		<aside class="help">
+			<h2>¿Cómo consigo la clave?</h2>
+			<ol>
+				<li>Entra en GitHub con la cuenta que administra el repositorio <code>{owner}/{repo}</code>.</li>
+				<li>Ve a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Settings → Developer settings → Fine-grained tokens → Generate new token</a>.</li>
+				<li>Nombre: <i>Web Reset</i>. Caducidad: 1 año (apúntate cuándo renovarla).</li>
+				<li><b>Repository access</b> → <i>Only select repositories</i> → <code>{repo}</code>.</li>
+				<li><b>Permissions</b> → <i>Contents</i>: <b>Read and write</b>. Opcional: <i>Actions</i>: <b>Read-only</b> (para ver cuándo termina de publicarse).</li>
+				<li>Genera el token, cópialo y pégalo aquí.</li>
+			</ol>
+			<p class="note">La clave solo da acceso a este repositorio y se queda guardada únicamente en este navegador. No la compartas por chats ni la pegues en otros sitios. Si se pierde un portátil, bórrala desde GitHub y crea otra.</p>
+		</aside>
+	</div>
+</Layout>
+
+<script>
+	import { checkToken, setToken, getToken, clearToken, GitHubError } from '../admin/github';
+	const form = document.querySelector<HTMLFormElement>('.login')!;
+	const logged = document.querySelector<HTMLElement>('.logged')!;
+	const msg = form.querySelector<HTMLElement>('.msg')!;
+	const show = () => { const t = !!getToken(); logged.hidden = !t; form.hidden = t; };
+	show();
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const token = (form.querySelector('input') as HTMLInputElement).value.trim();
+		msg.textContent = 'Comprobando…';
+		msg.dataset.tone = '';
+		try {
+			await checkToken(token);
+			setToken(token);
+			location.reload();
+		} catch (err) {
+			msg.dataset.tone = 'error';
+			msg.textContent = err instanceof GitHubError && err.status === 401
+				? 'La clave no es válida o ha caducado.'
+				: err instanceof GitHubError && (err.status === 404 || err.status === 403)
+					? 'La clave no tiene acceso de escritura a este repositorio. Revisa los pasos 4 y 5.'
+					: 'No se ha podido comprobar la clave. ¿Hay conexión a internet?';
+		}
+	});
+	document.querySelector('.logout')!.addEventListener('click', () => { clearToken(); location.reload(); });
+</script>
+
+<style>
+	.adm-login { display: grid; grid-template-columns: 1.2fr 1fr; gap: 4rem; padding-block: clamp(3rem, 8vw, 6rem); }
+	.lede { margin: 2rem 0; max-width: 46ch; }
+	label { display: block; margin-bottom: .5rem; font-weight: 650; font-size: .9rem; }
+	.row { display: flex; gap: .7rem; }
+	.row input { flex: 1; min-width: 0; padding: .8rem; border: 1.5px solid var(--negro); background: var(--blanco); font-family: var(--f-mono); }
+	.msg { min-height: 1.5em; margin-top: .8rem; font-size: .9rem; color: var(--gris); }
+	.msg[data-tone='error'] { color: #b8432c; }
+	.go { display: flex; flex-wrap: wrap; gap: 1rem; }
+	.logout { margin-top: 2.5rem; border: 0; background: none; padding: 0; text-decoration: underline; color: var(--gris); cursor: pointer; }
+	.help { align-self: start; padding: 1.8rem; background: var(--blanco); border: 1px solid var(--negro); box-shadow: var(--sombra); font-size: .92rem; }
+	.help h2 { margin: 0 0 1rem; font-size: 1.1rem; }
+	.help ol { padding-left: 1.2rem; display: grid; gap: .55rem; }
+	.help a { color: var(--azul); }
+	.help code { font-size: .85em; background: var(--papel-2); padding: .05em .3em; }
+	.note { margin: 1.2rem 0 0; padding-top: 1rem; border-top: 1px solid var(--linea); color: var(--gris); font-size: .84rem; }
+	@media (max-width: 860px) { .adm-login { grid-template-columns: 1fr; } }
+</style>

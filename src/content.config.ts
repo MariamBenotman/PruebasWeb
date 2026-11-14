@@ -13,30 +13,14 @@ const noticias = defineCollection({
 	}),
 });
 
+// Miembros y Cybertech se guardan como JSON porque el modo edición de la web los escribe directamente.
+// La forma de los datos está en src/lib/render.ts (normalizeCurso / normalizeEdicion).
 const miembros = defineCollection({
-	loader: glob({ base: './src/content/miembros', pattern: '**/*.md' }),
-	schema: z.object({
-		title: z.string(),
-		academicYear: z.string(),
-		introduction: z.string().optional(),
-		members: z.array(z.object({
-			name: z.string(),
-			role: z.string().optional(),
-			photo: z.string().optional(),
-			photoHover: z.string().optional(),
-		})).default([]),
-	}),
+	loader: glob({ base: './src/content/miembros', pattern: '*.json' }),
 });
 
 const cybertech = defineCollection({
-	loader: glob({ base: './src/content/cybertech', pattern: '**/*.md' }),
-	schema: z.object({
-		title: z.string(),
-		year: z.number().int(),
-		eventDate: z.string().optional(),
-		summary: z.string(),
-		image: z.string().optional(),
-	}),
+	loader: glob({ base: './src/content/cybertech', pattern: '*.json' }),
 });
 
 export const collections = { noticias, miembros, cybertech };

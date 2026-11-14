@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getEdiciones, BASE } from '../../lib/data';
+import { renderEdicion } from '../../lib/render';
+
+export async function getStaticPaths() {
+	const ediciones = await getEdiciones();
+	return ediciones.map((e) => ({ params: { anio: e.id }, props: { id: e.id } }));
+}
+
+const ediciones = await getEdiciones();
+const actual = ediciones.find((e) => e.id === Astro.props.id)!;
+const html = renderEdicion(actual.data, { base: BASE });
+---
+
+<Layout title={`Cybertech ${actual.data.anio}`} description={actual.data.lema || `Cybertech ${actual.data.anio}, la competición de robótica de la UPM organizada por Reset.`}>
+	<nav class="yearbar on-dark" aria-label="Ediciones">
+		<div class="wrap">
+			<span class="lbl">Ediciones</span>
+			{ediciones.map((e) => <a href={e.url} aria-current={e.id === actual.id ? 'page' : undefined}>{e.data.anio}</a>)}
+		</div>
+	</nav>
+	<div id="page-root" data-kind="cybertech" data-id={actual.id} set:html={html} />
+</Layout>
