@@ -3,19 +3,58 @@ backend:
   repo: MariamBenotman/PruebasWeb
   branch: main
 
-# Ruta donde se guardarán las fotos subidas desde el panel
-media_folder: "public/uploads"
-public_folder: "/uploads"
+# Only enabled for local editing while decap-server is running
+local_backend: true
 
-# Colección de contenidos editables por los miembros
+media_folder: "public/uploads"
+public_folder: "/PruebasWeb/uploads"
+
 collections:
-  - name: "paginas"
-    label: "Páginas del sitio"
-    folder: "src/content/paginas"
+  - name: "noticias"
+    label: "Noticias"
+    label_singular: "Noticia"
+    folder: "src/content/noticias"
     create: true
     slug: "{{slug}}"
     fields:
       - { label: "Título", name: "title", widget: "string" }
-      - { label: "Descripción", name: "description", widget: "string" }
-      - { label: "Imagen principal", name: "thumbnail", widget: "image", required: false }
-      - { label: "Contenido de la página", name: "body", widget: "markdown" }
+      - { label: "Fecha de publicación", name: "pubDate", widget: "datetime", format: "YYYY-MM-DD", date_format: "DD/MM/YYYY", time_format: false }
+      - { label: "Resumen", name: "summary", widget: "text" }
+      - { label: "Categoría", name: "category", widget: "string", required: false }
+      - { label: "Imagen", name: "image", widget: "image", required: false }
+      - { label: "Contenido", name: "body", widget: "markdown" }
+
+  - name: "miembros"
+    label: "Equipos de miembros"
+    label_singular: "Equipo"
+    folder: "src/content/miembros"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Título", name: "title", widget: "string" }
+      - { label: "Curso", name: "academicYear", widget: "string", hint: "Por ejemplo: 2026/27" }
+      - { label: "Presentación", name: "introduction", widget: "text", required: false }
+      - label: "Integrantes"
+        name: "members"
+        widget: "list"
+        summary: "{{fields.name}} · {{fields.role}}"
+        fields:
+          - { label: "Nombre", name: "name", widget: "string" }
+          - { label: "Cargo o área", name: "role", widget: "string", required: false }
+          - { label: "Foto principal", name: "photo", widget: "image", required: false }
+          - { label: "Foto alternativa (al pasar el cursor)", name: "photoHover", widget: "image", required: false }
+      - { label: "Contenido adicional", name: "body", widget: "markdown", required: false }
+
+  - name: "cybertech"
+    label: "Ediciones de Cybertech"
+    label_singular: "Edición Cybertech"
+    folder: "src/content/cybertech"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Título", name: "title", widget: "string" }
+      - { label: "Año", name: "year", widget: "number", value_type: "int", min: 2017, max: 2100 }
+      - { label: "Fechas del evento", name: "eventDate", widget: "string", required: false, hint: "Texto libre, por ejemplo: 25–28 de abril" }
+      - { label: "Resumen", name: "summary", widget: "text" }
+      - { label: "Imagen de portada", name: "image", widget: "image", required: false }
+      - { label: "Contenido", name: "body", widget: "markdown" }

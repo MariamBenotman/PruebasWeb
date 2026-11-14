@@ -1,154 +1,152 @@
 ---
-// src/components/Navbar.astro
+import { getCollection } from 'astro:content';
+import { navigation, pathFor, type NavigationItem } from '../data/legacy-site';
+
+const menuId = (slug: string) => `menu-${slug.replaceAll('/', '-')}`;
+const [members, cybertechEditions] = await Promise.all([
+	getCollection('miembros'),
+	getCollection('cybertech'),
+]);
+const menuItems: NavigationItem[] = navigation.map((item) => {
+	if (item.title === 'Conócenos') {
+		const existingTitles = new Set(item.children?.map((child) => child.title));
+		const newMembers = members
+			.filter((entry) => !existingTitles.has(entry.data.title))
+			.map((entry) => ({ title: entry.data.title, slug: `contacto/${entry.id}` }));
+		return { ...item, children: [...(item.children ?? []), ...newMembers] };
+	}
+	if (item.title === 'Cybertech') {
+		const existingTitles = new Set(item.children?.map((child) => child.title));
+		const newEditions = cybertechEditions
+			.filter((entry) => !existingTitles.has(entry.data.title))
+			.map((entry) => ({ title: entry.data.title, slug: `cybertech/${entry.id}` }));
+		return { ...item, children: [...(item.children ?? []), ...newEditions] };
+	}
+	return item;
+});
 ---
 
-<header class="navbar">
-  <div class="nav-container">
-    <a href="/" class="logo">
-      <span class="logo-bold">RESET</span> <span class="logo-sub">ETSII UPM</span>
-    </a>
-
-    <button class="menu-toggle" id="menu-toggle" aria-label="Abrir Menú">
-      <span class="bar"></span>
-      <span class="bar"></span>
-      <span class="bar"></span>
-    </button>
-
-    <nav class="nav-links" id="nav-links">
-      <a href="/noticias">Noticias</a>
-      
-      <!-- Desplegable Cybertech -->
-      <div class="dropdown">
-        <a href="/cybertech" class="dropbtn">Cybertech ▾</a>
-        <div class="dropdown-content">
-          <a href="/cybertech">Cybertech 2026 (Actual)</a>
-          <a href="/archivo/cybertech-2023">Cybertech 2023</a>
-          <a href="/archivo/cybertech-2022">Cybertech 2022</a>
-          <a href="/archivo/historico-cybertech">Ediciones Anteriores (2017-2021)</a>
-        </div>
-      </div>
-
-      <!-- Desplegable Proyectos -->
-      <div class="dropdown">
-        <a href="/proyectos" class="dropbtn">Proyectos ▾</a>
-        <div class="dropdown-content">
-          <a href="/proyectos">Proyectos Activos</a>
-          <a href="/archivo/antiguos-proyectos">Histórico de Proyectos</a>
-        </div>
-      </div>
-
-      <a href="/talleres">Talleres</a>
-
-      <!-- Desplegable Servicios -->
-      <div class="dropdown">
-        <a href="/servicios" class="dropbtn">Servicios ▾</a>
-        <div class="dropdown-content">
-          <a href="/servicios/impresion-3d">Impresión 3D</a>
-          <a href="/servicios/taller">Taller / Espacio</a>
-          <a href="/servicios/prestamos">Préstamos</a>
-          <a href="/servicios/tutoriales">Tutoriales Web</a>
-        </div>
-      </div>
-
-      <!-- Desplegable Conócenos -->
-      <div class="dropdown">
-        <a href="/contacto" class="dropbtn">Conócenos ▾</a>
-        <div class="dropdown-content">
-          <a href="/contacto">Contacto y Ubicación</a>
-          <a href="/participa">Participa en RESET</a>
-          <a href="/archivo/miembros">Histórico de Miembros</a>
-        </div>
-      </div>
-    </nav>
-  </div>
+<header class="site-header" id="top">
+	<div class="header-inner">
+		<a class="brand" href={pathFor('')} aria-label="Reset, inicio">
+			<span class="brand-wordmark">RESET</span>
+			<span class="brand-caption">Asociación de Estudiantes · ETSII UPM</span>
+		</a>
+		<button class="mobile-toggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="main-navigation">
+			<span></span><span></span><span></span>
+		</button>
+		<nav class="main-navigation" id="main-navigation" aria-label="Menú principal">
+			{menuItems.map((item) => (
+				<div class:list={['nav-entry', { 'has-children': Boolean(item.children) }]}>
+					<div class="nav-entry-label">
+						<a href={pathFor(item.slug)}>{item.title}</a>
+						{item.children && <button class="submenu-toggle" type="button" aria-label={`Mostrar ${item.title}`} aria-expanded="false" aria-controls={menuId(item.slug)}>⌄</button>}
+					</div>
+					{item.children && (
+						<div class="submenu" id={menuId(item.slug)}>
+							<a class="submenu-all" href={pathFor(item.slug)}>Ver {item.title.toLowerCase()}</a>
+							{item.children.map((child) => (
+								<a class:list={['submenu-link', { 'submenu-link-nested': child.depth === 2 }]} href={pathFor(child.slug)}>{child.title}</a>
+							))}
+						</div>
+					)}
+				</div>
+			))}
+			<button class="search-toggle" type="button" aria-label="Buscar" aria-expanded="false" aria-controls="site-search">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.4"></circle><path d="m16 16 4.2 4.2"></path></svg>
+			</button>
+		</nav>
+	</div>
+	<form class="search-panel" id="site-search" action={pathFor('buscar')} role="search">
+		<label for="site-search-input">Buscar en Reset</label>
+		<div class="search-field">
+			<input id="site-search-input" type="search" name="s" placeholder="Buscar..." required />
+			<button type="submit">Buscar</button>
+		</div>
+	</form>
 </header>
 
 <style>
-  .navbar {
-    background-color: #1a202c;
-    color: white;
-    padding: 0.8rem 1.5rem;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-  }
-  .nav-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .logo {
-    color: white;
-    text-decoration: none;
-    font-size: 1.3rem;
-  }
-  .logo-bold { font-weight: 800; color: #3182ce; }
-  .logo-sub { font-weight: 300; font-size: 0.95rem; opacity: 0.85; }
-
-  .nav-links {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-  }
-  .nav-links a {
-    color: #e2e8f0;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.95rem;
-    padding: 0.4rem 0.6rem;
-    transition: color 0.2s;
-  }
-  .nav-links a:hover { color: #63b3ed; }
-
-  /* Menú desplegable (Dropdown) */
-  .dropdown { position: relative; }
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background-color: #2d3748;
-    min-width: 210px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .dropdown-content a {
-    display: block;
-    padding: 0.6rem 1rem;
-    font-size: 0.9rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
-  .dropdown:hover .dropdown-content { display: block; }
-
-  /* Adaptación Responsive */
-  .menu-toggle { display: none; background: none; border: none; cursor: pointer; flex-direction: column; gap: 4px; }
-  .menu-toggle .bar { width: 25px; height: 3px; background: white; border-radius: 2px; }
-
-  @media (max-width: 768px) {
-    .menu-toggle { display: flex; }
-    .nav-links {
-      display: none;
-      flex-direction: column;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 100%;
-      background-color: #1a202c;
-      padding: 1rem 0;
-    }
-    .nav-links.is-active { display: flex; }
-    .dropdown-content { position: static; display: block; background-color: #1a202c; padding-left: 1rem; }
-  }
+	.site-header { position: sticky; top: 0; z-index: 20; color: #f5f7f5; background: var(--night); border-top: 4px solid var(--orange); box-shadow: 0 8px 20px #111c2a22; }
+	.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; max-width: 1320px; min-height: 82px; margin: auto; padding: .55rem 1.5rem; }
+	.brand { display: grid; flex: 0 0 215px; gap: .1rem; color: white; text-decoration: none; }
+	.brand-wordmark { color: white; font-size: 2rem; font-weight: 950; line-height: 1; letter-spacing: .04em; }
+	.brand-caption { color: #bdc9ce; font-size: .64rem; }
+	.main-navigation { display: flex; align-items: center; justify-content: flex-end; gap: .12rem; }
+	.nav-entry { position: relative; }
+	.nav-entry-label { display: flex; align-items: center; }
+	.nav-entry-label > a, .submenu-toggle, .search-toggle { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: .55rem .55rem; border: 0; color: #e7eef0; background: transparent; text-decoration: none; font-size: .78rem; font-weight: 650; white-space: nowrap; }
+	.nav-entry-label > a:hover, .nav-entry-label > a:focus-visible { color: #ff9a76; }
+	.submenu-toggle { min-width: 26px; padding: .3rem; cursor: pointer; color: #aab9bf; font-size: 1rem; }
+	.submenu { position: absolute; top: 100%; left: 0; display: grid; width: max-content; min-width: 220px; max-width: 300px; padding: .55rem; background: #182b3a; border-top: 2px solid var(--orange); box-shadow: 0 12px 24px #07111a55; opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity 220ms var(--ease-out), transform 280ms var(--ease-out), visibility 0s linear 280ms; }
+	.nav-entry:hover > .submenu, .nav-entry:focus-within > .submenu, .nav-entry.is-open > .submenu { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+	.submenu-link, .submenu-all { display: block; padding: .62rem .75rem; color: #e7eef0; text-decoration: none; font-size: .82rem; line-height: 1.3; }
+	.submenu-link:hover, .submenu-link:focus-visible, .submenu-all:hover { color: white; background: #254252; }
+	.submenu-all { color: #ff9a76; border-bottom: 1px solid #405461; font-weight: 750; }
+	.submenu-link-nested { padding-left: 1.35rem; }
+	.search-toggle { width: 42px; cursor: pointer; }
+	.search-toggle svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+	.search-toggle:hover { color: #ff9a76; }
+	.search-panel { display: grid; grid-template-columns: 1fr minmax(250px, 430px); align-items: center; gap: 1rem; max-width: 1320px; max-height: 0; margin: 0 auto; padding: 0 1.5rem; overflow: hidden; border-top: 1px solid transparent; opacity: 0; visibility: hidden; transform: translateY(-8px); transition: max-height 360ms var(--ease-out), opacity 220ms var(--ease-out), transform 300ms var(--ease-out), padding 300ms var(--ease-out), visibility 0s linear 360ms; }
+	.search-panel.is-open { max-height: 120px; padding: .9rem 1.5rem 1.1rem; border-top-color: #344655; opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+	.search-panel label { font-size: .88rem; font-weight: 700; }
+	.search-field { display: flex; }
+	.search-field input { width: 100%; min-width: 0; padding: .7rem .8rem; border: 1px solid #aebac0; border-right: 0; color: var(--ink); background: white; }
+	.search-field button { padding: .7rem 1rem; border: 0; color: white; background: var(--orange); font-weight: 750; cursor: pointer; }
+	.mobile-toggle { display: none; width: 44px; height: 44px; padding: 10px; border: 1px solid #64747e; background: transparent; cursor: pointer; }
+	.mobile-toggle span { display: block; height: 2px; margin: 4px 0; background: white; }
+	@media (max-width: 1120px) {
+		.mobile-toggle { display: block; margin-left: auto; }
+		.main-navigation { position: absolute; top: 100%; right: 0; left: 0; display: none; max-height: calc(100vh - 74px); overflow-y: auto; padding: .6rem 1rem 1rem; background: var(--night); border-top: 1px solid #344655; }
+		.main-navigation.is-open { display: grid; grid-template-columns: 1fr; gap: 0; }
+		.nav-entry { border-bottom: 1px solid #324452; }
+		.nav-entry-label { justify-content: space-between; }
+		.nav-entry-label > a { justify-content: flex-start; flex: 1; padding-left: .4rem; font-size: .95rem; }
+		.submenu-toggle { min-width: 44px; min-height: 44px; }
+		.submenu { position: static; width: auto; max-width: none; max-height: 0; padding: 0 0 0 .4rem; overflow: hidden; border: 0; box-shadow: none; transform: translateY(-6px); transition: max-height 360ms var(--ease-out), opacity 220ms var(--ease-out), transform 280ms var(--ease-out), padding 280ms var(--ease-out), visibility 0s linear 360ms; }
+		.nav-entry:hover > .submenu { opacity: 0; visibility: hidden; }
+		.nav-entry.is-open > .submenu, .nav-entry:focus-within > .submenu { max-height: 700px; padding: 0 0 .6rem .4rem; opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+		.search-toggle { justify-content: flex-start; width: auto; padding-left: .4rem; }
+		.search-panel { grid-template-columns: 1fr; gap: .5rem; padding: 0 1.25rem; }
+		.search-panel.is-open { max-height: 150px; padding: .85rem 1.25rem 1rem; }
+	}
+	@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 </style>
 
 <script>
-  const btn = document.getElementById('menu-toggle');
-  const nav = document.getElementById('nav-links');
-  if (btn && nav) {
-    btn.addEventListener('click', () => nav.classList.toggle('is-active'));
-  }
+  const navigation = document.querySelector<HTMLElement>('#main-navigation');
+  const mobileToggle = document.querySelector<HTMLButtonElement>('.mobile-toggle');
+  const searchToggle = document.querySelector<HTMLButtonElement>('.search-toggle');
+  const searchPanel = document.querySelector<HTMLFormElement>('#site-search');
+
+  mobileToggle?.addEventListener('click', () => {
+    const expanded = mobileToggle.getAttribute('aria-expanded') === 'true';
+    mobileToggle.setAttribute('aria-expanded', String(!expanded));
+    mobileToggle.setAttribute('aria-label', expanded ? 'Abrir menú' : 'Cerrar menú');
+    navigation?.classList.toggle('is-open', !expanded);
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.submenu-toggle').forEach((toggle) => {
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      toggle.closest('.nav-entry')?.classList.toggle('is-open', !expanded);
+    });
+  });
+
+  searchToggle?.addEventListener('click', () => {
+    const expanded = searchToggle.getAttribute('aria-expanded') === 'true';
+    searchToggle.setAttribute('aria-expanded', String(!expanded));
+    searchPanel?.classList.toggle('is-open', !expanded);
+    if (!expanded) searchPanel?.querySelector('input')?.focus();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      searchPanel?.classList.remove('is-open');
+      searchToggle?.setAttribute('aria-expanded', 'false');
+      navigation?.classList.remove('is-open');
+      mobileToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
 </script>

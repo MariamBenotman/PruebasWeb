@@ -1,0 +1,92 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import { legacyPages, pathFor } from '../data/legacy-site';
+
+const [newsEntries, memberEntries, cybertechEntries] = await Promise.all([
+	getCollection('noticias'),
+	getCollection('miembros'),
+	getCollection('cybertech'),
+]);
+const searchIndex = [
+	...legacyPages.map(({ title, section, intro, slug }) => ({ title, section, intro, href: pathFor(slug) })),
+	...newsEntries.map((entry) => ({ title: entry.data.title, section: entry.data.category ?? 'Noticias', intro: entry.data.summary, href: pathFor(`noticias/${entry.id}`) })),
+	...memberEntries.map((entry) => ({ title: entry.data.title, section: 'Miembros', intro: entry.data.introduction ?? '', href: pathFor(`contacto/${entry.id}`) })),
+	...cybertechEntries.map((entry) => ({ title: entry.data.title, section: 'Cybertech', intro: entry.data.summary, href: pathFor(`cybertech/${entry.id}`) })),
+];
+---
+
+<Layout title="Buscar - Reset">
+	<div class="search-page page-width" data-search-index={JSON.stringify(searchIndex)}>
+		<p class="section-kicker">Archivo del sitio</p>
+		<h1>Buscar</h1>
+		<form action={pathFor('buscar')} role="search">
+			<label for="results-query">Buscar en Reset</label>
+			<div><input id="results-query" name="s" type="search" placeholder="Buscar..." required /><button type="submit">Buscar</button></div>
+		</form>
+		<p class="results-label" data-results-label aria-live="polite"></p>
+		<div class="results-list" data-results></div>
+	</div>
+</Layout>
+
+<style>
+	.page-width { width: min(980px, calc(100% - 3rem)); margin: 0 auto; }
+	.search-page { min-height: 60vh; padding: 4rem 0 5rem; }
+	.search-page h1 { margin: 0 0 1.5rem; font-size: 3.8rem; }
+	.section-kicker { margin: 0 0 .7rem; color: var(--blue); font-size: .75rem; font-weight: 800; text-transform: uppercase; }
+	.search-page form { padding: 1.4rem; border: 1px solid var(--line); background: white; }
+	.search-page label { display: block; margin-bottom: .6rem; font-weight: 750; }
+	.search-page form > div { display: flex; }
+	.search-page input { flex: 1; min-width: 0; padding: .8rem; border: 1px solid #aebac0; }
+	.search-page button { padding: .8rem 1.2rem; border: 0; color: white; background: var(--blue); font-weight: 750; cursor: pointer; }
+	.results-label { margin-top: 2rem; font-weight: 700; }
+	.results-list { display: grid; }
+	.result-item { padding: 1.2rem 0; border-bottom: 1px solid var(--line); animation: result-arrive 420ms var(--ease-out) both; }
+	.result-item:nth-child(2) { animation-delay: 50ms; }
+	.result-item:nth-child(3) { animation-delay: 100ms; }
+	.result-item p { margin: .4rem 0; color: var(--muted); line-height: 1.5; }
+	.result-item a { color: var(--blue); font-weight: 800; text-decoration: none; }
+	.no-results { padding: 1.2rem; background: #e8edeb; color: #536168; }
+	@keyframes result-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+	@media (max-width: 600px) { .page-width { width: min(100% - 2rem, 560px); } .search-page { padding-top: 2.5rem; } .search-page h1 { font-size: 2.6rem; } }
+	@media (prefers-reduced-motion: reduce) { .result-item { animation: none; } }
+</style>
+
+<script>
+	const query = new URLSearchParams(window.location.search).get('s')?.trim() ?? '';
+	const searchPage = document.querySelector<HTMLElement>('[data-search-index]');
+	const searchIndex = JSON.parse(searchPage?.dataset.searchIndex ?? '[]') as { title: string; section: string; intro: string; href: string }[];
+	const queryInput = document.querySelector<HTMLInputElement>('#results-query');
+	const results = document.querySelector<HTMLElement>('[data-results]');
+	const resultsLabel = document.querySelector<HTMLElement>('[data-results-label]');
+	if (queryInput) queryInput.value = query;
+	if (query && results && resultsLabel) {
+		const normalizedQuery = query.toLocaleLowerCase('es');
+		const matches = searchIndex.filter((item) => `${item.title} ${item.section} ${item.intro}`.toLocaleLowerCase('es').includes(normalizedQuery));
+		resultsLabel.textContent = `${matches.length} resultado${matches.length === 1 ? '' : 's'} para «${query}»`;
+		if (matches.length) {
+			matches.forEach((item) => {
+				const article = document.createElement('article');
+				article.className = 'result-item';
+				const heading = document.createElement('h2');
+				const link = document.createElement('a');
+				link.href = item.href;
+				link.textContent = item.title;
+				heading.append(link);
+				const section = document.createElement('p');
+				section.textContent = item.section;
+				const summary = document.createElement('p');
+				summary.textContent = item.intro;
+				article.append(heading, section, summary);
+				results.append(article);
+			});
+		} else {
+			const empty = document.createElement('p');
+			empty.className = 'no-results';
+			empty.textContent = 'No se han encontrado páginas con esos términos.';
+			results.append(empty);
+		}
+	} else if (resultsLabel) {
+		resultsLabel.textContent = 'Introduce una palabra para buscar en noticias, proyectos y secciones.';
+	}
+</script>

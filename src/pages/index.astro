@@ -1,12 +1,208 @@
 ---
-import Welcome from '../components/Welcome.astro';
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
+import { pathFor } from '../data/legacy-site';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const homeNews = (await getCollection('noticias'))
+	.sort((first, second) => second.data.pubDate.valueOf() - first.data.pubDate.valueOf())
+	.slice(0, 3)
+	.map((article) => ({
+		title: article.data.title,
+		section: article.data.category ?? 'Noticias',
+		intro: article.data.summary,
+		image: article.data.image,
+		slug: `noticias/${article.id}`,
+	}));
+
+const slides = [
+	{ eyebrow: 'Nueva sección en la web:', title: 'Tutoriales', copy: '¿A qué esperas para verlos?', action: 'HAZ CLICK AQUÍ', slug: 'servicios/tutoriales', tone: 'tutorials' },
+	{ eyebrow: 'Vuelve', title: 'CYBERTECH', copy: 'La competición de robótica de la ETSII-UPM.', action: 'DESCUBRE CYBERTECH', slug: 'cybertech/cybertech-2023', tone: 'cybertech' },
+	{ eyebrow: 'Talleres y actividades', title: 'Octubre Robótico', copy: 'Tecnología, aprendizaje y proyectos compartidos.', action: 'VER LA NOTICIA', slug: 'octubre-robotico-2021', tone: 'robotics' },
+];
 ---
 
 <Layout>
-	<Welcome />
+	<section class="home-hero" aria-label="Destacados de Reset">
+		<div class="hero-slider" data-slider>
+			{slides.map((slide, index) => (
+				<article class:list={['hero-slide', `hero-slide-${slide.tone}`, { 'is-active': index === 0 }]} data-slide={index} aria-hidden={index !== 0}>
+					<div class="hero-copy">
+						<p class="hero-eyebrow">{slide.eyebrow}</p>
+						<h1>{slide.title}</h1>
+						<p class="hero-subtitle">{slide.copy}</p>
+						<a class="hero-action" href={pathFor(slide.slug)}>{slide.action}<span aria-hidden="true">↗</span></a>
+					</div>
+					<div class="hero-art" aria-hidden="true">
+						<span class="art-index">0{index + 1}</span>
+						<strong>R<span>·</span></strong>
+						<span class="art-label">ROBÓTICA · ELECTRÓNICA · AUTOMÁTICA · INFORMÁTICA</span>
+					</div>
+				</article>
+			))}
+			<div class="slider-controls" aria-label="Controles del destacado">
+				<button type="button" data-slide-previous aria-label="Destacado anterior">←</button>
+				{slides.map((slide, index) => <button type="button" data-slide-to={index} aria-label={`Mostrar destacado ${index + 1}`} aria-pressed={index === 0}>{String(index + 1).padStart(2, '0')}</button>)}
+				<button type="button" data-slide-pause aria-label="Pausar carrusel" aria-pressed="false">Ⅱ</button>
+				<button type="button" data-slide-next aria-label="Siguiente destacado">→</button>
+			</div>
+		</div>
+	</section>
+
+	<section class="about-section page-width">
+		<div class="section-heading"><p class="section-kicker">Reset · ETSII UPM</p><h2>Quiénes somos</h2></div>
+		<div class="about-copy">
+			<p>Reset es una asociación de estudiantes sin ánimo de lucro perteneciente a la ETSII-UPM, dedicada a la robótica, electrónica, automática e informática. Nuestra base es la libre transmisión de conocimientos entre todos los miembros y cualquiera que tenga ganas de aprender. Realizamos proyectos propios, competiciones, asistimos a eventos representando a la Universidad Politécnica de Madrid e impartimos talleres totalmente gratuitos. Ofrecemos un servicio de impresión 3D y préstamo de herramientas exclusivo a los alumnos y personal de la ETSII.</p>
+			<p>Muchos de nosotros entramos en la carrera queriéndonos convertir en MacGyver, con ganas de cacharrear, de tocar, entender y construir. Si este es tu caso, Reset es tu lugar; para conseguirlo hemos obtenido el apoyo de diversos departamentos, unidades docentes y otras asociaciones.</p>
+		</div>
+	</section>
+
+	<section class="news-section">
+		<div class="page-width">
+			<div class="news-heading"><div><p class="section-kicker">Lo que hacemos</p><h2>Últimas noticias</h2></div><a href={pathFor('noticias')}>Más noticias <span aria-hidden="true">↗</span></a></div>
+			<div class="news-grid">
+				{homeNews.map((article, index) => (
+					<article class="news-card">
+						<a class:list={['news-image', `news-image-${index + 1}`]} href={pathFor(article.slug)} aria-label={`Leer ${article.title}`}>
+							{article.image ? <img src={article.image} alt="" loading="lazy" /> : <span>{index === 0 ? 'CYBERTECH' : index === 1 ? 'OCTUBRE ROBÓTICO' : 'RESET · UPM'}</span>}
+							<b aria-hidden="true">↗</b>
+						</a>
+						<p class="news-category">{article.section}</p>
+						<h3><a href={pathFor(article.slug)}>{article.title}</a></h3>
+						<p class="news-excerpt">{article.intro}</p>
+						<a class="read-more" href={pathFor(article.slug)}>Leer más <span aria-hidden="true">→</span></a>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<section class="home-bottom page-width">
+		<div class="events-callout"><div><p class="section-kicker">Agenda</p><h2>Próximos eventos</h2><p>Consulta las actividades y encuentros de Reset.</p></div><a href={pathFor('calendario')} aria-label="Abrir calendario">↗</a></div>
+		<aside class="social-callout"><p class="section-kicker">Síguenos</p><h2>Reset en redes</h2><a href="https://twitter.com/reset_etsii" target="_blank" rel="noreferrer">Tweets por reset_etsii <span aria-hidden="true">↗</span></a></aside>
+	</section>
 </Layout>
+
+<style>
+	.page-width { width: min(1180px, calc(100% - 3rem)); margin: 0 auto; }
+	.home-hero { color: white; background: var(--night); border-bottom: 5px solid var(--orange); }
+	.hero-slider { position: relative; isolation: isolate; max-width: 1440px; min-height: 440px; margin: auto; overflow: hidden; }
+	.hero-slide { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr); align-content: center; align-items: center; gap: 2rem; padding: 4rem max(6vw, calc((100vw - 1180px) / 2)); opacity: 0; visibility: hidden; transform: translate3d(22px, 0, 0); transition: opacity 720ms var(--ease-out), transform 820ms var(--ease-out), visibility 0s linear 820ms; }
+	.hero-slide.is-active { opacity: 1; visibility: visible; transform: translate3d(0, 0, 0); transition-delay: 0s; }
+	.hero-slide-tutorials { background: linear-gradient(110deg, #102634 0%, #163d49 54%, #18515b 100%); }
+	.hero-slide-cybertech { background: linear-gradient(110deg, #281d22 0%, #56312b 52%, #8a482f 100%); }
+	.hero-slide-robotics { background: linear-gradient(110deg, #152932 0%, #23444b 55%, #326164 100%); }
+	.hero-copy { position: relative; z-index: 1; max-width: 600px; }
+	.hero-eyebrow, .section-kicker { margin: 0 0 .8rem; color: #ff9a76; font-size: .75rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+	.hero-copy h1 { max-width: 640px; margin: 0; color: white; font-size: 4.5rem; font-weight: 850; line-height: .98; }
+	.hero-subtitle { max-width: 480px; margin: 1rem 0 1.7rem; color: #d3e0e2; font-size: 1.12rem; line-height: 1.5; }
+	.hero-action { display: inline-flex; align-items: center; gap: 1rem; padding: .85rem 1rem; border: 1px solid #ff9a76; color: white; text-decoration: none; font-size: .78rem; font-weight: 800; letter-spacing: .06em; }
+	.hero-action:hover { color: var(--night); background: #ff9a76; }
+	.hero-art { position: relative; display: grid; place-items: center; min-height: 240px; padding: 2rem; border: 1px solid #d5e5e233; background: repeating-linear-gradient(135deg, #09172244 0 20px, #d5e5e20b 21px 22px); }
+	.hero-art::before { position: absolute; inset: 1rem; border: 1px solid #d5e5e222; content: ''; pointer-events: none; }
+	.hero-art strong { color: #f5f7f5; font-size: 10rem; font-weight: 900; line-height: .8; }
+	.hero-art strong span { color: #ff9a76; }
+	.art-index { position: absolute; top: 1.2rem; left: 1.25rem; color: #ff9a76; font-weight: 800; }
+	.art-label { position: absolute; right: 1rem; bottom: 1rem; left: 1rem; color: #c0d0d4; font-size: .6rem; letter-spacing: .12em; text-align: center; }
+	.slider-controls { position: absolute; right: max(6vw, calc((100vw - 1180px) / 2)); bottom: 1.5rem; z-index: 2; display: flex; gap: .35rem; }
+	.slider-controls button { display: grid; place-items: center; min-width: 38px; height: 38px; padding: 0 .6rem; border: 1px solid #a8bdc655; color: #e7eef0; background: #0e1a25aa; cursor: pointer; transition: color 180ms ease, background 220ms ease, border-color 220ms ease, transform 260ms var(--ease-out); }
+	.slider-controls button:hover { transform: translateY(-2px); }
+	.slider-controls button[aria-pressed='true'] { color: #10202b; background: #ff9a76; border-color: #ff9a76; }
+	.about-section { display: grid; grid-template-columns: .8fr 1.2fr; gap: 3rem; padding-top: 4.8rem; padding-bottom: 4.8rem; }
+	.section-heading h2, .news-heading h2, .home-bottom h2 { margin: 0; color: var(--ink); font-size: 2.4rem; line-height: 1.05; }
+	.about-copy p { margin: 0 0 1rem; color: #3d4b52; font-size: 1rem; line-height: 1.75; }
+	.news-section { padding: 4rem 0 4.5rem; background: #e8edeb; border-top: 1px solid #d7dddf; border-bottom: 1px solid #d7dddf; }
+	.news-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+	.news-heading > a { display: flex; gap: .8rem; color: var(--blue); font-size: .9rem; font-weight: 750; text-decoration: none; }
+	.news-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+	.news-card { min-width: 0; padding-bottom: 1.3rem; border-bottom: 2px solid #bbc6c8; animation: card-arrive 650ms var(--ease-out) both; }
+	.news-card:nth-child(2) { animation-delay: 90ms; }
+	.news-card:nth-child(3) { animation-delay: 180ms; }
+	.news-image { position: relative; display: grid; min-height: 180px; place-items: center; overflow: hidden; color: white; text-decoration: none; background: repeating-linear-gradient(135deg, #174151 0 22px, #ffffff10 23px 24px); transition: background-size 500ms var(--ease-out); }
+	.news-image-2 { background-color: #7a442e; background-image: repeating-linear-gradient(135deg, #7a442e 0 22px, #ffffff14 23px 24px); }
+	.news-image-3 { background-color: #31575d; background-image: repeating-linear-gradient(135deg, #31575d 0 22px, #ffffff12 23px 24px); }
+	.news-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 650ms var(--ease-out); }
+	.news-image:hover img { transform: scale(1.035); }
+	.news-image span { position: relative; z-index: 1; padding: .5rem; color: white; font-size: 1.15rem; font-weight: 900; text-align: center; transition: transform 450ms var(--ease-out); }
+	.news-image:hover span { transform: scale(1.04); }
+	.news-image b { position: absolute; right: .75rem; bottom: .75rem; display: grid; place-items: center; width: 2rem; aspect-ratio: 1; border: 1px solid #ffffff99; }
+	.news-category { margin: 1.1rem 0 .45rem; color: var(--blue); font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+	.news-card h3 { margin: 0; font-size: 1.12rem; line-height: 1.3; }
+	.news-card h3 a { text-decoration: none; }
+	.news-card h3 a:hover { color: var(--blue); }
+	.news-excerpt { min-height: 5rem; color: #536168; font-size: .9rem; line-height: 1.55; }
+	.read-more { display: inline-flex; gap: .75rem; color: var(--ink); font-size: .78rem; font-weight: 800; text-decoration: none; text-transform: uppercase; }
+	.home-bottom { display: grid; grid-template-columns: 1.2fr .8fr; gap: 1.25rem; padding-top: 3.5rem; padding-bottom: 4rem; }
+	.events-callout, .social-callout { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; min-height: 190px; padding: 1.6rem; border: 1px solid var(--line); background: white; }
+	.events-callout p:not(.section-kicker) { margin: .7rem 0 0; color: var(--muted); }
+	.events-callout > a { display: grid; place-items: center; flex: 0 0 48px; aspect-ratio: 1; color: white; background: var(--blue); text-decoration: none; font-size: 1.3rem; }
+	.social-callout { display: block; color: white; background: #17637a; }
+	.social-callout h2 { color: white; }
+	.social-callout a { display: inline-flex; gap: .8rem; margin-top: 1.2rem; color: white; font-size: .9rem; text-decoration-color: #ffffff99; text-underline-offset: .3em; }
+	@keyframes card-arrive { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+	@media (max-width: 760px) {
+		.page-width { width: min(100% - 2rem, 560px); }
+		.hero-slider { min-height: 570px; }
+		.hero-slide { grid-template-columns: 1fr; align-content: center; gap: 1.5rem; padding: 2.3rem 1.25rem 5.2rem; }
+		.hero-copy h1 { font-size: 2.8rem; }
+		.hero-art { min-height: 155px; padding: 1rem; }
+		.hero-art strong { font-size: 7rem; }
+		.art-label { font-size: .48rem; }
+		.slider-controls { right: 1rem; bottom: .8rem; }
+		.about-section { grid-template-columns: 1fr; gap: 1.3rem; padding-top: 3rem; padding-bottom: 3rem; }
+		.news-section { padding: 3rem 0; }
+		.news-heading { align-items: start; }
+		.news-grid { grid-template-columns: 1fr; gap: 2rem; }
+		.news-image { min-height: 195px; }
+		.news-excerpt { min-height: 0; }
+		.home-bottom { grid-template-columns: 1fr; padding-top: 2rem; padding-bottom: 2.5rem; }
+		.events-callout, .social-callout { min-height: 165px; }
+		.section-heading h2, .news-heading h2, .home-bottom h2 { font-size: 1.9rem; }
+	}
+	@media (prefers-reduced-motion: reduce) { .hero-slide { transition: none; } .news-card { animation: none; } }
+</style>
+
+<script>
+	const slider = document.querySelector<HTMLElement>('[data-slider]');
+	if (slider) {
+		const slides = Array.from(slider.querySelectorAll<HTMLElement>('[data-slide]'));
+		const dots = Array.from(slider.querySelectorAll<HTMLButtonElement>('[data-slide-to]'));
+		let activeIndex = 0;
+		const showSlide = (nextIndex: number) => {
+			activeIndex = (nextIndex + slides.length) % slides.length;
+			slides.forEach((slide, index) => {
+				slide.classList.toggle('is-active', index === activeIndex);
+				slide.setAttribute('aria-hidden', String(index !== activeIndex));
+			});
+			dots.forEach((dot, index) => dot.setAttribute('aria-pressed', String(index === activeIndex)));
+		};
+		dots.forEach((dot, index) => dot.addEventListener('click', () => showSlide(index)));
+		slider.querySelector('[data-slide-previous]')?.addEventListener('click', () => showSlide(activeIndex - 1));
+		slider.querySelector('[data-slide-next]')?.addEventListener('click', () => showSlide(activeIndex + 1));
+		const pauseButton = slider.querySelector<HTMLButtonElement>('[data-slide-pause]');
+		const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		let paused = reducedMotion;
+		let timer: number | undefined;
+		const stopTimer = () => { window.clearInterval(timer); timer = undefined; };
+		const startTimer = () => {
+			if (paused || timer !== undefined) return;
+			timer = window.setInterval(() => showSlide(activeIndex + 1), 7000);
+		};
+		pauseButton?.setAttribute('aria-pressed', String(paused));
+		pauseButton?.setAttribute('aria-label', paused ? 'Reanudar carrusel' : 'Pausar carrusel');
+		pauseButton?.addEventListener('click', () => {
+			paused = !paused;
+			pauseButton.setAttribute('aria-pressed', String(paused));
+			pauseButton.setAttribute('aria-label', paused ? 'Reanudar carrusel' : 'Pausar carrusel');
+			pauseButton.textContent = paused ? '▶' : 'Ⅱ';
+			if (paused) stopTimer(); else startTimer();
+		});
+		slider.addEventListener('pointerenter', stopTimer);
+		slider.addEventListener('pointerleave', startTimer);
+		slider.addEventListener('focusin', stopTimer);
+		slider.addEventListener('focusout', (event) => {
+			if (!slider.contains(event.relatedTarget as Node | null)) startTimer();
+		});
+		startTimer();
+	}
+</script>
 
