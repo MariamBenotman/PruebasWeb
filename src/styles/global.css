@@ -357,3 +357,31 @@ html.js .sec-head.reveal.is-in .rule { transform: scaleX(1); }
 .en-incl-arr { position: absolute; left: 1.2rem; bottom: .8rem; color: var(--naranja); }
 .en-incl-grid .adm-add { width: 100%; height: 100%; min-height: 160px; }
 .adm-oculto { margin-top: 1.5rem; padding: .8rem 1rem; border: 1.5px dashed #b8432c; color: #b8432c; font-family: var(--f-mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+
+/* Franja de las vistas previas de ramas (…/ramas/<rama>/) */
+.vista-previa { padding: .45rem var(--gutter); background: repeating-linear-gradient(-45deg, var(--naranja) 0 14px, #e89b1c 14px 28px); color: var(--negro); font-family: var(--f-mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .06em; text-align: center; }
+
+/* ───────────── Proyectos: quién lo ha hecho ───────────── */
+.en-autores { margin-top: 3rem; }
+.en-autores-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1.2rem 1rem; margin: 0; padding: 0; list-style: none; }
+.en-autor { display: grid; gap: .55rem; text-decoration: none; }
+.en-autor .frame { --mark: transparent; }
+.en-autor span { font-weight: 600; font-size: .92rem; line-height: 1.25; }
+a.en-autor:hover span { color: var(--naranja); }
+a.en-autor .frame { transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+a.en-autor:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+.en-autores-grid .adm-add { width: 100%; aspect-ratio: 2 / 3; }
+.en-otros { margin: 1.4rem 0 0; color: var(--gris); }
+
+/* Cybertech: «Inscríbete» dentro del plazo de inscripción */
+.ct-inscripcion { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.2rem; margin: 1.6rem 0 0; }
+.ct-inscripcion[hidden] { display: none; }
+.ct-inscripcion span { font-family: var(--f-mono); font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; color: var(--naranja-vivo); }
+.ct-inscripcion em { color: #9db7d0; font-style: normal; text-transform: none; letter-spacing: 0; }
+/* Botones debajo del texto (formulario, correo…) y la imagen a la derecha, más contenida y fija al bajar */
+.gp-acciones { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2.5rem; }
+.gp-acciones:not(:has(a)) { display: none; }
+.gp-acciones [data-keep] { display: contents; }
+.gp-main.con-img { grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr); }
+.gp-main.con-img .gp-img { justify-self: end; width: 100%; max-width: 460px; position: sticky; top: 100px; }
+.gp-col .gp-body { margin-bottom: 1.8rem; }

@@ -13,4 +13,5 @@ export const collections = {
 	servicios: json('servicios'),
 	noticias: json('noticias'),
 	paginas: json('paginas'), // Colaboradores, Contacto, Participa… (una por archivo)
+	inicio: json('inicio'), // la portada (un solo archivo: portada.json)
 };

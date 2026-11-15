@@ -4,13 +4,18 @@ import { getCursos, getEdiciones, getPaginas, href } from '../lib/data';
 import { contacto } from '../data/contacto';
 const [cursos, ediciones, paginas] = await Promise.all([getCursos(), getEdiciones(), getPaginas()]);
 const participa = paginas.find((p) => p.id === 'participa');
-const cols: { t: string; l: [string, string][] }[] = [
-	{ t: 'Cybertech', l: ediciones.slice(0, 5).map((e) => [e.label, e.url]) },
-	{ t: 'Conócenos', l: [
-		...cursos.slice(0, 3).map((c): [string, string] => [c.label, c.url]),
-		...paginas.filter((p) => p.data.menu).map((p): [string, string] => [p.data.titulo, p.url]),
-		...(participa ? [['Participa', participa.url] as [string, string]] : []),
-	] },
+
+/** Todas las columnas con el mismo número de filas, para que el pie quede igualado */
+const FILAS = 5;
+type Enlace = [string, string];
+const apartados: Enlace[] = [
+	...paginas.filter((p) => p.data.menu).map((p): Enlace => [p.data.titulo, p.url]),
+	...(participa ? [['Participa', participa.url] as Enlace] : []),
+];
+const cols: { t: string; l: Enlace[] }[] = [
+	{ t: 'Cybertech', l: ediciones.slice(0, FILAS).map((e): Enlace => [e.label, e.url]) },
+	// Los cursos más recientes que quepan (al menos uno) y después los apartados (Colaboradores, Contacto, Participa…)
+	{ t: 'Conócenos', l: [...cursos.slice(0, Math.max(1, FILAS - apartados.length)).map((c): Enlace => [c.label, c.url]), ...apartados].slice(0, Math.max(FILAS, 1 + apartados.length)) },
 	{ t: 'Reset', l: [['Proyectos', href('proyectos')], ['Talleres', href('talleres')], ['Servicios', href('servicios')], ['Noticias', href('noticias')], ['Buscar', href('buscar')]] },
 ];
 ---

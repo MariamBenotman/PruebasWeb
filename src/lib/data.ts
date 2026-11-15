@@ -1,5 +1,5 @@
 import { getCollection } from 'astro:content';
-import { normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, ordenEntradas, cursoCorto, SECCIONES, type SeccionKey } from './render';
+import { normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, ordenEntradas, cursoCorto, clavePersona, SECCIONES, type SeccionKey, type Persona } from './render';
 
 export const BASE = import.meta.env.BASE_URL;
 
@@ -78,3 +78,21 @@ export async function getPaginas() {
 export const img = (p?: string) => (p ? (/^(https?:|\/)/.test(p) ? p : href(p)) : '');
 
 export { fechaLarga as fecha } from './render';
+
+/**
+ * Todas las personas que han pasado por Reset (de todos los cursos), con su foto más reciente
+ * y el enlace al último curso en el que aparecen. Para elegir autores de un proyecto.
+ */
+export async function getPersonas() {
+	const out = new Map<string, Persona>();
+	for (const c of await getCursos()) { // del curso más reciente al más antiguo
+		for (const s of c.data.secciones) for (const m of s.miembros) {
+			const k = clavePersona(m.nombre);
+			if (!k) continue;
+			const ya = out.get(k);
+			if (!ya) out.set(k, { nombre: m.nombre, foto: m.foto, url: c.url });
+			else if (!ya.foto && m.foto) ya.foto = m.foto;
+		}
+	}
+	return [...out.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+}

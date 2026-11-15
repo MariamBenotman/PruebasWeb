@@ -3,8 +3,8 @@
  * Para añadir un campo nuevo: añádelo aquí, en src/lib/render.ts (normalize + render) y listo.
  */
 import {
-	normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, renderCurso, renderEdicion, renderEntrada, renderPagina, cursoSlug, cursoCorto, slugify,
-	SECCIONES, type Curso, type Edicion, type Entrada, type Pagina, type SeccionKey, type RenderCtx,
+	normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, normalizeInicio, renderCurso, renderEdicion, renderEntrada, renderPagina, renderInicio, cursoSlug, cursoCorto, slugify,
+	SECCIONES, type Curso, type Edicion, type Entrada, type Pagina, type Inicio, type Persona, type SeccionKey, type RenderCtx,
 } from '../lib/render';
 
 export type Field =
@@ -194,6 +194,9 @@ export const cybertechKind: DocKind<Edicion> = {
 			{ key: 'fechas', label: 'Fechas', type: 'text', placeholder: '25–28 de abril de 2026' },
 			{ key: 'lugar', label: 'Lugar', type: 'text', placeholder: 'Pabellón de deportes de la ETSII' },
 			{ key: 'tematica', label: 'Temática (opcional)', type: 'text', placeholder: 'Cyberpunk' },
+			{ key: 'inscripcionDesde', label: 'Inscripciones: desde (opcional)', type: 'date', hint: 'Entre estas dos fechas (ambas incluidas) sale «Inscripciones abiertas» en el menú y un botón «Inscríbete» aquí y en la portada. Aparece y desaparece solo.' },
+			{ key: 'inscripcionHasta', label: 'Inscripciones: hasta (opcional)', type: 'date' },
+			{ key: 'inscripcionEnlace', label: 'Enlace al formulario de inscripción', type: 'text', placeholder: 'https://forms.gle/…', hint: 'El formulario donde se apuntan los equipos (por ejemplo, un Google Forms de la cuenta de Reset).' },
 			{ key: 'portada', label: 'Imagen de portada', type: 'image', media: true, maxSize: 15 * MB, formato: 'cartel', hint: 'El cartel de la edición: A3, horizontal o vertical (por ejemplo, 2000 × 1414 px).' },
 			{ key: 'intro', label: 'Introducción', type: 'markdown', rows: 7 },
 			{
@@ -268,6 +271,20 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 			];
 		},
 	};
+	// Proyectos: activo / año / autores (miembros de Reset, de #personas-data que escribe la página)
+	const personas = (): { nombre: string; foto: string; url: string }[] => {
+		try { return JSON.parse(document.getElementById('personas-data')?.textContent || '[]'); } catch { return []; }
+	};
+	const proyectoFields: Field[] = [
+		{ key: 'activo', label: 'Proyecto activo (en marcha)', type: 'check', hint: 'Sale en «Proyectos activos» del menú. Cuando termine, desmárcalo: pasa a estar solo en el historial.' },
+		{ key: 'anio', label: 'Año (opcional)', type: 'text', placeholder: '2024', hint: 'Sirve para ordenar el historial de proyectos por año.' },
+		{
+			key: 'autores', label: 'Autores: miembros de Reset', type: 'refs',
+			hint: 'Marca quién lo ha hecho. Salen abajo, con su foto de la sección de Miembros.',
+			options: () => personas().map((p) => ({ value: p.nombre, label: p.nombre })),
+		},
+		{ key: 'otrosAutores', label: 'Otros colaboradores (opcional)', type: 'text', placeholder: 'Nombre Apellido, Otra Persona…', hint: 'Personas que no están en Miembros, separadas por comas.' },
+	];
 	const incluyeField: Field = {
 		key: 'incluye', label: `${sec.titulo} de esta edición (opcional)`, type: 'refs',
 		hint: `Marca los ${sec.titulo.toLowerCase()} que tienen su propia página: saldrán como tarjetas enlazadas. Si no marcas ninguno, el bloque no aparece.`,
@@ -284,7 +301,8 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 		dir: `src/content/${seccion}`,
 		normalize: normalizeEntrada,
 		render: (d, ctx) => renderEntrada(d, ctx, seccion, serieDe(seccion, d.serie),
-			series(seccion).filter((x) => !x.oculto).map((x) => ({ id: x.id, titulo: x.titulo, resumen: x.resumen ?? '', portada: x.portada ?? '' }))),
+			series(seccion).filter((x) => !x.oculto).map((x) => ({ id: x.id, titulo: x.titulo, resumen: x.resumen ?? '', portada: x.portada ?? '' })),
+			personas() as Persona[]),
 		// La dirección se fija al crearla y no cambia aunque se edite el título (para no romper enlaces).
 		fileId: (d, actual) => actual ?? slugify(d.titulo),
 		validate: (d) =>
@@ -306,11 +324,12 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 				{ key: 'portada', label: 'Imagen principal', type: 'image', media: true, maxSize: 15 * MB, ...(sec.ediciones ? { formato: 'cartel' as const, hint: 'Normalmente el cartel: A3, horizontal o vertical (por ejemplo, 2000 × 1414 px).' } : {}) },
 				{ key: 'cuerpo', label: 'Contenido', type: 'markdown', rows: 14 },
 				...(sec.ediciones ? [incluyeField] : []),
+				...(seccion === 'proyectos' ? proyectoFields : []),
 				{ key: 'galeria', label: 'Galería de fotos', type: 'images' },
 				...(seccion === 'noticias' ? [] : [
 					{ key: 'descMenu', label: 'Descripción corta en el menú (opcional)', type: 'text', placeholder: sec.ediciones ? 'C, Python, Linux, PCB…' : '', hint: 'Sale en gris debajo del título en el desplegable. Una línea como mucho.' } as Field,
 					{ key: 'enListado', label: `Mostrar en el menú y en la lista de ${sec.titulo}`, type: 'check', hint: sec.ediciones ? 'Desmárcalo si este taller solo va dentro de otro (por ejemplo, dentro de un Octubre Robótico).' : undefined } as Field,
-					{ key: 'destacado', label: 'Destacar en el menú', type: 'check', hint: 'Sale el primero del desplegable, con una estrella y una franja naranja. Úsalo para lo importante del momento (por ejemplo, el Octubre Robótico en septiembre).' } as Field,
+					...(seccion === 'proyectos' ? [] : [{ key: 'destacado', label: 'Destacar en el menú', type: 'check', hint: 'Sale el primero del desplegable, con una estrella y una franja naranja. Úsalo para lo importante del momento (por ejemplo, el Octubre Robótico en septiembre).' } as Field]),
 				]),
 				{ key: 'oculto', label: 'Ocultar', type: 'check', hint: `No sale en ningún sitio de la web, pero no se borra: puedes volver a mostrarlo cuando quieras (por ejemplo, ${el === 'la' ? 'una' : 'un'} ${sec.singular} que un año no se hace).` },
 			],
@@ -361,6 +380,8 @@ export const paginasKind: DocKind<Pagina> = {
 			{ key: 'intro', label: 'Frase de presentación', type: 'text', hint: 'Sale debajo del título, en grande.' },
 			{ key: 'cuerpo', label: 'Contenido', type: 'markdown', rows: 14, hint: 'Usa "Subtítulo" para separar bloques (por ejemplo, un colaborador por subtítulo).' },
 			{ key: 'imagen', label: 'Imagen (opcional)', type: 'image', media: true, maxSize: 15 * MB, hint: 'Sale al lado del texto.' },
+			{ key: 'formulario', label: 'Enlace a un formulario (opcional)', type: 'text', placeholder: 'https://forms.gle/…', hint: 'Sale un botón naranja debajo del texto. Por ejemplo, el formulario para apuntarse a Reset (Google Forms de la cuenta de Reset).' },
+			{ key: 'formularioTexto', label: 'Texto del botón del formulario', type: 'text', placeholder: 'Rellenar el formulario' },
 			{ key: 'menu', label: 'Mostrar en el menú «Conócenos»', type: 'check' },
 			{ key: 'orden', label: 'Posición en el menú', type: 'number', hint: '1 = el primero. Si lo dejas en 0, va al final (por orden alfabético).' },
 		],
@@ -369,7 +390,66 @@ export const paginasKind: DocKind<Pagina> = {
 	noBorrar: (id) => (id === 'participa' ? 'Este apartado no se puede eliminar: el botón «Únete» de toda la web lleva aquí. Puedes cambiar su texto.' : undefined),
 };
 
+/* ───────────── Portada ───────────── */
+
+const enlaceHint = 'Dirección dentro de la web (por ejemplo «talleres» o «servicios/impresion-3d») o una dirección completa (https://…).';
+const bloqueSchema = (que: string, conEnlace: boolean): ObjSchema => ({
+	title: (b) => b?.titulo || `${que} sin título`,
+	nameKey: 'titulo',
+	fields: [
+		{ key: 'titulo', label: 'Título', type: 'text' },
+		{ key: 'texto', label: 'Texto', type: 'text' },
+		...(conEnlace ? [{ key: 'enlace', label: 'Enlace', type: 'text', hint: enlaceHint } as Field] : []),
+	],
+});
+
+export const inicioKind: DocKind<Inicio> = {
+	kind: 'inicio',
+	nombre: 'portada',
+	dir: 'src/content/inicio',
+	normalize: normalizeInicio,
+	render: renderInicio,
+	fileId: () => 'portada',
+	validate: () => null,
+	mediaFolder: () => 'fotos/inicio',
+	titulo: () => 'Portada',
+	url: () => '',
+	schema: {
+		title: () => 'Portada',
+		fields: [
+			{ key: 'lema', label: 'Lema', type: 'text', hint: 'Lo que pongas entre *asteriscos* sale en naranja. Ejemplo: Tocar, entender y *construir.*' },
+			{ key: 'intro', label: 'Presentación', type: 'text', hint: 'Una o dos frases al lado del lema.' },
+			{
+				key: 'diapositivas', label: 'Carrusel de fotos', type: 'list', addLabel: 'Añadir diapositiva',
+				hint: 'Pasan solas cada 6 segundos. Usa fotos horizontales y grandes (mínimo 1600 px de ancho).',
+				newItem: () => ({ imagen: '', titulo: '', texto: '', enlaceTexto: '', enlace: '' }),
+				item: {
+					title: (s) => s?.titulo || 'Diapositiva sin título',
+					nameKey: 'titulo',
+					fields: [
+						{ key: 'imagen', label: 'Foto', type: 'image', hint: 'Horizontal, mínimo 1600 px de ancho. El texto va abajo a la izquierda: que no tape lo importante.' },
+						{ key: 'titulo', label: 'Título', type: 'text', placeholder: 'Cybertech' },
+						{ key: 'texto', label: 'Mensaje', type: 'text', placeholder: 'La competición de robótica más grande de la UPM.' },
+						{ key: 'enlaceTexto', label: 'Texto del botón (opcional)', type: 'text', placeholder: 'Ver más' },
+						{ key: 'enlace', label: 'Enlace del botón (opcional)', type: 'text', hint: enlaceHint },
+					],
+				},
+			},
+			{ key: 'areas', label: 'Áreas (franja blanca)', type: 'list', addLabel: 'Añadir área', item: bloqueSchema('Área', false), newItem: () => ({ titulo: '', texto: '', enlace: '' }) },
+			{ key: 'quienesDestacado', label: 'Quiénes somos: frase grande', type: 'text', hint: 'Lo que pongas entre *asteriscos* sale en naranja.' },
+			{ key: 'quienesTexto', label: 'Quiénes somos: texto', type: 'markdown', rows: 8 },
+			{ key: 'queHacemos', label: 'Qué hacemos (tarjetas con enlace)', type: 'list', addLabel: 'Añadir tarjeta', item: bloqueSchema('Tarjeta', true), newItem: () => ({ titulo: '', texto: '', enlace: '' }) },
+			{ key: 'uneteTitulo', label: 'Únete: título', type: 'text', hint: 'Lo que pongas entre *asteriscos* sale en blanco.' },
+			{ key: 'uneteTexto', label: 'Únete: texto', type: 'text' },
+			{ key: 'uneteBoton', label: 'Únete: texto del botón', type: 'text' },
+		],
+	},
+	nuevo: () => normalizeInicio({}),
+	noBorrar: () => 'La portada no se puede eliminar.',
+};
+
 export const kinds: Record<string, DocKind> = {
+	inicio: inicioKind,
 	paginas: paginasKind,
 	miembros: miembrosKind,
 	cybertech: cybertechKind,

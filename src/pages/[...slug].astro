@@ -13,12 +13,21 @@ export async function getStaticPaths() {
 }
 const { id } = Astro.props as { id: string };
 const p = (await getPaginas()).find((x) => x.id === id)!;
+// Lo editable, partido por el hueco de los botones fijos (que van debajo del texto, junto al del formulario)
+const [antes, despues] = renderPagina(p.data, { base: BASE }).split('<div data-keep="acciones"></div>');
 ---
 
 <Layout title={p.data.titulo} description={p.data.intro}>
-	<div id="page-root" data-kind="paginas" data-id={id} set:html={renderPagina(p.data, { base: BASE })} />
+	<div id="page-root" data-kind="paginas" data-id={id}>
+		<Fragment set:html={antes} />
+		<div data-keep="acciones">
+			{/* Botones fijos de algunos apartados (los datos de contacto están en src/data/contacto.ts) */}
+			{id === 'participa' && <a class="btn" href={`mailto:${contacto.email}?subject=Quiero%20participar%20en%20Reset`}>Escribir a {contacto.email} <span class="arr">→</span></a>}
+			{id === 'calendario' && <a class="btn primary" href={contacto.redes[0].url} target="_blank" rel="noopener">Ver novedades en Instagram <span class="arr">→</span></a>}
+		</div>
+		<Fragment set:html={despues} />
+	</div>
 
-	{/* Bloques fijos de algunos apartados (no se editan aquí: los datos de contacto están en src/data/contacto.ts) */}
 	{id === 'contacto' && (
 		<div class="wrap gp-extra">
 			<dl class="gp-contact">
@@ -27,12 +36,6 @@ const p = (await getPaginas()).find((x) => x.id === id)!;
 				<div><dt>Redes</dt><dd>{contacto.redes.map((r) => <a href={r.url} target="_blank" rel="noopener">{r.nombre}</a>)}</dd></div>
 			</dl>
 		</div>
-	)}
-	{id === 'calendario' && (
-		<div class="wrap gp-extra"><a class="btn primary" href={contacto.redes[0].url} target="_blank" rel="noopener">Ver novedades en Instagram <span class="arr">→</span></a></div>
-	)}
-	{id === 'participa' && (
-		<div class="wrap gp-extra"><a class="btn primary" href={`mailto:${contacto.email}?subject=Quiero%20participar%20en%20Reset`}>Escribir a {contacto.email} <span class="arr">→</span></a></div>
 	)}
 	<div class="gp-end"></div>
 </Layout>

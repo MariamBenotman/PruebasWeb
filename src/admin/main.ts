@@ -85,6 +85,7 @@ function refreshBar() {
 	btn('discard').hidden = !dirty || isNew;
 	bar.classList.toggle('is-dirty', dirty);
 	if (K) $doc.textContent = K.titulo(K.normalize(data));
+	syncBarraPagina();
 }
 
 bar.addEventListener('click', (e) => {
@@ -124,7 +125,10 @@ let raf = 0;
 function renderPage() {
 	cancelAnimationFrame(raf);
 	if (!root || !K) return;
+	// Lo que se actualiza solo (en la portada: Cybertech, noticias…) no lo dibuja el editor: se conserva tal cual
+	const fijos = new Map([...root.querySelectorAll<HTMLElement>('[data-keep]')].map((el) => [el.dataset.keep!, el]));
 	root.innerHTML = K.render(K.normalize(data), ctx());
+	root.querySelectorAll<HTMLElement>('[data-keep]').forEach((hueco) => { const el = fijos.get(hueco.dataset.keep!); if (el) hueco.replaceWith(el); });
 	document.dispatchEvent(new Event('reset:rendered'));
 	highlight(false);
 	refreshBar();
@@ -134,6 +138,8 @@ const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(
 function highlight(scroll: boolean) {
 	root?.querySelectorAll('.adm-current').forEach((el) => el.classList.remove('adm-current'));
 	if (current === null) return;
+	// Avisar a la página de qué se está editando (el carrusel enseña esa diapositiva)
+	document.dispatchEvent(new CustomEvent('reset:editando', { detail: current }));
 	const el = root?.querySelector(`[data-edit="${current}"]`);
 	el?.classList.add('adm-current');
 	if (scroll && el) {
@@ -693,24 +699,60 @@ function rootExtras() {
 	}
 	if (!isNew && docId) {
 		el.append(h(`<p class="f-h adm-danger-note">Zona peligrosa</p>`));
-		const motivo = K.noBorrar?.(docId);
-		const ocultable = K.schema.fields.some((f) => f.key === 'oculto');
-		if (motivo) el.append(h(`<p class="f-h">${esc(motivo)}</p>`));
-		else {
-			const zona = h(`<div><p class="f-h">Comprobando permisos…</p></div>`);
-			el.append(zona);
-			puedeBorrar().then((ok) => {
-				zona.innerHTML = '';
-				if (!ok) {
-					zona.append(h(`<p class="f-h">Eliminar está reservado a la clave de administración.${ocultable ? ' Si ya no se usa, marca <b>Ocultar</b> arriba: desaparece de la web pero no se pierde.' : ''}</p>`));
-					return;
-				}
-				zona.append(h(`<p class="f-h">${ocultable ? 'Si solo quieres quitarlo un tiempo, mejor marca <b>Ocultar</b>. ' : ''}Eliminar lo borra de la web al publicar. Si te equivocas, se puede recuperar desde el historial de GitHub.</p>`));
-				zona.append(confirmButton(`Eliminar ${K.titulo(K.normalize(data))} por completo`, `Pulsa otra vez para eliminar ${K.titulo(K.normalize(data))}`, () => removeDoc()));
-			});
-		}
+		const z = zonaEliminar();
+		if (z) el.append(z);
 	}
 	return el;
+}
+
+/** Eliminar (con permisos y avisos). Se usa en el panel lateral y en la barra de arriba de la página. */
+function zonaEliminar(compacta = false): HTMLElement | null {
+	if (isNew || !docId) return null;
+	const motivo = K.noBorrar?.(docId);
+	const ocultable = K.schema.fields.some((f) => f.key === 'oculto');
+	const zona = h(`<div class="adm-eliminar"><p class="f-h">${motivo ? esc(motivo) : 'Comprobando permisos…'}</p></div>`);
+	if (motivo) return compacta ? null : zona;
+	puedeBorrar().then((ok) => {
+		zona.innerHTML = '';
+		if (!ok) {
+			zona.append(h(`<p class="f-h">Eliminar está reservado a la clave de administración.${ocultable ? ' Si ya no se usa, marca <b>Ocultar</b>: desaparece de la web pero no se pierde.' : ''}</p>`));
+			return;
+		}
+		if (!compacta) zona.append(h(`<p class="f-h">${ocultable ? 'Si solo quieres quitarlo un tiempo, mejor marca <b>Ocultar</b>. ' : ''}Eliminar lo borra de la web al publicar. Si te equivocas, se puede recuperar desde el historial de GitHub.</p>`));
+		const b = confirmButton(compacta ? 'Eliminar…' : `Eliminar ${K.titulo(K.normalize(data))} por completo`, `Pulsa otra vez para eliminar ${K.titulo(K.normalize(data))}${compacta ? ' (se puede recuperar desde el historial de GitHub)' : ''}`, () => removeDoc());
+		if (compacta) b.title = `${ocultable ? 'Si solo quieres quitarlo un tiempo, mejor usa Ocultar. ' : ''}Eliminar lo borra de la web al publicar. Si te equivocas, se puede recuperar desde el historial de GitHub.`;
+		zona.append(b);
+	});
+	return zona;
+}
+
+/* ───────────── Barra de la página (arriba): Destacar, Ocultar, Mostrar en la sección, Eliminar ───────────── */
+
+let pageBar: HTMLElement | null = null;
+/** Las casillas de «Datos generales» (las mismas, con sus mismas explicaciones) y Eliminar, a mano arriba de la página. */
+function montarBarraPagina() {
+	pageBar?.remove(); pageBar = null;
+	if (!root) return;
+	const checks = K.schema.fields.filter((f): f is Extract<Field, { type: 'check' }> => f.type === 'check');
+	const eliminar = zonaEliminar(true);
+	if (!checks.length && !eliminar) return;
+	pageBar = h(`<div class="adm-pagebar" role="toolbar" aria-label="Opciones de esta página"><div class="wrap adm-pagebar-in"><span class="adm-pagebar-l">${esc(K.nombre.charAt(0).toUpperCase() + K.nombre.slice(1))}</span></div></div>`);
+	const inn = pageBar.querySelector('.adm-pagebar-in')!;
+	for (const f of checks) {
+		const c = h(`<label class="adm-pb-check" data-hint="${esc(f.hint ?? '')}"><input type="checkbox" data-key="${esc(f.key)}"><span>${esc(f.label)}</span>${f.hint ? '<i aria-hidden="true">?</i>' : ''}</label>`);
+		c.querySelector('input')!.addEventListener('change', (e) => {
+			setAt(f.key, (e.target as HTMLInputElement).checked);
+			renderPage();
+			if (current === '') open('', false); // el panel lateral, si está abierto, también se actualiza
+		});
+		inn.append(c);
+	}
+	if (eliminar) { eliminar.classList.add('adm-pb-del'); inn.append(eliminar); }
+	root.before(pageBar);
+	syncBarraPagina();
+}
+function syncBarraPagina() {
+	pageBar?.querySelectorAll<HTMLInputElement>('input[data-key]').forEach((i) => { i.checked = !!getAt(i.dataset.key!); });
 }
 
 /* ───────────── Añadir ───────────── */
@@ -864,6 +906,7 @@ async function boot() {
 		btn('general').hidden = false;
 		btn('save').hidden = false;
 		renderPage();
+		montarBarraPagina();
 		if (isNew) {
 			open('');
 			const que = K.kind === 'miembros' ? 'del nuevo curso' : K.kind === 'cybertech' ? 'de la nueva edición' : K.nombre === 'noticia' ? 'de la nueva noticia' : `del nuevo ${K.nombre}`;

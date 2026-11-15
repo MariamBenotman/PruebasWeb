@@ -5,6 +5,7 @@
   "secciones": [
     {
       "titulo": "Junta",
+      "orden": "manual",
       "miembros": [
         {
           "nombre": "Antonio Cameo",
@@ -50,6 +51,7 @@
     },
     {
       "titulo": "Vocales",
+      "orden": "manual",
       "miembros": [
         {
           "nombre": "Jorge Martínez",
@@ -119,6 +121,7 @@
     },
     {
       "titulo": "Miembros",
+      "orden": "alfabetico",
       "miembros": [
         {
           "nombre": "Alfonso Salcedo",
@@ -159,8 +162,8 @@
         {
           "nombre": "Clara Molina",
           "roles": [],
-          "foto": "fotos/miembros/2022-23/clara-molina.jpg",
-          "fotoHover": "fotos/miembros/2022-23/clara-molina-2.jpg"
+          "foto": "fotos/miembros/2023-24/clara-molina.jpg",
+          "fotoHover": "fotos/miembros/2024-25/clara-molina-2.jpg"
         },
         {
           "nombre": "Irene Rodríguez",

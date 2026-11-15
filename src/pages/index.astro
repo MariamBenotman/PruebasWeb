@@ -1,218 +1,385 @@
----
+﻿---
+/**
+ * Portada. Lo editable (lema, carrusel, áreas, quiénes somos, qué hacemos, únete) está en
+ * src/content/inicio/portada.json y se dibuja con renderInicio (igual en la web y en el editor).
+ * Lo que se actualiza solo (Cybertech, noticias, curso actual) se rellena aquí, en los huecos `data-keep`.
+ */
 import Layout from '../layouts/Layout.astro';
-import { getCursos, getEdiciones, getEntradas, href, img, fecha } from '../lib/data';
+import Logo from '../components/Logo.astro';
+import { getCollection } from 'astro:content';
+import { getCursos, getEdiciones, getEntradas, href, img, fecha, BASE } from '../lib/data';
+import { normalizeInicio, renderInicio } from '../lib/render';
 
-const [ediciones, cursos, noticias] = await Promise.all([getEdiciones(), getCursos(), getEntradas('noticias')]);
+const [ediciones, cursos, noticias, inicio] = await Promise.all([getEdiciones(), getCursos(), getEntradas('noticias'), getCollection('inicio')]);
 const ct = ediciones[0];
 const curso = cursos[0];
 const ultimas = noticias.filter((n) => !n.data.oculto).slice(0, 3);
+const datos = normalizeInicio(inicio.find((x) => x.id === 'portada')?.data);
 
-const areas = [
-	{ n: '01', t: 'Robótica', d: 'Robots autónomos y teleoperados, de la idea al pabellón de competición.' },
-	{ n: '02', t: 'Electrónica', d: 'Diseño de circuitos, soldadura, sensores y PCBs hechas en casa.' },
-	{ n: '03', t: 'Automática', d: 'Control, sistemas embebidos y todo lo que hace que algo se mueva bien.' },
-	{ n: '04', t: 'Informática', d: 'Programación, visión, web y lo que haga falta para que funcione.' },
-];
-const servicios = [
-	{ t: 'Proyectos', d: 'Proyectos propios en los que cualquiera puede meterse.', u: 'proyectos' },
-	{ t: 'Talleres', d: 'Formación totalmente gratuita: Arduino, C, soldadura, diseño de robots.', u: 'talleres' },
-	{ t: 'Impresión 3D', d: 'Servicio exclusivo para alumnado y personal de la ETSII.', u: 'servicios/impresion-3d' },
-	{ t: 'Préstamos', d: 'Herramientas a tu disposición para que no se pare tu proyecto.', u: 'servicios/prestamos' },
-];
+// La parte editable, partida por los huecos que se rellenan aquí
+const html = renderInicio(datos, { base: BASE });
+const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/);
 ---
 
 <Layout>
-	<section class="hero">
-		<div class="wrap hero-in">
-			<div class="hero-copy">
-				<p class="kicker"><span>Asociación de estudiantes</span><span>ETSII · UPM</span></p>
-				<h1 class="display hero-t">
-					<span class="ln"><span>Tocar,</span></span>
-					<span class="ln"><span>entender</span></span>
-					<span class="ln"><span>y <em>construir.</em></span></span>
-				</h1>
-				<p class="hero-lede">Muchos entramos en la carrera queriendo convertirnos en MacGyver. Si tienes ganas de cacharrear, Reset es tu sitio: proyectos propios, talleres gratuitos y la competición de robótica más grande de la UPM.</p>
-				<div class="hero-cta">
-					{ct && <a class="btn primary" href={ct.url}>{ct.label} <span class="arr">→</span></a>}
-					<a class="btn" href={href('participa')}>Únete a Reset <span class="arr">→</span></a>
-				</div>
+	<div class="inicio">
+		<!-- RESET en grande: al hacer scroll se encoge y vuela hasta el logo de la cabecera -->
+		<div class="wrap inicio-logo" aria-hidden="true"><Logo /></div>
+		<!-- Invita a bajar: lleva al carrusel. Desaparece en cuanto se hace scroll. -->
+		<button class="baja" type="button" aria-label="Ir a la siguiente sección"><i class="baja-pista"></i><i class="baja-flecha"></i></button>
+
+		<div id="page-root" data-kind="inicio" data-id="portada">
+			<Fragment set:html={trozos[0]} />
+			<span data-keep="cta-cybertech">{ct && <a class="btn primary" href={ct.url}>{ct.label} <span class="arr">→</span></a>}</span>
+			<Fragment set:html={trozos[1]} />
+			<p data-keep="curso">{curso && <a href={curso.url}>Conoce al equipo del curso {curso.data.curso} →</a>}</p>
+			<Fragment set:html={trozos[2]} />
+			<div data-keep="cybertech">
+				{ct && (
+					<section class="ct-band">
+						<div class="ct-band-grid" aria-hidden="true"></div>
+						<div class="wrap ct-band-in">
+							<div>
+								<p class="kicker on-dark"><span>Competición</span><span>Edición {ct.data.anio}</span></p>
+								<h2 class="ct-band-t">Cyber<br />tech<span>{String(ct.data.anio).slice(2)}</span></h2>
+							</div>
+							<div class="ct-band-r">
+								<p class="ct-band-lema">{ct.data.lema || 'La competición de robótica más grande de la UPM.'}</p>
+								{ct.data.categorias.length > 0 && (
+									<ul class="ct-band-cats">{ct.data.categorias.map((c, i) => <li><span class="idx">{String(i + 1).padStart(2, '0')}</span>{c.nombre}</li>)}</ul>
+								)}
+								{(ct.data.inscripcionDesde || ct.data.inscripcionHasta) && (
+									<p class="ct-inscripcion" data-plazo={`${ct.data.inscripcionDesde}|${ct.data.inscripcionHasta}`} hidden>
+										{ct.data.inscripcionEnlace && <a class="btn primary" href={ct.data.inscripcionEnlace} target={/^https?:/.test(ct.data.inscripcionEnlace) ? '_blank' : undefined} rel="noopener">Inscríbete <span class="arr">→</span></a>}
+										<span>Inscripciones abiertas</span>
+									</p>
+								)}
+								<a class="btn primary" href={ct.url}>Ver las pruebas <span class="arr">→</span></a>
+								<p class="ct-band-hist">Ediciones anteriores: {ediciones.slice(1).map((e) => <a href={e.url}>{e.data.anio}</a>)}</p>
+							</div>
+						</div>
+					</section>
+				)}
 			</div>
-			<div class="hero-art">
-				<figure class="frame hero-photo" data-label="Reset">
-					<img src={href('fotos/inicio/portada.jpg')} alt="Miembros de Reset en el taller" onerror="__img(this)" fetchpriority="high" />
-				</figure>
-				<svg class="trace" viewBox="0 0 220 140" aria-hidden="true">
-					<path d="M2 20 H90 L120 50 V110 H218" />
-					<circle cx="2" cy="20" r="4" /><circle cx="120" cy="80" r="3" /><circle cx="218" cy="110" r="4" />
-				</svg>
-				<p class="hero-tag"><span class="idx">REF.</span> Taller Reset · ETSII</p>
+			<Fragment set:html={trozos[3]} />
+			<div data-keep="noticias">
+				{ultimas.length > 0 && (
+					<section class="wrap news">
+						<header class="sec-head reveal"><span class="idx">§03</span><h2>Noticias</h2><span class="rule"></span><a class="more" href={href('noticias')}>Todas →</a></header>
+						<div class="news-grid">
+							{ultimas.map((n, i) => (
+								<a class="news-card reveal" style={`--d:${i}`} href={n.url}>
+									<figure class="frame" data-label={n.data.etiquetas[0] ?? 'Reset'}>
+										{n.data.portada && <img src={img(n.data.portada)} alt="" loading="lazy" onerror="__img(this)" />}
+									</figure>
+									<p class="news-meta">{n.data.fecha && <time datetime={n.data.fecha}>{fecha(n.data.fecha)}</time>}{n.data.etiquetas[0] && <span>{n.data.etiquetas[0]}</span>}</p>
+									<h3>{n.data.titulo}</h3>
+								</a>
+							))}
+						</div>
+					</section>
+				)}
 			</div>
+			<Fragment set:html={trozos[4]} />
 		</div>
-	</section>
-
-	<section class="areas">
-		<div class="wrap areas-in">
-			{areas.map((a, i) => (
-				<div class="area reveal" style={`--d:${i}`}>
-					<span class="idx">{a.n}</span>
-					<h2>{a.t}</h2>
-					<p>{a.d}</p>
-				</div>
-			))}
-		</div>
-	</section>
-
-	<section class="wrap about">
-		<header class="sec-head reveal"><span class="idx">§01</span><h2>Quiénes somos</h2><span class="rule"></span></header>
-		<div class="about-in">
-			<p class="about-big reveal">Una asociación <em>sin ánimo de lucro</em> donde el conocimiento se comparte libremente entre todos los miembros y cualquiera con ganas de aprender.</p>
-			<div class="prose reveal" style="--d:2">
-				<p>Reset pertenece a la ETSII-UPM y se dedica a la robótica, la electrónica, la automática y la informática. Realizamos proyectos propios, organizamos competiciones, representamos a la Universidad Politécnica de Madrid en eventos e impartimos talleres totalmente gratuitos.</p>
-				<p>Además, ofrecemos un servicio de impresión 3D y préstamo de herramientas exclusivo para el alumnado y el personal de la ETSII. Para todo ello contamos con el apoyo de varios departamentos, unidades docentes y otras asociaciones.</p>
-				{curso && <p><a href={curso.url}>Conoce al equipo del curso {curso.data.curso} →</a></p>}
-			</div>
-		</div>
-	</section>
-
-	{ct && (
-		<section class="ct-band">
-			<div class="ct-band-grid" aria-hidden="true"></div>
-			<div class="wrap ct-band-in">
-				<div>
-					<p class="kicker on-dark"><span>Competición</span><span>Edición {ct.data.anio}</span></p>
-					<h2 class="ct-band-t">Cyber<br />tech<span>{String(ct.data.anio).slice(2)}</span></h2>
-				</div>
-				<div class="ct-band-r">
-					<p class="ct-band-lema">{ct.data.lema || 'La competición de robótica más grande de la UPM.'}</p>
-					{ct.data.categorias.length > 0 && (
-						<ul class="ct-band-cats">{ct.data.categorias.map((c, i) => <li><span class="idx">{String(i + 1).padStart(2, '0')}</span>{c.nombre}</li>)}</ul>
-					)}
-					<a class="btn primary" href={ct.url}>Ver las pruebas <span class="arr">→</span></a>
-					<p class="ct-band-hist">Ediciones anteriores: {ediciones.slice(1).map((e) => <a href={e.url}>{e.data.anio}</a>)}</p>
-				</div>
-			</div>
-		</section>
-	)}
-
-	<section class="wrap services">
-		<header class="sec-head reveal"><span class="idx">§02</span><h2>Qué hacemos</h2><span class="rule"></span></header>
-		<div class="svc-grid">
-			{servicios.map((s, i) => (
-				<a class="svc reveal" style={`--d:${i}`} href={href(s.u)}>
-					<span class="idx">{String(i + 1).padStart(2, '0')}</span>
-					<h3>{s.t}</h3>
-					<p>{s.d}</p>
-					<span class="svc-arr" aria-hidden="true">→</span>
-				</a>
-			))}
-		</div>
-	</section>
-
-	{ultimas.length > 0 && (
-		<section class="wrap news">
-			<header class="sec-head reveal"><span class="idx">§03</span><h2>Noticias</h2><span class="rule"></span><a class="more" href={href('noticias')}>Todas →</a></header>
-			<div class="news-grid">
-				{ultimas.map((n, i) => (
-					<a class="news-card reveal" style={`--d:${i}`} href={n.url}>
-						<figure class="frame" data-label={n.data.etiquetas[0] ?? 'Reset'}>
-							{n.data.portada && <img src={img(n.data.portada)} alt="" loading="lazy" onerror="__img(this)" />}
-						</figure>
-						<p class="news-meta">{n.data.fecha && <time datetime={n.data.fecha}>{fecha(n.data.fecha)}</time>}{n.data.etiquetas[0] && <span>{n.data.etiquetas[0]}</span>}</p>
-						<h3>{n.data.titulo}</h3>
-					</a>
-				))}
-			</div>
-		</section>
-	)}
-
-	<section class="join">
-		<div class="wrap join-in">
-			<h2 class="display">¿Te <em>apuntas?</em></h2>
-			<div>
-				<p>Ser miembro de Reset es gratis. Ven a construir, enseñar, organizar Cybertech o simplemente a pasarlo bien y hacer amigos.</p>
-				<a class="btn" href={href('participa')}>Quiero participar <span class="arr">→</span></a>
-			</div>
-		</div>
-	</section>
+	</div>
 </Layout>
 
-<style>
-	.hero { padding: clamp(2.5rem, 7vw, 6rem) 0 clamp(3rem, 7vw, 5rem); border-bottom: 1px solid var(--negro); overflow: hidden; }
-	.hero-in { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 3rem 4rem; align-items: center; }
-	.hero-t { font-size: clamp(2.3rem, 5.7vw, 5.2rem); }
-	.ln { display: block; overflow: hidden; padding-bottom: .04em; }
-	.ln > span { display: inline-block; animation: rise .9s var(--ease) both; }
-	.ln:nth-child(2) > span { animation-delay: .08s; }
-	.ln:nth-child(3) > span { animation-delay: .16s; }
-	@keyframes rise { from { transform: translateY(105%); } }
-	.hero-lede { max-width: 50ch; margin: 2rem 0 2.2rem; font-size: 1.12rem; color: #3b3a36; animation: fade 1s var(--ease) .35s both; }
-	.hero-cta { display: flex; flex-wrap: wrap; gap: 1rem; animation: fade 1s var(--ease) .45s both; }
-	@keyframes fade { from { opacity: 0; transform: translateY(10px); } }
-	.hero-art { position: relative; animation: fade 1.1s var(--ease) .2s both; }
-	.hero-photo { aspect-ratio: 4 / 5; box-shadow: 12px 12px 0 var(--naranja); }
-	.trace { position: absolute; left: -38%; bottom: 12%; width: 55%; overflow: visible; z-index: 3; pointer-events: none; }
-	.trace path { fill: none; stroke: var(--naranja); stroke-width: 2.5; stroke-dasharray: 400; stroke-dashoffset: 400; animation: draw 1.6s var(--ease) .8s forwards; }
-	.trace circle { fill: var(--papel); stroke: var(--naranja); stroke-width: 2.5; opacity: 0; animation: fade .4s 1.8s forwards; }
-	@keyframes draw { to { stroke-dashoffset: 0; } }
-	.hero-tag { margin: 1.2rem 0 0; font-family: var(--f-mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; color: var(--gris); }
-	@media (max-width: 860px) { .hero-in { grid-template-columns: 1fr; } .hero-art { max-width: 420px; } .trace { display: none; } }
+<script>
+	/* ───── Carrusel: pasa solo, se para al pasar el ratón; en modo edición enseña la diapositiva que editas ───── */
+	const INTERVALO = 6500;
+	const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-	.areas { background: var(--blanco); border-bottom: 1px solid var(--negro); }
-	.areas-in { display: grid; grid-template-columns: repeat(4, 1fr); }
-	.area { padding: 2rem 1.6rem 2.2rem 0; border-right: 1px solid var(--linea); }
-	.area + .area { padding-left: 1.6rem; }
-	.area:last-child { border-right: 0; }
-	.area h2 { margin: .6rem 0 .5rem; font-family: var(--f-display); font-stretch: 118%; font-weight: 800; font-size: 1.35rem; text-transform: uppercase; letter-spacing: -.01em; }
-	.area p { margin: 0; font-size: .92rem; color: var(--gris); }
-	@media (max-width: 860px) { .areas-in { grid-template-columns: 1fr 1fr; } .area:nth-child(2) { border-right: 0; } .area:nth-child(3) { padding-left: 0; } .area:nth-child(n+3) { border-top: 1px solid var(--linea); } }
-	@media (max-width: 520px) { .areas-in { grid-template-columns: 1fr; } .area, .area + .area { padding: 1.4rem 0; border-right: 0; border-top: 1px solid var(--linea); } .area:first-child { border-top: 0; } }
+	function carrusel(car: HTMLElement) {
+		if (car.dataset.ok) return;
+		car.dataset.ok = '1';
+		const slides = [...car.querySelectorAll<HTMLElement>('.car-slide')];
+		const dots = [...car.querySelectorAll<HTMLButtonElement>('[data-car-go]')];
+		if (slides.length < 2) return;
+		// Al volver a dibujarse (modo edición, en cada tecla) sigue en la diapositiva en la que estaba
+		const guardada = (window as any).__carIdx;
+		let i = typeof guardada === 'number' && guardada < slides.length ? guardada : Math.max(0, slides.findIndex((s) => s.classList.contains('is-on')));
+		car.style.setProperty('--car-t', `${INTERVALO}ms`);
+		// La barra de cada diapositiva se llena con el tiempo que lleva; las anteriores quedan llenas.
+		// Al pausar (ratón encima, fuera de la pantalla) se queda donde estaba y sigue desde ahí.
+		let timer = 0, inicio = 0, queda = INTERVALO;
+		let encima = false, enPantalla = false;
+		const corriendo = () => !reducido && enPantalla && !encima;
+		const ir = (n: number) => {
+			i = (n + slides.length) % slides.length;
+			(window as any).__carIdx = i;
+			slides.forEach((s, k) => s.classList.toggle('is-on', k === i));
+			dots.forEach((d, k) => {
+				d.classList.toggle('hecho', k < i);
+				k === i ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current');
+			});
+			// reinicia la animación de la barra actual
+			car.classList.remove('anda'); void car.offsetWidth; car.classList.add('anda');
+			queda = INTERVALO;
+			reanudar();
+		};
+		const reanudar = () => {
+			clearTimeout(timer);
+			const va = corriendo();
+			car.classList.toggle('pausado', !va);
+			if (!va) return;
+			inicio = performance.now();
+			timer = window.setTimeout(() => ir(i + 1), queda);
+		};
+		const parar = () => {
+			if (car.classList.contains('pausado')) return;
+			clearTimeout(timer);
+			queda = Math.max(0, queda - (performance.now() - inicio));
+			car.classList.add('pausado');
+		};
+		const pausa = (p: boolean) => { encima = p; p ? parar() : reanudar(); };
+		// Solo cuenta mientras el carrusel se ve
+		new IntersectionObserver(([e]) => { enPantalla = e.isIntersecting; enPantalla ? reanudar() : parar(); }, { threshold: 0.4 }).observe(car);
+		car.querySelector('[data-car-prev]')?.addEventListener('click', () => ir(i - 1));
+		car.querySelector('[data-car-next]')?.addEventListener('click', () => ir(i + 1));
+		dots.forEach((d) => d.addEventListener('click', () => ir(Number(d.dataset.carGo))));
+		car.addEventListener('pointerenter', () => pausa(true));
+		car.addEventListener('pointerleave', () => pausa(false));
+		car.addEventListener('focusin', () => pausa(true));
+		car.addEventListener('focusout', () => pausa(false));
+		// Deslizar con el dedo
+		let x0 = 0;
+		car.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+		car.addEventListener('touchend', (e) => { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) ir(i + (dx < 0 ? 1 : -1)); });
+		(car as any).__ir = (n: number) => { encima = true; ir(n); parar(); };
+		ir(i);
+	}
+	const iniciar = () => document.querySelectorAll<HTMLElement>('[data-car]').forEach(carrusel);
+	iniciar();
+	document.addEventListener('reset:rendered', iniciar);
+	document.addEventListener('reset:editando', (e) => {
+		const m = String((e as CustomEvent).detail ?? '').match(/^diapositivas\.(\d+)/);
+		const car = document.querySelector<HTMLElement>('[data-car]') as any;
+		if (m && car?.__ir) car.__ir(Number(m[1]));
+	});
 
-	.about, .services, .news { margin-top: clamp(4rem, 9vw, 7rem); }
-	.about-in { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem 4rem; }
-	.about-big { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: clamp(1.5rem, 2.8vw, 2.25rem); line-height: 1.15; letter-spacing: -.02em; }
-	.about-big em { font-style: normal; color: var(--naranja); }
-	@media (max-width: 860px) { .about-in { grid-template-columns: 1fr; } }
+	/* ───── Las secciones aparecen al entrar en pantalla (de desenfocadas a nítidas), una vez ───── */
+	const SECCIONES_INICIO = ['[data-car]', '.inicio .areas', '.inicio .about', '.inicio [data-keep="cybertech"] > section', '.inicio .services', '.inicio [data-keep="noticias"] > section', '.inicio .join'];
+	if (!document.documentElement.classList.contains('is-admin') && !reducido) {
+		const ver = new IntersectionObserver((entries) => {
+			for (const e of entries) if (e.isIntersecting) { e.target.classList.add('visto'); ver.unobserve(e.target); }
+		}, { rootMargin: '0px 0px -30% 0px' }); // al pasar su borde superior del 70% de la pantalla (arriba del todo, el carrusel aún no)
+		document.querySelectorAll<HTMLElement>(SECCIONES_INICIO.join(',')).forEach((el) => { el.classList.add('aparece'); ver.observe(el); });
+	}
 
-	.ct-band { position: relative; margin-top: clamp(4rem, 9vw, 7rem); background: var(--azul); color: var(--blanco); overflow: hidden; }
-	.ct-band-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 48px 48px; }
-	.ct-band-in { position: relative; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem 4rem; align-items: end; padding-block: clamp(3.5rem, 8vw, 6rem); }
-	.ct-band-t { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: clamp(3.5rem, 11vw, 9.5rem); line-height: .82; letter-spacing: -.045em; }
-	.ct-band-t span { color: transparent; -webkit-text-stroke: 2px var(--naranja); margin-left: .08em; }
-	.ct-band-lema { margin: 0 0 1.5rem; font-size: 1.2rem; color: #d3e2f0; max-width: 32ch; }
-	.ct-band-cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 2rem; padding: 0; list-style: none; }
-	.ct-band-cats li { display: flex; gap: .5rem; align-items: baseline; padding: .4rem .8rem; border: 1px solid rgba(255,255,255,.35); font-weight: 600; }
-	.ct-band-hist { margin: 1.8rem 0 0; font-family: var(--f-mono); font-size: .76rem; color: #a9c3dc; }
-	.ct-band-hist a { margin-left: .6rem; color: var(--blanco); }
-	.ct-band-hist a:hover { color: var(--naranja-vivo); }
-	@media (max-width: 860px) { .ct-band-in { grid-template-columns: 1fr; } }
+	/* ───── Botón para bajar: se esconde al hacer scroll y vuelve tras un rato quieto, si queda algo debajo ───── */
+	const baja = document.querySelector<HTMLButtonElement>('.baja');
+	let quieto = 0;
+	const quedaDebajo = () => innerHeight + scrollY < document.documentElement.scrollHeight - 160;
+	const esconder = () => {
+		baja?.classList.add('fuera');
+		clearTimeout(quieto);
+		quieto = window.setTimeout(() => baja?.classList.toggle('fuera', !quedaDebajo()), 2600);
+	};
+	addEventListener('scroll', esconder, { passive: true });
+	baja?.classList.toggle('fuera', !quedaDebajo());
+	// Lleva al principio de la siguiente sección, justo debajo de la cabecera (nunca a medias de una)
+	baja?.addEventListener('click', () => {
+		const cabecera = document.querySelector<HTMLElement>('.nav')?.offsetHeight ?? 72;
+		const destinos = [...document.querySelectorAll<HTMLElement>('[data-car] .car-track, .inicio .areas, .inicio .about, .inicio [data-keep="cybertech"] > section, .inicio .services, .inicio [data-keep="noticias"] > section, .inicio .join')]
+			// offsetTop no cuenta el desplazamiento de la animación de entrada (getBoundingClientRect sí)
+			.map((el) => { let y = 0; for (let n: HTMLElement | null = el; n; n = n.offsetParent as HTMLElement | null) y += n.offsetTop; return y - cabecera - 20; })
+			.sort((a, b) => a - b);
+		const y = destinos.find((d) => d > scrollY + 10);
+		if (y !== undefined) scrollTo({ top: y, behavior: reducido ? 'auto' : 'smooth' });
+	});
 
-	.svc-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--negro); background: var(--blanco); }
-	.svc { position: relative; padding: 1.6rem 1.5rem 3.5rem; text-decoration: none; border-right: 1px solid var(--negro); transition: background .25s var(--ease), color .25s; }
-	.svc:last-child { border-right: 0; }
-	.svc h3 { margin: .8rem 0 .5rem; font-size: 1.25rem; }
-	.svc p { margin: 0; font-size: .92rem; color: var(--gris); transition: color .25s; }
-	.svc-arr { position: absolute; left: 1.5rem; bottom: 1.3rem; font-size: 1.2rem; transition: transform .25s var(--ease); }
-	.svc:hover { background: var(--azul); color: var(--blanco); }
-	.svc:hover p { color: #c3d4e4; }
-	.svc:hover .svc-arr { transform: translateX(6px); color: var(--naranja-vivo); }
-	@media (max-width: 860px) { .svc-grid { grid-template-columns: 1fr 1fr; } .svc:nth-child(2) { border-right: 0; } .svc:nth-child(n+3) { border-top: 1px solid var(--negro); } }
-	@media (max-width: 520px) { .svc-grid { grid-template-columns: 1fr; } .svc { border-right: 0; border-top: 1px solid var(--negro); } .svc:first-child { border-top: 0; } }
 
-	.more { font-family: var(--f-mono); font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; white-space: nowrap; }
-	.more:hover { color: var(--naranja); }
-	.news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4rem 2rem; }
-	.news-card { text-decoration: none; }
-	.news-card .frame { aspect-ratio: var(--a3); --mark: transparent; transition: box-shadow .25s var(--ease), transform .25s var(--ease); }
-	.news-card:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--sombra-n); }
-	.news-meta { display: flex; gap: 1rem; margin: 1.1rem 0 .4rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
-	.news-meta span { color: var(--naranja); }
-	.news-card h3 { margin: 0; font-size: 1.15rem; line-height: 1.3; }
-	.news-card:hover h3 { text-decoration: underline; text-decoration-color: var(--naranja); text-underline-offset: .2em; }
-	@media (max-width: 860px) { .news-grid { grid-template-columns: 1fr; max-width: 520px; } }
+	/* ───── RESET en grande que vuela hasta la cabecera al hacer scroll ───── */
+	const grande = document.querySelector<HTMLImageElement>('.inicio-logo img');
+	const peque = document.querySelector<HTMLImageElement>('.nav-logo img');
+	const raiz = document.documentElement;
+	if (grande && peque && !reducido) {
+		raiz.classList.add('logo-volando');
+		let origen: DOMRect, origenY = 0;
+		const medir = () => {
+			grande.style.transform = '';
+			origen = grande.getBoundingClientRect();
+			origenY = origen.top + scrollY; // posición en la página, sin scroll
+		};
+		const suave = (t: number) => t * t * (3 - 2 * t); // empieza y termina despacio
+		// El avance que se ve (p) persigue al que marca el scroll en cada fotograma: así no va a saltos
+		// aunque la rueda del ratón mueva la página de golpe.
+		let p = 0, corriendo = false;
+		const objetivo = () => Math.min(1, Math.max(0, scrollY / Math.max(160, origenY + origen.height * 0.6)));
+		const pintar = () => {
+			const destino = peque.getBoundingClientRect();
+			const e = suave(p);
+			const escala = 1 + (destino.width / origen.width - 1) * e;
+			const x = (destino.left - origen.left) * e;
+			const yAhora = origenY - scrollY; // dónde estaría sin moverlo
+			const y = (origenY + (destino.top - origenY) * e) - yAhora;
+			grande.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${escala})`;
+			raiz.classList.toggle('logo-llegado', p >= 0.999);
+		};
+		const bucle = () => {
+			const t = objetivo();
+			p += (t - p) * 0.22;
+			if (Math.abs(t - p) < 0.001) p = t;
+			pintar();
+			if (p !== t) requestAnimationFrame(bucle); else corriendo = false;
+		};
+		const pedir = () => { if (!corriendo) { corriendo = true; requestAnimationFrame(bucle); } };
+		const preparar = () => { medir(); p = objetivo(); pintar(); };
+		if (grande.complete) preparar(); else grande.addEventListener('load', preparar, { once: true });
+		addEventListener('scroll', pedir, { passive: true });
+		addEventListener('resize', preparar);
+	}
+</script>
 
-	.join { margin-top: clamp(4rem, 9vw, 7rem); background: var(--naranja); border-top: 1px solid var(--negro); }
-	.join-in { display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem 4rem; align-items: center; padding-block: clamp(3rem, 7vw, 5rem); }
-	.join .display em { color: var(--blanco); }
-	.join p { margin: 0 0 1.5rem; font-size: 1.1rem; max-width: 40ch; }
-	@media (max-width: 860px) { .join-in { grid-template-columns: 1fr; } }
+<style is:global>
+	/* ───── RESET grande ───── */
+	.inicio-logo { padding-top: clamp(2rem, 5vw, 4rem); }
+	.inicio-logo .logo { display: block; height: auto; }
+	.inicio-logo .logo img { display: block; width: min(100%, 980px); height: auto; transform-origin: 0 0; will-change: transform; position: relative; z-index: 60; }
+	/* Con un desplegable abierto, el logo pasa por debajo de la cabecera: el menú siempre delante */
+	html:has(.nav-item:hover, .nav-item:focus-within, .nav.is-open) .inicio-logo .logo img { z-index: 1; }
+	.inicio-logo .logo-txt { font-size: clamp(3rem, 14vw, 9rem); }
+	/* Mientras vuela, el logo pequeño de la cabecera espera; al llegar, se cambian */
+	html.logo-volando .nav-logo { opacity: 0; transition: opacity .15s; }
+	html.logo-volando.logo-llegado .nav-logo { opacity: 1; }
+	html.logo-volando.logo-llegado .inicio-logo img { opacity: 0; }
+
+
+	/* ───── Primera pantalla y botón para bajar ───── */
+	/* El hueco hace que el carrusel empiece justo debajo de donde se corta la pantalla (lo calcula el script) */
+	/* Cada sección entra desenfocada y algo más abajo, y se enfoca al aparecer (lo activa el script) */
+	.aparece { opacity: 0; filter: blur(12px); transform: translateY(32px); transition: opacity 1s var(--ease), filter 1s var(--ease), transform 1s var(--ease); }
+	.aparece.visto { opacity: 1; filter: none; transform: none; }
+	.baja {
+		position: fixed; z-index: 40; left: 50%; bottom: clamp(1rem, 4vh, 2.2rem); transform: translateX(-50%);
+		display: grid; justify-items: center; gap: 6px; width: 44px; padding: 10px 0 12px;
+		border: 1px solid var(--negro); background: var(--papel); cursor: pointer;
+		box-shadow: 3px 3px 0 var(--negro); transition: opacity .3s, transform .3s var(--ease), box-shadow .2s;
+	}
+	.baja:hover { box-shadow: 5px 5px 0 var(--naranja); }
+	.baja:focus-visible { outline: 2px solid var(--naranja); outline-offset: 3px; }
+	.baja.fuera { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+	/* Pista de circuito con un punto naranja que baja por ella */
+	.baja-pista { position: relative; display: block; width: 2px; height: 26px; background: linear-gradient(var(--negro) 0 0) center / 1px 100% no-repeat; }
+	.baja-pista::after { content: ''; position: absolute; left: 50%; top: 0; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--naranja); animation: baja-punto 1.8s var(--ease) infinite; }
+	@keyframes baja-punto { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(22px); opacity: 0; } }
+	.baja-flecha { display: block; width: 9px; height: 9px; border-right: 2px solid var(--negro); border-bottom: 2px solid var(--negro); transform: rotate(45deg); margin-top: -4px; }
+	@media (prefers-reduced-motion: reduce) { .baja-pista::after { animation: none; top: 50%; } }
+	html.is-admin .baja { display: none; }
+	/* ───── Lema + carrusel ───── */
+	.inicio .hero { padding: clamp(1.5rem, 3vw, 2.5rem) 0 clamp(3rem, 6vw, 4.5rem); border-bottom: 1px solid var(--negro); }
+	.inicio .hero-copy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem 4rem; align-items: end; margin-bottom: clamp(1.8rem, 4vw, 2.8rem); }
+	.inicio .hero-t { margin: 0; font-family: var(--f-display); font-stretch: 118%; font-weight: 800; text-transform: uppercase; font-size: clamp(1.9rem, 3.6vw, 3.3rem); line-height: .95; letter-spacing: -.03em; }
+	.inicio .hero-t em { font-style: normal; color: var(--naranja); }
+	.inicio .hero-lede { margin: 0 0 1.4rem; font-size: 1.05rem; color: #3b3a36; max-width: 52ch; }
+	.inicio .hero-cta { display: flex; flex-wrap: wrap; gap: 1rem; }
+	.inicio .hero-cta [data-keep] { display: contents; }
+	@media (max-width: 860px) { .inicio .hero-copy { grid-template-columns: 1fr; } }
+
+	.car { position: relative; }
+	.car-track { position: relative; aspect-ratio: 16 / 7; background: var(--azul); border: 1px solid var(--negro); box-shadow: 12px 12px 0 var(--naranja); overflow: hidden; }
+	@media (max-width: 760px) { .car-track { aspect-ratio: 4 / 3; box-shadow: 7px 7px 0 var(--naranja); } }
+	.car-slide { position: absolute; inset: 0; margin: 0; opacity: 0; visibility: hidden; transition: opacity .9s var(--ease), visibility 0s .9s; }
+	.car-slide.is-on { opacity: 1; visibility: visible; transition-delay: 0s; z-index: 1; }
+	.car-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); transition: transform 7s linear; }
+	.car-slide.is-on img { transform: scale(1); }
+	@media (prefers-reduced-motion: reduce) { .car-slide img, .car-slide.is-on img { transform: none; transition: none; } }
+	/* En modo edición la página se vuelve a dibujar en cada tecla: sin fundidos, para que la foto se vea al instante */
+	html.is-admin .car-slide, html.is-admin .car-slide img, html.is-admin .car-slide .car-cap > * { transition: none !important; }
+	html.is-admin .car-slide img { transform: none; }
+	.car-slide::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7, 36, 64, .82) 0%, rgba(7, 36, 64, .45) 38%, transparent 65%); pointer-events: none; }
+	.car-cap { position: absolute; z-index: 2; left: clamp(1.2rem, 4vw, 3rem); bottom: clamp(1.2rem, 4vw, 3rem); max-width: min(30rem, 80%); display: grid; gap: .5rem; color: var(--blanco); }
+	.car-n { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; color: var(--naranja-vivo); }
+	.car-t { font-family: var(--f-display); font-stretch: 120%; font-weight: 800; text-transform: uppercase; font-size: clamp(1.6rem, 4vw, 3.2rem); line-height: .95; letter-spacing: -.02em; }
+	.car-x { font-size: clamp(.95rem, 1.4vw, 1.1rem); color: #dce8f3; max-width: 40ch; }
+	.car-a { justify-self: start; margin-top: .4rem; padding: .5rem .9rem; background: var(--naranja); color: var(--negro); font-family: var(--f-mono); font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; transition: background .2s; }
+	.car-a:hover { background: var(--naranja-vivo); }
+	.car-a span { margin-left: .3rem; }
+	/* Texto que entra al cambiar de diapositiva */
+	.car-slide .car-cap > * { opacity: 0; transform: translateY(12px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
+	.car-slide.is-on .car-cap > * { opacity: 1; transform: none; }
+	.car-slide.is-on .car-cap > :nth-child(2) { transition-delay: .1s; }
+	.car-slide.is-on .car-cap > :nth-child(3) { transition-delay: .18s; }
+	.car-slide.is-on .car-cap > :nth-child(4) { transition-delay: .26s; }
+	.car-ui { display: flex; align-items: center; gap: .8rem; margin-top: 1.2rem; }
+	.car-btn { width: 40px; height: 40px; border: 1px solid var(--negro); background: var(--blanco); cursor: pointer; font-size: 1rem; transition: background .2s, color .2s; }
+	.car-btn:hover { background: var(--negro); color: var(--papel); }
+	.car-dots { display: flex; flex: 1; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+	.car-dots li { flex: 1; }
+	.car-dots button { display: block; width: 100%; padding: .7rem 0; border: 0; background: none; cursor: pointer; }
+	/* Cada segmento es una línea que se llena con el tiempo de su foto */
+	.car-dots i { position: relative; display: block; height: 3px; background: #d8d3c6; overflow: hidden; transition: height .2s; }
+	.car-dots i::after { content: ''; position: absolute; inset: 0; background: var(--naranja); transform: scaleX(0); transform-origin: left; }
+	.car-dots .hecho i::after { transform: scaleX(1); }
+	.car.anda .car-dots [aria-current] i::after { animation: car-prog var(--car-t, 6.5s) linear forwards; }
+	.car.pausado .car-dots [aria-current] i::after { animation-play-state: paused; }
+	.car-dots button:hover i { height: 5px; }
+	@keyframes car-prog { to { transform: scaleX(1); } }
+	@media (prefers-reduced-motion: reduce) { .car-dots [aria-current] i::after { animation: none !important; transform: scaleX(1); } }
+	.car-adm { margin-top: .8rem; }
+	.car-vacio { display: grid; place-items: center; }
+
+	/* ───── Áreas ───── */
+	.inicio .areas { background: var(--blanco); border-bottom: 1px solid var(--negro); }
+	.inicio .areas-in { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+	.inicio .area { padding: 2rem 1.6rem 2.2rem 0; border-right: 1px solid var(--linea); }
+	.inicio .area + .area { padding-left: 1.6rem; }
+	.inicio .area:last-child { border-right: 0; }
+	.inicio .area h2 { margin: .6rem 0 .5rem; font-family: var(--f-display); font-stretch: 118%; font-weight: 800; font-size: 1.35rem; text-transform: uppercase; letter-spacing: -.01em; }
+	.inicio .area p { margin: 0; font-size: .92rem; color: var(--gris); }
+	@media (max-width: 520px) { .inicio .area, .inicio .area + .area { padding: 1.4rem 0; border-right: 0; border-top: 1px solid var(--linea); } .inicio .area:first-child { border-top: 0; } }
+
+	/* ───── Quiénes somos ───── */
+	.inicio .about, .inicio .services, .inicio .news { margin-top: clamp(4rem, 9vw, 7rem); }
+	.inicio .about-in { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem 4rem; }
+	.inicio .about-big { margin: 0; font-family: var(--f-display); font-stretch: 112%; font-weight: 700; font-size: clamp(1.5rem, 2.8vw, 2.25rem); line-height: 1.15; letter-spacing: -.02em; }
+	.inicio .about-big em { font-style: normal; color: var(--naranja); }
+	@media (max-width: 860px) { .inicio .about-in { grid-template-columns: 1fr; } }
+
+	/* ───── Cybertech (se actualiza sola) ───── */
+	.inicio .ct-band { position: relative; margin-top: clamp(4rem, 9vw, 7rem); background: var(--azul); color: var(--blanco); overflow: hidden; }
+	.inicio .ct-band-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 48px 48px; }
+	.inicio .ct-band-in { position: relative; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem 4rem; align-items: end; padding-block: clamp(3.5rem, 8vw, 6rem); }
+	.inicio .ct-band-t { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: clamp(3.5rem, 11vw, 9.5rem); line-height: .82; letter-spacing: -.045em; }
+	.inicio .ct-band-t span { color: transparent; -webkit-text-stroke: 2px var(--naranja); margin-left: .08em; }
+	.inicio .ct-band-lema { margin: 0 0 1.5rem; font-size: 1.2rem; color: #d3e2f0; max-width: 32ch; }
+	.inicio .ct-band-cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 2rem; padding: 0; list-style: none; }
+	.inicio .ct-band-cats li { display: flex; gap: .5rem; align-items: baseline; padding: .4rem .8rem; border: 1px solid rgba(255,255,255,.35); font-weight: 600; }
+	.inicio .ct-band-hist { margin: 1.8rem 0 0; font-family: var(--f-mono); font-size: .76rem; color: #a9c3dc; }
+	.inicio .ct-band-hist a { margin-left: .6rem; color: var(--blanco); }
+	.inicio .ct-band-hist a:hover { color: var(--naranja-vivo); }
+	@media (max-width: 860px) { .inicio .ct-band-in { grid-template-columns: 1fr; } }
+
+	/* ───── Qué hacemos ───── */
+	.inicio .svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border: 1px solid var(--negro); background: var(--blanco); }
+	.inicio .svc { position: relative; padding: 1.6rem 1.5rem 3.5rem; text-decoration: none; border-right: 1px solid var(--negro); transition: background .25s var(--ease), color .25s; }
+	.inicio .svc:last-child { border-right: 0; }
+	.inicio .svc h3 { margin: .8rem 0 .5rem; font-size: 1.25rem; }
+	.inicio .svc p { margin: 0; font-size: .92rem; color: var(--gris); transition: color .25s; }
+	.inicio .svc-arr { position: absolute; left: 1.5rem; bottom: 1.3rem; font-size: 1.2rem; transition: transform .25s var(--ease); }
+	.inicio a.svc:hover { background: var(--azul); color: var(--blanco); }
+	.inicio a.svc:hover p { color: #c3d4e4; }
+	.inicio a.svc:hover .svc-arr { transform: translateX(6px); color: var(--naranja-vivo); }
+	@media (max-width: 520px) { .inicio .svc { border-right: 0; border-top: 1px solid var(--negro); } .inicio .svc:first-child { border-top: 0; } }
+
+	/* ───── Noticias (se actualizan solas) ───── */
+	.inicio .more { font-family: var(--f-mono); font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; white-space: nowrap; }
+	.inicio .more:hover { color: var(--naranja); }
+	.inicio .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4rem 2rem; }
+	.inicio .news-card { text-decoration: none; }
+	.inicio .news-card .frame { aspect-ratio: var(--a3); --mark: transparent; transition: box-shadow .25s var(--ease), transform .25s var(--ease); }
+	.inicio .news-card:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--sombra-n); }
+	.inicio .news-meta { display: flex; gap: 1rem; margin: 1.1rem 0 .4rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	.inicio .news-meta span { color: var(--naranja); }
+	.inicio .news-card h3 { margin: 0; font-size: 1.15rem; line-height: 1.3; }
+	.inicio .news-card:hover h3 { text-decoration: underline; text-decoration-color: var(--naranja); text-underline-offset: .2em; }
+	@media (max-width: 860px) { .inicio .news-grid { grid-template-columns: 1fr; max-width: 520px; } }
+
+	/* ───── Únete ───── */
+	.inicio .join { margin-top: clamp(4rem, 9vw, 7rem); background: var(--naranja); border-top: 1px solid var(--negro); }
+	.inicio .join-in { display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem 4rem; align-items: center; padding-block: clamp(3rem, 7vw, 5rem); }
+	.inicio .join .display em { font-style: normal; color: var(--blanco); }
+	.inicio .join p { margin: 0 0 1.5rem; font-size: 1.1rem; max-width: 40ch; }
+	@media (max-width: 860px) { .inicio .join-in { grid-template-columns: 1fr; } }
 </style>

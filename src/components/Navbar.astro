@@ -20,9 +20,11 @@ interface Hijo {
 	/** Texto corto en gris debajo del título ("C, Python, Linux…") */
 	desc?: string;
 	/** Panel lateral con las ediciones anteriores (y, en modo edición, "+ Nueva edición") */
-	fly?: { hijos: Hijo[]; nueva: string };
+	fly?: { hijos: Hijo[]; nueva: string; nuevaTexto?: string };
 	/** Casilla «Destacar en el menú»: estrella y franja naranja, y sale el primero */
 	resaltado?: boolean;
+	/** Plazo "desde|hasta" en el que sale, en naranja, «Inscripciones abiertas» (Cybertech) */
+	plazo?: string;
 }
 interface Entrada { titulo: string; url: string; activo: string; hijos: Hijo[]; noticias?: Ficha[]; admin: Hijo[] }
 
@@ -33,6 +35,26 @@ const limitar = (items: Hijo[], max: number, titulo: string, url: string): Hijo[
 const secciones = Object.keys(SECCIONES) as SeccionKey[];
 const arboles = Object.fromEntries(await Promise.all(secciones.map(async (s) => [s, await getArbol(s)] as const)));
 const [cursos, ediciones, paginas] = await Promise.all([getCursos(), getEdiciones(), getPaginas()]);
+
+/** Proyectos: solo dos entradas. «Activos» abre a un lado los que están en marcha; «Historial», todos por año. */
+const proyectosMenu = (): Entrada => {
+	const activos = arboles.proyectos.raiz.filter((r) => r.listada && r.data.activo);
+	return {
+		titulo: SECCIONES.proyectos.titulo, url: href('proyectos'), activo: 'proyectos',
+		hijos: [
+			{
+				titulo: 'Proyectos activos', url: href('proyectos#activos'),
+				desc: activos.length ? `${activos.length} en marcha` : 'Ahora mismo, ninguno',
+				fly: {
+					nueva: href('editar?tipo=proyectos'), nuevaTexto: SECCIONES.proyectos.nuevo,
+					hijos: limitar(activos.map((r) => ({ titulo: r.data.titulo, url: r.url })), MAX, 'Ver todos', href('proyectos#activos')),
+				},
+			},
+			{ titulo: 'Historial de proyectos', url: href('proyectos#historial'), desc: 'Todos los proyectos, por año' },
+		],
+		admin: [{ titulo: SECCIONES.proyectos.nuevo, url: href('editar?tipo=proyectos') }],
+	};
+};
 
 const seccionMenu = (s: SeccionKey): Entrada => {
 	const { raiz } = arboles[s];
@@ -72,10 +94,11 @@ const isActive = (slug: string) => path.startsWith(href(slug));
 const menu: Entrada[] = [
 	{
 		titulo: 'Cybertech', url: ediciones[0]?.url ?? href(), activo: 'cybertech',
-		hijos: limitar(ediciones.map((e) => ({ titulo: e.label, url: e.url })), MAX, 'Todas las ediciones', href('cybertech')),
+		// La edición con plazo de inscripción lleva al lado «Inscripciones abiertas» mientras dure
+		hijos: limitar(ediciones.map((e) => ({ titulo: e.label, url: e.url, plazo: e.data.inscripcionDesde || e.data.inscripcionHasta ? `${e.data.inscripcionDesde}|${e.data.inscripcionHasta}` : undefined })), MAX, 'Todas las ediciones', href('cybertech')),
 		admin: [{ titulo: 'Nueva edición', url: href('editar?tipo=cybertech') }],
 	},
-	seccionMenu('proyectos'),
+	proyectosMenu(),
 	seccionMenu('talleres'),
 	seccionMenu('servicios'),
 	{
@@ -143,13 +166,13 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 										<li class:list={{ sep: h.sep, 'has-fly': h.fly, 'fly-vacio': h.fly && !h.fly.hijos.length, resaltado: h.resaltado }}>
 											<a href={h.url}>
 												{h.resaltado && <i class="estrella" aria-hidden="true">★</i>}
-												<span class="t">{h.titulo}{h.desc && <small class="desc">{h.desc}</small>}</span>
+												<span class="t">{h.titulo}{h.desc && <small class="desc">{h.desc}</small>}{h.plazo && <em class="plazo" data-plazo={h.plazo} hidden>Inscripciones abiertas</em>}</span>
 											</a>
 											{h.fly && (
 												<div class="fly">
 													<ul>
 														{h.fly.hijos.map((f) => <li class:list={{ sep: f.sep }}><a href={f.url}>{f.titulo}</a></li>)}
-														<li class="adm-only sub-add"><a href={h.fly.nueva}>+ Nueva edición</a></li>
+														<li class="adm-only sub-add"><a href={h.fly.nueva}>+ {h.fly.nuevaTexto ?? 'Nueva edición'}</a></li>
 													</ul>
 												</div>
 											)}
@@ -202,7 +225,7 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 
 	.nav { position: sticky; top: 0; z-index: 50; background: var(--papel); border-bottom: 1px solid var(--negro); }
 	.nav-in { display: flex; align-items: center; gap: 2rem; height: 72px; }
-	.nav-logo { height: 38px; display: flex; text-decoration: none; margin-right: auto; }
+	.nav-logo { height: 46px; display: flex; text-decoration: none; margin-right: auto; }
 	.nav-menu { display: flex; align-items: center; gap: 1.6rem; height: 100%; }
 	.nav-menu > ul { display: flex; height: 100%; margin: 0; padding: 0; list-style: none; }
 	.nav-item { position: relative; display: flex; align-items: center; }
@@ -241,6 +264,14 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 	.fly-vacio .sub-add a { margin-top: 0; }
 	.fly.izq { left: auto; right: 100%; padding: 0 .4rem 0 0; transform: translateX(6px); }
 	.fly.izq::before { inset: 0 0 0 auto; }
+
+	/* «Inscripciones abiertas» al lado de la edición de Cybertech (solo dentro del plazo) */
+	/* Debajo del título, en pequeño y en naranja, con un punto que late: no ensancha el menú */
+	.plazo { display: flex; align-items: center; gap: .4rem; margin-top: .2rem; font-style: normal; font-family: var(--f-mono); font-size: .64rem; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: var(--naranja); }
+	.plazo[hidden] { display: none; }
+	.plazo::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--naranja); box-shadow: 0 0 0 0 rgba(220, 135, 0, .6); animation: plazo-late 1.8s ease-out infinite; }
+	@keyframes plazo-late { 70% { box-shadow: 0 0 0 7px rgba(220, 135, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 135, 0, 0); } }
+	@media (prefers-reduced-motion: reduce) { .plazo::before { animation: none; } }
 
 	/* Descripción corta debajo del título */
 	.sub .desc { display: block; margin-top: .15rem; max-width: 30ch; font-size: .78rem; font-weight: 400; line-height: 1.3; color: var(--gris); }

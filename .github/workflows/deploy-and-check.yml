@@ -1,19 +1,32 @@
 name: Desplegar en GitHub Pages
 
+# La web de main se publica en la raíz (…github.io/PruebasWeb/) y cada rama tiene su vista previa
+# en …github.io/PruebasWeb/ramas/<nombre-de-la-rama>/. GitHub solo deja publicar desde main, así que
+# un push en otra rama comprueba que compila y pide a main que vuelva a publicarlo todo.
+
 on:
   push:
-    branches: [ main ]
+    branches: [ '**' ]            # cualquier rama
   pull_request:
-    branches: [ main ]
+    branches: [ main ]            # en una PR solo se comprueba que compila
+  delete:                         # al borrar una rama se vuelve a publicar (y su vista previa desaparece)
+  workflow_dispatch:              # publicación a mano o pedida desde otra rama
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write                  # para que una rama pueda pedir a main que vuelva a publicar
+
+concurrency:                      # si se piden dos publicaciones seguidas, gana la última
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Validar y Compilar
+  # Push en una rama que no es main: comprobar que compila y pedir a main que publique todo otra vez.
+  rama:
+    name: Comprobar rama y pedir vista previa
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,6 +36,48 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
+      - run: gh workflow run deploy-and-check.yml --ref main --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  build:
+    name: Validar y Compilar
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # también las demás ramas
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build        # main → la web de siempre
+
+      # Cada rama se compila en dist/ramas/<nombre>/. Si una rama no compila, se salta con un aviso
+      # y la web de main se publica igual.
+      - name: Compilar las vistas previas de las ramas
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          REPO="${{ github.event.repository.name }}"
+          mkdir -p dist/ramas
+          echo '<!doctype html><meta charset="utf-8"><title>Vistas previas</title><h1>Vistas previas de las ramas</h1><ul>' > dist/ramas/index.html
+          git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/origin | while read -r rama; do
+            if [ "$rama" = "main" ] || [ "$rama" = "HEAD" ]; then continue; fi
+            slug=$(printf '%s' "$rama" | sed 's/ñ/n/g; s/Ñ/n/g' | iconv -f utf-8 -t ascii//TRANSLIT | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+            dir="$RUNNER_TEMP/rama-$slug"
+            git worktree add --detach "$dir" "origin/$rama"
+            if (cd "$dir" && npm ci && PUBLIC_VISTA_PREVIA="$rama" npx astro build --base "/$REPO/ramas/$slug/"); then
+              cp -r "$dir/dist" "dist/ramas/$slug"
+              echo "<li><a href=\"$slug/\">$rama</a></li>" >> dist/ramas/index.html
+            else
+              echo "::warning::No se ha podido compilar la rama $rama; se publica sin ella."
+            fi
+          done
+          echo '</ul>' >> dist/ramas/index.html
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
@@ -30,7 +85,7 @@ jobs:
   deploy:
     name: Publicar Web
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

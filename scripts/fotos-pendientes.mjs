@@ -27,7 +27,8 @@ logo('cybertech-logo', 'Logo de Cybertech, en color');
 logo('cybertech-logo-blanco', 'Logo de Cybertech, en blanco');
 add(marca, 'marca/favicon.png', 'Icono de la pestaña del navegador (símbolo de Reset, PNG cuadrado 512×512)');
 add(marca, 'fuentes/LTAtomatic.woff2', 'Fuente de marca LTAtomatic en formato .woff2 (si tienes .ttf/.otf, pásamela y la convierto)');
-add(marca, 'fotos/inicio/portada.jpg', 'Foto grande de la portada (vertical 4:5: gente en el taller, un robot…)');
+// Fotos del carrusel de la portada
+for (const { d } of readJson('src/content/inicio')) (d.diapositivas ?? []).forEach((s, i) => add(marca, s.imagen, `Portada: diapositiva ${i + 1} «${s.titulo}» (horizontal, mínimo 1600 px de ancho)`));
 
 /* Miembros */
 for (const { d } of readJson('src/content/miembros')) {

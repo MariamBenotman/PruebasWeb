@@ -9,6 +9,8 @@ interface Props { title?: string; description?: string; /** Página oculta: que 
 const { title, noindex = false, description = 'Asociación de Estudiantes Reset · ETSII-UPM. Robótica, electrónica, automática e informática. Organizadores de Cybertech.' } = Astro.props;
 const fullTitle = title ? `${title} · Reset` : 'Reset · Asociación de Estudiantes ETSII-UPM';
 const gh = sitio.github;
+/** Vista previa de una rama (la compila GitHub en /ramas/<rama>/): sin modo edición y sin indexar */
+const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 ---
 
 <!doctype html>
@@ -18,20 +20,23 @@ const gh = sitio.github;
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#0b3558" />
 		<meta name="description" content={description} />
-		{noindex && <meta name="robots" content="noindex" />}
+		{(noindex || vistaPrevia) && <meta name="robots" content="noindex" />}
 		<title>{fullTitle}</title>
-		<link rel="icon" href={href('marca/favicon.png')} />
+		<!-- Icono de la pestaña: SVG sin fondo, negro en modo claro y blanco en modo oscuro (Chrome, Edge, Firefox). PNG para Safari. -->
+		<link rel="icon" href={href('marca/favicon.png')} sizes="512x512" type="image/png" />
+		<link rel="icon" href={href('marca/favicon.svg')} type="image/svg+xml" />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 		<style set:html={`@font-face{font-family:'LTAtomatic';src:url('${href('fuentes/LTAtomatic.woff2')}') format('woff2');font-display:swap}:root{--marca-agua:url('${href('marca/reset-marca-agua.svg')}')}`}></style>
-		<script is:inline define:vars={{ gh, base: href(''), local: import.meta.env.DEV }}>
+		<script is:inline define:vars={{ gh, base: href(''), local: import.meta.env.DEV, vistaPrevia }}>
 			document.documentElement.classList.add('js');
 			window.__site = { gh, base, local };
 			try {
 				// En local (astro dev) el modo edición está activo sin token, salvo que se haya pulsado "Salir".
 				var on = local ? !localStorage.getItem('reset-local-off') : !!localStorage.getItem('reset-admin-token');
-				if (on) document.documentElement.classList.add('is-admin');
+				// En una vista previa no se edita: guardaría en la web principal (main)
+				if (on && !vistaPrevia) document.documentElement.classList.add('is-admin');
 			} catch {}
 			// Si una imagen no existe: prueba alternativas (data-fb="a|b"); si no, se quita y queda el hueco de reserva.
 			window.__img = function (el) {
@@ -44,6 +49,7 @@ const gh = sitio.github;
 	</head>
 	<body>
 		<a class="skip" href="#contenido">Saltar al contenido</a>
+		{vistaPrevia && <div class="vista-previa">Vista previa de la rama <b>{vistaPrevia}</b> · no es la web publicada</div>}
 		<Navbar />
 		<main id="contenido">
 			<slot />
@@ -97,6 +103,15 @@ const gh = sitio.github;
 			};
 			watch();
 			document.addEventListener('reset:rendered', watch);
+
+			// Lo que solo se ve dentro de un plazo (p. ej. «Inscripciones abiertas» de Cybertech): data-plazo="desde|hasta"
+			// Se decide aquí, en el navegador, con la fecha de hoy: aparece y desaparece solo, sin volver a publicar.
+			const hoy = new Date();
+			const hoyIso = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+			document.querySelectorAll<HTMLElement>('[data-plazo]').forEach((el) => {
+				const [desde, hasta] = (el.dataset.plazo ?? '').split('|');
+				el.hidden = !((!desde || desde <= hoyIso) && (!hasta || hoyIso <= hasta));
+			});
 
 			// Modo edición: solo se descarga si hay sesión iniciada
 			if (document.documentElement.classList.contains('is-admin')) import('../admin/main');

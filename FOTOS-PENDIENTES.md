@@ -2,7 +2,7 @@
 
 > Archivo generado con `npm run fotos`. No lo edites a mano: vuelve a ejecutar el comando cuando añadas fotos.
 
-**Faltan 103 de 326 imágenes.** Mientras falte una, la web muestra un recuadro azul con las iniciales o el nombre.
+**Faltan 100 de 331 imágenes.** Mientras falte una, la web muestra un recuadro azul con las iniciales o el nombre.
 
 ## Cómo añadirlas
 
@@ -10,7 +10,7 @@
 - **A mano:** guarda el archivo en la carpeta `public/` del proyecto con **exactamente** la ruta de la columna derecha. Por ejemplo, `fotos/miembros/2022-23/antonio-cameo.jpg` va en `public/fotos/miembros/2022-23/antonio-cameo.jpg`. Las fotos de personas deben ser **.jpg** y **verticales 2:3** (por ejemplo, 1200 × 1800 px). Los carteles, **A3** horizontal o vertical (por ejemplo, 2000 × 1414 px).
 
 
-## Logos, fuente e imagen de portada — faltan 4 de 9
+## Logos, fuente e imagen de portada — faltan 3 de 14
 
 Los logos mejor en **SVG**. Si solo tienes PNG, usa el mismo nombre con .png (fondo transparente, mínimo 600 px de ancho).
 
@@ -19,7 +19,6 @@ Los logos mejor en **SVG**. Si solo tienes PNG, usa el mismo nombre con .png (fo
 | Logo de Cybertech, en color | `marca/cybertech-logo.svg` |
 | Logo de Cybertech, en blanco | `marca/cybertech-logo-blanco.svg` |
 | Fuente de marca LTAtomatic en formato .woff2 (si tienes .ttf/.otf, pásamela y la convierto) | `fuentes/LTAtomatic.woff2` |
-| Foto grande de la portada (vertical 4:5: gente en el taller, un robot…) | `fotos/inicio/portada.jpg` |
 
 ## Miembros 2024/25 — faltan 35 de 57
 
@@ -91,7 +90,7 @@ Los logos mejor en **SVG**. Si solo tienes PNG, usa el mismo nombre con .png (fo
 | Jean Paul Sulca · Miembros — foto principal | `fotos/miembros/2023-24/jean-paul-sulca.jpg` |
 | Jean Paul Sulca · Miembros — foto al pasar el ratón | `fotos/miembros/2023-24/jean-paul-sulca-2.jpg` |
 
-## Miembros 2022/23 — faltan 17 de 62
+## Miembros 2022/23 — faltan 15 de 62
 
 | Qué es | Dónde guardarlo (dentro de `public/`) |
 |---|---|
@@ -100,8 +99,6 @@ Los logos mejor en **SVG**. Si solo tienes PNG, usa el mismo nombre con .png (fo
 | Rocío García · Vocal de Taller — foto al pasar el ratón | `fotos/miembros/2022-23/rocio-garcia-2.jpg` |
 | Ricardo Estremera · Miembros — foto principal | `fotos/miembros/2022-23/ricardo-estremera.jpg` |
 | Ricardo Estremera · Miembros — foto al pasar el ratón | `fotos/miembros/2022-23/ricardo-estremera-2.jpg` |
-| Clara Molina · Miembros — foto principal | `fotos/miembros/2022-23/clara-molina.jpg` |
-| Clara Molina · Miembros — foto al pasar el ratón | `fotos/miembros/2022-23/clara-molina-2.jpg` |
 | Luis Lagerqvist · Miembros — foto principal | `fotos/miembros/2022-23/luis-lagerqvist.jpg` |
 | Luis Lagerqvist · Miembros — foto al pasar el ratón | `fotos/miembros/2022-23/luis-lagerqvist-2.jpg` |
 | Raúl Molina · Miembros — foto principal | `fotos/miembros/2022-23/raul-molina.jpg` |

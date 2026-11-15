@@ -22,6 +22,12 @@ const publicas = entradas.filter((e) => e.listada);
 const etiquetas = [...new Set(publicas.flatMap((e) => e.tags))];
 const lista = seccion === 'noticias';
 const pad = (n: number) => String(n).padStart(2, '0');
+
+// Proyectos: arriba los activos; debajo el historial completo, por año (lo que no tiene año, al final)
+const esProyectos = seccion === 'proyectos';
+const activos = entradas.filter((e) => e.data.activo);
+const porAnio = Object.entries(Object.groupBy(entradas, (e) => e.data.anio || 'Sin año'))
+	.sort(([a], [b]) => (a === 'Sin año' ? 1 : b === 'Sin año' ? -1 : b.localeCompare(a)));
 ---
 
 <Layout title={sec.titulo} description={sec.intro}>
@@ -35,14 +41,58 @@ const pad = (n: number) => String(n).padStart(2, '0');
 			</div>
 		</header>
 
-		{etiquetas.length > 1 && (
+		{esProyectos ? (
+			<>
+				<section id="activos" class="pr-sec">
+					<header class="sec-head"><span class="idx">{pad(activos.filter((e) => e.listada).length)}</span><h2>Proyectos activos</h2><span class="rule"></span></header>
+					<ol class="ls-items is-grid">
+						{activos.map((e, i) => (
+							<li class:list={['reveal', { 'adm-only ls-off': !e.listada }]} style={`--d:${i % 6}`}>
+								<a href={e.url}>
+									{e.aviso && <span class="ls-aviso">{e.aviso}</span>}
+									<figure class="frame" data-label={e.data.titulo}>{e.portada && <img src={img(e.portada)} alt="" loading="lazy" onerror="__img(this)" />}</figure>
+									<div class="ls-txt">
+										<p class="meta">{e.data.anio && <time>{e.data.anio}</time>}<span>En marcha</span></p>
+										<h2>{e.data.titulo}</h2>
+										{e.data.resumen && <p class="sum">{e.data.resumen}</p>}
+									</div>
+								</a>
+							</li>
+						))}
+						<li class="adm-only ls-add"><a class="adm-add" href={href(`editar?tipo=${seccion}`)}><span>+</span>{sec.nuevo}</a></li>
+					</ol>
+					{!activos.some((e) => e.listada) && <p class="empty">Ahora mismo no hay proyectos en marcha. ¿Propones uno?</p>}
+				</section>
+
+				<section id="historial" class="pr-sec">
+					<header class="sec-head"><span class="idx">{pad(publicas.length)}</span><h2>Historial de proyectos</h2><span class="rule"></span></header>
+					{porAnio.map(([anio, lista]) => (
+						<div class="pr-anio">
+							<h3 class="pr-anio-t">{anio}</h3>
+							<ol class="pr-lista">
+								{lista!.map((e) => (
+									<li class:list={{ 'adm-only ls-off': !e.listada }}>
+										<a href={e.url}>
+											<figure class="frame" data-label={e.data.titulo}>{e.portada && <img src={img(e.portada)} alt="" loading="lazy" onerror="__img(this)" />}</figure>
+											<span class="pr-t">{e.data.titulo}{e.aviso && <small class="pr-aviso"> · {e.aviso}</small>}</span>
+											<span class="pr-r">{e.data.resumen}</span>
+											<span class:list={['pr-estado', { on: e.data.activo }]}>{e.data.activo ? 'En marcha' : 'Terminado'}</span>
+										</a>
+									</li>
+								))}
+							</ol>
+						</div>
+					))}
+				</section>
+			</>
+		) : etiquetas.length > 1 && (
 			<div class="ls-filter" role="toolbar" aria-label="Filtrar">
 				<button type="button" aria-pressed="true" data-tag="">Todo</button>
 				{etiquetas.map((t) => <button type="button" aria-pressed="false" data-tag={t}>{t}</button>)}
 			</div>
 		)}
 
-		<ol class:list={['ls-items', lista ? 'is-list' : 'is-grid']}>
+		{!esProyectos && <ol class:list={['ls-items', lista ? 'is-list' : 'is-grid']}>
 			{entradas.map((e, i) => (
 				<li class:list={['reveal', { 'adm-only ls-off': !e.listada }]} style={`--d:${i % 6}`} data-tags={JSON.stringify(e.tags)}>
 					<a href={e.url}>
@@ -64,8 +114,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
 				</li>
 			))}
 			<li class="adm-only ls-add"><a class="adm-add" href={href(`editar?tipo=${seccion}`)}><span>+</span>{sec.nuevo}</a></li>
-		</ol>
-		{publicas.length === 0 && <p class="empty">Todavía no hay nada aquí.</p>}
+		</ol>}
+		{!esProyectos && publicas.length === 0 && <p class="empty">Todavía no hay nada aquí.</p>}
 	</div>
 </Layout>
 
@@ -98,6 +148,21 @@ const pad = (n: number) => String(n).padStart(2, '0');
 	.ls-items a { text-decoration: none; }
 	.meta { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: 0 0 .5rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
 	.meta span { color: var(--naranja); }
+	/* Proyectos: activos + historial por año */
+	.pr-sec { margin-bottom: 4rem; scroll-margin-top: 90px; }
+	.pr-anio { display: grid; grid-template-columns: 110px 1fr; gap: 1rem 2rem; padding: 1.2rem 0; border-top: 1px solid var(--linea); }
+	.pr-anio-t { margin: .2rem 0 0; font-family: var(--f-display); font-stretch: 120%; font-weight: 800; font-size: 1.6rem; color: var(--naranja); }
+	.pr-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: .2rem; }
+	.pr-lista a { display: grid; grid-template-columns: 76px minmax(0, 14rem) minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; padding: .45rem .5rem; text-decoration: none; transition: background .2s; }
+	.pr-lista a:hover { background: var(--blanco); }
+	.pr-lista .frame { aspect-ratio: var(--a3); --mark: transparent; overflow: hidden; }
+	.pr-lista .frame::before { font-size: .7rem; padding: .3rem; }
+	.pr-t { font-weight: 700; }
+	.pr-aviso { color: #b8432c; font-weight: 400; }
+	.pr-r { color: var(--gris); font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.pr-estado { font-family: var(--f-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	.pr-estado.on { color: var(--naranja); }
+	@media (max-width: 760px) { .pr-anio { grid-template-columns: 1fr; } .pr-lista a { grid-template-columns: 64px 1fr; } .pr-r, .pr-estado { display: none; } }
 	.ls-off > a { opacity: .55; border-style: dashed !important; }
 	.ls-off > a:hover { opacity: 1; }
 	.ls-items > li > a { position: relative; }

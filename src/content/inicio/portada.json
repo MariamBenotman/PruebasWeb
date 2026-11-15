@@ -1,0 +1,97 @@
+{
+  "lema": "Robótica hecha por *estudiantes.*",
+  "intro": "Somos la asociación de robótica, electrónica, automática e informática de la ETSII-UPM. Hacemos proyectos propios, damos talleres gratuitos y organizamos Cybertech, la competición de robótica más grande de la UPM.",
+  "diapositivas": [
+    {
+      "imagen": "fotos/inicio/cybertech.jpg",
+      "titulo": "Cybertech",
+      "texto": "La competición de robótica más grande de la UPM.",
+      "enlaceTexto": "Ver la competición",
+      "enlace": "cybertech"
+    },
+    {
+      "imagen": "fotos/inicio/taller.jpg",
+      "titulo": "Nuestro taller",
+      "texto": "Herramientas, impresoras 3D y gente con ganas de cacharrear. Pásate cuando quieras.",
+      "enlaceTexto": "Únete",
+      "enlace": "participa"
+    },
+    {
+      "imagen": "fotos/inicio/impresion-3d.jpg",
+      "titulo": "Impresión 3D",
+      "texto": "Imprimimos tus piezas: servicio para el alumnado y el personal de la ETSII.",
+      "enlaceTexto": "Cómo pedirlo",
+      "enlace": "servicios/impresion-3d"
+    },
+    {
+      "imagen": "fotos/inicio/proyectos.jpg",
+      "titulo": "Proyectos",
+      "texto": "Robots, electrónica y mucho cacharreo. Apúntate a uno o propón el tuyo.",
+      "enlaceTexto": "Ver proyectos",
+      "enlace": "proyectos"
+    },
+    {
+      "imagen": "fotos/inicio/talleres.jpg",
+      "titulo": "Talleres gratuitos",
+      "texto": "Programación, Linux, PCB, Arduino… para aprender desde cero.",
+      "enlaceTexto": "Ver talleres",
+      "enlace": "talleres"
+    },
+    {
+      "imagen": "fotos/inicio/reset.jpg",
+      "titulo": "Reset",
+      "texto": "Asociación de Estudiantes de la ETSII-UPM.",
+      "enlaceTexto": "Conócenos",
+      "enlace": "participa"
+    }
+  ],
+  "areas": [
+    {
+      "titulo": "Robótica",
+      "texto": "Robots autónomos y teleoperados, de la idea al pabellón de competición.",
+      "enlace": ""
+    },
+    {
+      "titulo": "Electrónica",
+      "texto": "Diseño de circuitos, soldadura, sensores y PCBs hechas en casa.",
+      "enlace": ""
+    },
+    {
+      "titulo": "Automática",
+      "texto": "Control, sistemas embebidos y todo lo que hace que algo se mueva bien.",
+      "enlace": ""
+    },
+    {
+      "titulo": "Informática",
+      "texto": "Programación, visión, web y lo que haga falta para que funcione.",
+      "enlace": ""
+    }
+  ],
+  "quienesDestacado": "Una asociación *sin ánimo de lucro* donde el conocimiento se comparte libremente entre todos los miembros y cualquiera con ganas de aprender.",
+  "quienesTexto": "Reset pertenece a la ETSII-UPM y se dedica a la robótica, la electrónica, la automática y la informática. Realizamos proyectos propios, organizamos competiciones, representamos a la Universidad Politécnica de Madrid en eventos e impartimos talleres totalmente gratuitos.\n\nAdemás, ofrecemos un servicio de impresión 3D y préstamo de herramientas exclusivo para el alumnado y el personal de la ETSII. Para todo ello contamos con el apoyo de varios departamentos, unidades docentes y otras asociaciones.",
+  "queHacemos": [
+    {
+      "titulo": "Proyectos",
+      "texto": "Proyectos propios en los que cualquiera puede meterse.",
+      "enlace": "proyectos"
+    },
+    {
+      "titulo": "Talleres",
+      "texto": "Formación totalmente gratuita: Arduino, C, soldadura, diseño de robots.",
+      "enlace": "talleres"
+    },
+    {
+      "titulo": "Impresión 3D",
+      "texto": "Servicio exclusivo para alumnado y personal de la ETSII.",
+      "enlace": "servicios/impresion-3d"
+    },
+    {
+      "titulo": "Préstamos",
+      "texto": "Herramientas a tu disposición para que no se pare tu proyecto.",
+      "enlace": "servicios/prestamos"
+    }
+  ],
+  "uneteTitulo": "¿Te *apuntas?*",
+  "uneteTexto": "Ser miembro de Reset es gratis. Ven a construir, enseñar, organizar Cybertech o simplemente a pasarlo bien y hacer amigos.",
+  "uneteBoton": "Quiero participar"
+}

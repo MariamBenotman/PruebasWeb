@@ -5,5 +5,15 @@
   "resumen": "Préstamo de herramientas para la comunidad de la ETSII.",
   "portada": "",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [],
+  "serie": "",
+  "descMenu": "",
+  "oculto": false,
+  "enListado": true,
+  "incluye": [],
+  "destacado": false,
+  "activo": false,
+  "anio": "",
+  "autores": [],
+  "otrosAutores": ""
 }
