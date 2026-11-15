@@ -385,3 +385,4 @@ a.en-autor:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--so
 .gp-main.con-img { grid-template-columns: minmax(0, 1.25fr) minmax(0, .85fr); }
 .gp-main.con-img .gp-img { justify-self: end; width: 100%; max-width: 460px; position: sticky; top: 100px; }
 .gp-col .gp-body { margin-bottom: 1.8rem; }
+@media (max-width: 860px) { .gp-main.con-img { grid-template-columns: 1fr; } .gp-main.con-img .gp-img { position: static; justify-self: start; } }

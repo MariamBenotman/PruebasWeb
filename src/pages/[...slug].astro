@@ -7,6 +7,7 @@ import Layout from '../layouts/Layout.astro';
 import { getPaginas, BASE } from '../lib/data';
 import { renderPagina } from '../lib/render';
 import { contacto } from '../data/contacto';
+import FormularioParticipa from '../components/FormularioParticipa.astro';
 
 export async function getStaticPaths() {
 	return (await getPaginas()).map((p) => ({ params: { slug: p.id }, props: { id: p.id } }));
@@ -22,11 +23,14 @@ const [antes, despues] = renderPagina(p.data, { base: BASE }).split('<div data-k
 		<Fragment set:html={antes} />
 		<div data-keep="acciones">
 			{/* Botones fijos de algunos apartados (los datos de contacto están en src/data/contacto.ts) */}
+			{id === 'participa' && <a class="btn primary" href="#formulario">Rellenar el formulario <span class="arr">↓</span></a>}
 			{id === 'participa' && <a class="btn" href={`mailto:${contacto.email}?subject=Quiero%20participar%20en%20Reset`}>Escribir a {contacto.email} <span class="arr">→</span></a>}
 			{id === 'calendario' && <a class="btn primary" href={contacto.redes[0].url} target="_blank" rel="noopener">Ver novedades en Instagram <span class="arr">→</span></a>}
 		</div>
 		<Fragment set:html={despues} />
 	</div>
+
+	{id === 'participa' && <FormularioParticipa />}
 
 	{id === 'contacto' && (
 		<div class="wrap gp-extra">

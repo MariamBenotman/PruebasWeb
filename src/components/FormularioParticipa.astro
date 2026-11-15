@@ -1,0 +1,121 @@
+---
+/**
+ * Formulario «Participa en Reset» (el mismo que tenía la web antigua: nombre, correo, teléfono,
+ * motivación y cómo nos has conocido).
+ *
+ * Cómo se envía (src/data/sitio.json → "formularios" → "participa"):
+ *  - Vacío (como ahora): al pulsar «Enviar» se abre el programa de correo de quien lo rellena con un
+ *    mensaje a Reset ya escrito con sus respuestas; solo tiene que darle a enviar. No depende de nadie.
+ *  - Con la dirección de un servicio de formularios (p. ej. https://formsubmit.co/ajax/aereset@gmail.com
+ *    o un endpoint de Formspree): las respuestas se envían directamente y el servicio las reenvía al correo.
+ */
+import sitio from '../data/sitio.json';
+import { contacto } from '../data/contacto';
+
+const envio: string = (sitio as any).formularios?.participa ?? '';
+const canales = ['Carteles en la Escuela', 'Vinieron a contarlo a clase', 'Me llegó un correo', 'Redes sociales', 'Me lo contó un amigo/a', 'Otros motivos que no os pienso decir'];
+---
+
+<section class="wrap fp" id="formulario">
+	<header class="sec-head"><span class="idx">§</span><h2>Apúntate</h2><span class="rule"></span></header>
+	<form class="fp-form" data-envio={envio} data-correo={contacto.email} novalidate>
+		<div class="fp-grid">
+			<label class="fp-campo"><span>Nombre <b>*</b></span><input name="nombre" type="text" autocomplete="name" required /></label>
+			<label class="fp-campo"><span>Correo <b>*</b></span><input name="correo" type="email" autocomplete="email" required /></label>
+			<label class="fp-campo"><span>Teléfono <b>*</b> <small>para meterte en el grupo de Telegram</small></span><input name="telefono" type="tel" autocomplete="tel" inputmode="tel" required /></label>
+			<fieldset class="fp-campo fp-canales">
+				<legend>¿Cómo nos has conocido?</legend>
+				{canales.map((c) => <label class="fp-check"><input type="checkbox" name="canal" value={c} /><span>{c}</span></label>)}
+			</fieldset>
+			<label class="fp-campo fp-ancho"><span>Tu motivación y mensaje <b>*</b></span><textarea name="mensaje" rows="5" required></textarea></label>
+		</div>
+		<!-- Trampa para robots de spam: una persona no ve este campo y lo deja vacío -->
+		<label class="fp-trampa" aria-hidden="true">No rellenes esto <input name="web" type="text" tabindex="-1" autocomplete="off" /></label>
+		<div class="fp-pie">
+			<button class="btn primary" type="submit">Enviar <span class="arr">→</span></button>
+			<p class="fp-nota">Tus datos solo se usan para ponernos en contacto contigo. {envio ? '' : 'Al enviar se abrirá tu programa de correo con el mensaje ya escrito.'}</p>
+		</div>
+		<p class="fp-estado" role="status" aria-live="polite"></p>
+	</form>
+</section>
+
+<script>
+	document.querySelectorAll<HTMLFormElement>('.fp-form').forEach((form) => {
+		const estado = form.querySelector<HTMLElement>('.fp-estado')!;
+		const avisar = (msg: string, tono: 'ok' | 'error' | '' = '') => { estado.textContent = msg; estado.dataset.tono = tono; };
+		form.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			// Comprobar lo obligatorio (con los mensajes del navegador, en el idioma de cada uno)
+			const malo = [...form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('[required]')].find((c) => !c.checkValidity());
+			if (malo) { malo.reportValidity(); malo.focus(); return; }
+			const datos = new FormData(form);
+			if (datos.get('web')) return; // robot
+			const r = {
+				nombre: String(datos.get('nombre')).trim(),
+				correo: String(datos.get('correo')).trim(),
+				telefono: String(datos.get('telefono')).trim(),
+				canales: datos.getAll('canal').map(String),
+				mensaje: String(datos.get('mensaje')).trim(),
+			};
+			const asunto = `Quiero participar en Reset: ${r.nombre}`;
+			const texto = [
+				`Nombre: ${r.nombre}`, `Correo: ${r.correo}`, `Teléfono: ${r.telefono}`,
+				`Cómo nos ha conocido: ${r.canales.join(', ') || '—'}`, '', 'Motivación y mensaje:', r.mensaje,
+			].join('\n');
+			const envio = form.dataset.envio;
+			if (!envio) {
+				// Sin servicio de formularios: se abre el correo con todo escrito
+				const url = `mailto:${form.dataset.correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(texto)}`;
+				form.dataset.ultimo = url;
+				location.href = url;
+				avisar('Se ha abierto tu programa de correo con el mensaje listo: solo tienes que enviarlo. Si no se abre, escríbenos a ' + form.dataset.correo + '.', 'ok');
+				return;
+			}
+			// Con servicio de formularios (FormSubmit, Formspree…): envío directo
+			const boton = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+			boton.disabled = true; avisar('Enviando…');
+			try {
+				const res = await fetch(envio, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+					body: JSON.stringify({ _subject: asunto, Nombre: r.nombre, Correo: r.correo, email: r.correo, Teléfono: r.telefono, 'Cómo nos ha conocido': r.canales.join(', '), Mensaje: r.mensaje }),
+				});
+				if (!res.ok) throw new Error(String(res.status));
+				form.reset();
+				avisar('¡Recibido! Te escribiremos pronto.', 'ok');
+			} catch {
+				avisar('No se ha podido enviar. Prueba otra vez o escríbenos a ' + form.dataset.correo + '.', 'error');
+			} finally { boton.disabled = false; }
+		});
+	});
+</script>
+
+<style>
+	.fp { margin-top: 1rem; scroll-margin-top: 90px; }
+	.fp-form { padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid var(--negro); background: var(--blanco); box-shadow: 8px 8px 0 var(--naranja); }
+	.fp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem 1.6rem; }
+	.fp-campo { display: grid; gap: .45rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+	.fp-campo > span, .fp-campo legend { font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--azul); padding: 0; }
+	.fp-campo b { color: var(--naranja); font-weight: 500; }
+	.fp-campo small { text-transform: none; letter-spacing: 0; color: var(--gris); font-family: var(--f-body, inherit); font-size: .78rem; }
+	.fp-campo input, .fp-campo textarea {
+		width: 100%; padding: .7rem .8rem; border: 1px solid #bdb7aa; border-radius: 0; background: var(--papel);
+		font: inherit; font-size: 1rem; color: var(--negro); transition: border-color .2s, box-shadow .2s;
+	}
+	.fp-campo textarea { resize: vertical; min-height: 7rem; }
+	.fp-campo input:focus, .fp-campo textarea:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(11, 53, 88, .15); }
+	.fp-grid > .fp-campo { grid-column: 1; }
+	.fp-grid > .fp-canales { grid-column: 2; grid-row: 1 / span 3; align-content: start; }
+	.fp-grid > .fp-ancho { grid-column: 1 / -1; }
+	.fp-canales legend { margin-bottom: .45rem; }
+	.fp-check { display: flex; align-items: center; gap: .55rem; padding: .25rem 0; cursor: pointer; font-size: .95rem; }
+	.fp-check input { width: 17px; height: 17px; margin: 0; accent-color: var(--naranja); }
+	.fp-trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+	.fp-pie { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; margin-top: 1.6rem; }
+	.fp-nota { margin: 0; font-size: .85rem; color: var(--gris); max-width: 52ch; }
+	.fp-estado { margin: 1rem 0 0; font-weight: 600; }
+	.fp-estado:empty { display: none; }
+	.fp-estado[data-tono='ok'] { color: #2f7d3b; }
+	.fp-estado[data-tono='error'] { color: #b8432c; }
+	@media (max-width: 760px) { .fp-grid { grid-template-columns: 1fr; } .fp-grid > .fp-canales { grid-column: 1; grid-row: auto; } }
+</style>
