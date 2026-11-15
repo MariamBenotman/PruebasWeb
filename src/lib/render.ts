@@ -10,7 +10,20 @@ import { marked } from 'marked';
 
 /* ───────────── Tipos ───────────── */
 
-export interface Miembro { nombre: string; roles: string[]; foto: string; fotoHover: string }
+export interface Miembro {
+	nombre: string; roles: string[]; foto: string; fotoHover: string;
+	/** Meses del curso en los que ha sido «resetero del mes» ('noviembre', 'diciembre'…). Cada curso empieza de cero. */
+	meses: string[];
+}
+/** Meses de un curso académico, en orden (de septiembre a agosto) */
+export const MESES_CURSO = ['septiembre', 'octubre', 'noviembre', 'diciembre', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto'];
+/** «noviembre» del curso «2026/27» → «2026-11»; «enero» → «2027-01» */
+export function mesDelCurso(curso: string, mes: string): string {
+	const y0 = parseInt(curso, 10), i = MESES_CURSO.indexOf(mes);
+	if (!y0 || i < 0) return '';
+	const n = (i + 8) % 12 + 1;
+	return `${i < 4 ? y0 : y0 + 1}-${String(n).padStart(2, '0')}`;
+}
 /** `alfabetico`: las personas salen por orden alfabético; `manual`: en el orden en que se colocan en el editor */
 export type OrdenMiembros = 'alfabetico' | 'manual';
 export interface SeccionMiembros { titulo: string; orden: OrdenMiembros; miembros: Miembro[] }
@@ -64,6 +77,7 @@ export function normalizeCurso(raw: any = {}): Curso {
 				roles: arr(m?.roles, str).filter(Boolean),
 				foto: str(m?.foto),
 				fotoHover: str(m?.fotoHover),
+				meses: MESES_CURSO.filter((x) => Array.isArray(m?.meses) && m.meses.includes(x)),
 			})),
 		})),
 	};
@@ -149,6 +163,17 @@ const addBtn = (ctx: RenderCtx, path: string, label: string, cls = '') =>
 const editAttr = (ctx: RenderCtx, path: string) => (ctx.admin ? ` data-edit="${path}"` : '');
 const reveal = (ctx: RenderCtx) => (ctx.admin ? '' : ' reveal');
 
+/** Engranaje (SVG en línea, toma el color del texto): 8 dientes y un agujero en el centro */
+const ENGRANAJE = (() => {
+	const n = 8, R = 11.5, r = 8.6, h = 3.4, paso = (2 * Math.PI) / n;
+	const pt = (rad: number, a: number) => `${(12 + rad * Math.cos(a)).toFixed(2)} ${(12 + rad * Math.sin(a)).toFixed(2)}`;
+	const dientes = Array.from({ length: n }, (_, k) => {
+		const c = k * paso;
+		return [pt(r, c - paso * 0.3), pt(R, c - paso * 0.16), pt(R, c + paso * 0.16), pt(r, c + paso * 0.3)].join(' L ');
+	}).join(' L ');
+	return `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M ${dientes} Z M ${12 + h} 12 A ${h} ${h} 0 1 0 ${12 - h} 12 A ${h} ${h} 0 1 0 ${12 + h} 12 Z"/></svg>`;
+})();
+
 /* ───────────── Página de miembros ───────────── */
 
 export function renderCurso(d: Curso, ctx: RenderCtx): string {
@@ -160,19 +185,31 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 		.map((s) => `<div><dt>${esc(s.titulo)}</dt><dd>${pad(s.miembros.length)}</dd></div>`)
 		.join('');
 
+	// Resetero del mes: un engranaje por cada mes, en fila arriba a la derecha de la foto. Con los 12, «Resetero del año».
+	// Quién lo es ahora (el último mes ya empezado de este curso) lo decide el navegador con la fecha de hoy (Layout.astro),
+	// y su foto lleva un marco de ondas (.rdm-marco).
+	const engranajes = (m: Miembro) => !m.meses.length ? '' :
+		(m.meses.length === MESES_CURSO.length
+			? `<span class="rda" title="Resetero del mes los 12 meses del curso">${ENGRANAJE}<span>Resetero del año</span></span>`
+			: `<span class="rdm" role="img" aria-label="Resetero del mes: ${esc(m.meses.join(', '))}">${
+				m.meses.map((mes, k) => `<i style="--k:${m.meses.length - 1 - k}" title="Resetero del mes · ${esc(mes)}">${ENGRANAJE}</i>`).join('')}</span>`)
+		+ '<span class="rdm-marco" aria-hidden="true"></span>';
 	const card = (m: Miembro, i: number, j: number) => `
-		<li class="m-card${reveal(ctx)}" style="--d:${j % 12}"${editAttr(ctx, `secciones.${i}.miembros.${j}`)}>
+		<li class="m-card${reveal(ctx)}" style="--d:${j % 12}"${m.meses.length ? ` data-rdm="${m.meses.map((x) => mesDelCurso(d.curso, x)).join(' ')}"` : ''}${editAttr(ctx, `secciones.${i}.miembros.${j}`)}>
 			${frame(m.foto, ctx, {
 				label: initials(m.nombre),
 				cls: 'm-photo',
 				alt: m.nombre,
-				extra: m.fotoHover ? frameAlt(m.fotoHover, ctx) : '',
+				extra: (m.fotoHover ? frameAlt(m.fotoHover, ctx) : '') + engranajes(m),
 			})}
 			<div class="m-meta">
 				<h3>${esc(m.nombre) || '<span class="muted">Sin nombre</span>'}</h3>
-				${m.roles.length ? `<ul class="tags">${m.roles.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}
+				${ctx.admin && !m.roles.length && d.secciones[i].orden === 'manual' && /junta|vocal/i.test(d.secciones[i].titulo) ? `<p class="adm-aviso-card">⚠ Falta su cargo de ${esc(d.secciones[i].titulo)}</p>` : ''}
+				${m.roles.length || m.meses.length ? `<ul class="tags">${m.roles.map((r) => `<li>${esc(r)}</li>`).join('')}${m.meses.length ? '<li class="rdm-tag">Resetero del mes</li>' : ''}</ul>` : ''}
 			</div>
 		</li>`;
+	// La leyenda solo sale si este curso tiene algún resetero del mes
+	const hayRdm = d.secciones.some((s) => s.miembros.some((m) => m.meses.length));
 
 	// El índice original (j) se conserva para que el editor sepa qué persona es cada tarjeta
 	const ordenar = (s: SeccionMiembros) => {
@@ -203,7 +240,7 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 			<h1 class="display">Miembros <em>${esc(corto)}</em></h1>
 			<div class="pg-head-row">
 				${d.intro ? `<div class="lede prose">${md(d.intro)}</div>` : '<div></div>'}
-				${total ? `<dl class="tally"><div><dt>Personas</dt><dd>${pad(total)}</dd></div>${tally}</dl>` : ''}
+				${total ? `<div class="tally-col"><dl class="tally"><div><dt>Personas</dt><dd>${pad(total)}</dd></div>${tally}</dl>${hayRdm ? `<p class="rdm-leyenda">Cada <span class="rdm-ico" role="img" aria-label="engranaje">${ENGRANAJE}</span> representa un mes como resetero del mes</p>` : ''}</div>` : ''}
 			</div>
 		</header>
 		${d.fotoGrupo || ctx.admin ? `<div class="group-photo${reveal(ctx)}"${editAttr(ctx, '')}>${frame(d.fotoGrupo, ctx, { label: 'Foto de grupo', cls: 'wide' })}</div>` : ''}

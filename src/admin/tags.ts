@@ -28,8 +28,20 @@ export const tagStore = {
 	},
 };
 
+/** Ajustes opcionales del selector (p. ej. los cargos de Miembros, que van por secciones) */
+export interface PickerOpts {
+	/** Qué etiquetas guardadas se ofrecen */
+	filtrar?: (tag: string) => boolean;
+	/** Texto pequeño junto a cada etiqueta (p. ej. su sección) */
+	sub?: (tag: string) => string;
+	/** Varias formas de crear una etiqueta nueva («como cargo de Junta», «como cargo de Vocales»…) */
+	crear?: () => { texto: string; alCrear: (tag: string) => void }[];
+	/** Nota debajo del menú */
+	nota?: () => string;
+}
+
 /** Selector de etiquetas: chips + buscador + "Crear «…»". */
-export function tagPicker(group: string, value: string[], placeholder: string, onChange: (v: string[]) => void): HTMLElement {
+export function tagPicker(group: string, value: string[], placeholder: string, onChange: (v: string[]) => void, po: PickerOpts = {}): HTMLElement {
 	let selected = [...value];
 	let active = 0;
 	const el = document.createElement('div');
@@ -46,12 +58,14 @@ export function tagPicker(group: string, value: string[], placeholder: string, o
 	};
 	const options = () => {
 		const q = input.value.trim().toLowerCase();
-		const opts: { label: string; value: string; create?: boolean }[] = tagStore.list(group)
-			.filter((t) => !selected.includes(t) && t.toLowerCase().includes(q))
+		const opts: { label: string; value: string; create?: boolean; texto?: string; alCrear?: (t: string) => void }[] = tagStore.list(group)
+			.filter((t) => !selected.includes(t) && t.toLowerCase().includes(q) && (!po.filtrar || po.filtrar(t)))
 			.map((t) => ({ label: t, value: t }));
 		const raw = input.value.trim();
 		if (raw && !tagStore.list(group).some((t) => t.toLowerCase() === raw.toLowerCase())) {
-			opts.push({ label: raw, value: raw, create: true });
+			const formas = po.crear?.() ?? [];
+			if (formas.length) for (const f of formas) opts.push({ label: raw, value: raw, create: true, texto: f.texto, alCrear: f.alCrear });
+			else opts.push({ label: raw, value: raw, create: true });
 		}
 		return opts;
 	};
@@ -60,17 +74,19 @@ export function tagPicker(group: string, value: string[], placeholder: string, o
 		active = Math.min(active, Math.max(0, opts.length - 1));
 		if (document.activeElement !== input || !open) { menu.hidden = true; return; }
 		menu.hidden = false;
-		menu.innerHTML = opts.length
+		const nota = po.nota?.() ?? '';
+		menu.innerHTML = (opts.length
 			? opts.map((o, i) => `<div class="f-opt${i === active ? ' is-active' : ''}${o.create ? ' is-create' : ''}" data-i="${i}" role="option">
-				${o.create ? `<span class="f-plus">+</span> Crear <b>${esc(o.label)}</b>` : `<span>${esc(o.label)}</span><button type="button" class="f-del" data-del="${esc(o.value)}" title="Borrar de la lista de etiquetas guardadas">borrar</button>`}
+				${o.create ? `<span class="f-plus">+</span> Crear <b>${esc(o.label)}</b>${o.texto ? ` ${esc(o.texto)}` : ''}` : `<span>${esc(o.label)}${po.sub?.(o.value) ? ` <small class="f-opt-sub">${esc(po.sub(o.value))}</small>` : ''}</span><button type="button" class="f-del" data-del="${esc(o.value)}" title="Borrar de la lista de etiquetas guardadas">borrar</button>`}
 			</div>`).join('')
-			: `<div class="f-empty">${tagStore.list(group).length ? 'No hay más etiquetas. Escribe para crear una.' : 'Escribe para crear la primera etiqueta.'}</div>`;
+			: `<div class="f-empty">${tagStore.list(group).length ? 'No hay más etiquetas. Escribe para crear una.' : 'Escribe para crear la primera etiqueta.'}</div>`)
+			+ (nota ? `<div class="f-empty f-nota">${esc(nota)}</div>` : '');
 		(menu as any)._opts = opts;
 	};
 	const choose = (i: number) => {
 		const o = ((menu as any)._opts || [])[i];
 		if (!o) return;
-		if (o.create) tagStore.add(group, o.value);
+		if (o.create) { tagStore.add(group, o.value); o.alCrear?.(o.value); }
 		selected.push(o.value);
 		input.value = '';
 		active = 0;

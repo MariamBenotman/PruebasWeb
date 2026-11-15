@@ -150,6 +150,21 @@ const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 			const cursoActual = `${y0}/${String((y0 + 1) % 100).padStart(2, '0')}`;
 			document.querySelectorAll<HTMLElement>('[data-curso]').forEach((el) => { el.hidden = el.dataset.curso !== cursoActual; });
 
+			// Resetero del mes: quien tenga el mes más reciente ya empezado de este curso (data-rdm="2026-11 2027-02" en su tarjeta).
+			// Elegido el de noviembre, se destaca desde noviembre hasta que se elija el siguiente. Cada curso empieza de cero.
+			const inicioCurso = `${y0}-09`, mesHoy = hoyIso.slice(0, 7);
+			const marcarRdm = () => {
+				const tarjetas = [...document.querySelectorAll<HTMLElement>('[data-rdm]')];
+				let ultimo = '';
+				for (const t of tarjetas) for (const ym of (t.dataset.rdm ?? '').split(' ')) if (ym >= inicioCurso && ym <= mesHoy && ym > ultimo) ultimo = ym;
+				for (const t of tarjetas) {
+					const es = !!ultimo && (t.dataset.rdm ?? '').split(' ').includes(ultimo);
+					t.classList.toggle('es-rdm', es);
+				}
+			};
+			marcarRdm();
+			document.addEventListener('reset:rendered', marcarRdm);
+
 			// Modo edición: solo se descarga si hay sesión iniciada
 			if (document.documentElement.classList.contains('is-admin')) import('../admin/main');
 		</script>

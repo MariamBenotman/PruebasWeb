@@ -11,6 +11,8 @@ import { clearToken, readFile, listDir, listTree, commit, deployStatus, rawUrl, 
 import { kinds, type DocKind, type Field, type ObjSchema, type Reutilizar } from './schema';
 import { pending, processFile, pickFiles } from './media';
 import { tagStore, tagPicker } from './tags';
+import * as R from './roles';
+import type { Curso } from '../lib/render';
 import { esc, asset, joinBase, slugify } from '../lib/render';
 
 const base = window.__site.base;
@@ -46,6 +48,7 @@ let prevDoc: any = null;
 let prevId: string | undefined; // plantilla propuesta por defecto al crear algo nuevo
 let current: string | null = null; // ruta abierta en el panel ("" = datos generales)
 let saving = false;
+let otrosCursos: Curso[] = []; // Miembros: los demás cursos, del más reciente al más antiguo
 
 const segs = (p: string) => (p ? p.split('.') : []);
 const getAt = (p: string) => segs(p).reduce((o: any, k) => o?.[k], data);
@@ -316,7 +319,7 @@ function field(f: Field, path: string, ownerPath: string): HTMLElement {
 			const opts = f.options();
 			// Lo marcado que ya no existe (p. ej. se borró ese taller) se enseña igualmente para poder desmarcarlo
 			for (const id of sel) if (!opts.some((o) => o.value === id)) opts.push({ value: id, label: id, sub: 'ya no existe' });
-			const el = wrapField(f, `<div class="f-refs">${opts.map((o) => `
+			const el = wrapField(f, `<div class="f-refs"${f.columnas ? ` style="grid-template-columns: repeat(${f.columnas}, 1fr)"` : ''}>${opts.map((o) => `
 				<label><input type="checkbox" value="${esc(o.value)}" ${sel.includes(o.value) ? 'checked' : ''}><span>${esc(o.label)}${o.sub ? ` <small>(${esc(o.sub)})</small>` : ''}</span></label>`).join('')
 				|| '<p class="f-h">Todavía no hay otros talleres creados. Crea uno con «+ Nuevo taller» y luego márcalo aquí.</p>'}</div>`);
 			el.querySelector('.f-refs')!.addEventListener('change', () => {
@@ -340,6 +343,7 @@ function field(f: Field, path: string, ownerPath: string): HTMLElement {
 			return el;
 		}
 		case 'tags': {
+			if (K.kind === 'miembros' && f.key === 'roles') return rolesField(f, path);
 			const picker = tagPicker(f.group, Array.isArray(v) ? v : [], f.placeholder ?? 'Añadir…', (val) => { setAt(path, val); schedule(); });
 			return wrapField(f, picker);
 		}
@@ -567,7 +571,7 @@ function catalogo(r: Reutilizar) {
 function reuseBox(r: Reutilizar, path: string) {
 	const el = h(`
 		<div class="f-reuse">
-			<p class="f-reuse-h">¿Ya estuvo en ${esc(r.donde)}? Búscala y se añade con sus fotos y su rol, que luego puedes cambiar.</p>
+			<p class="f-reuse-h">¿Ya estuvo en ${esc(r.donde)}? Búscala y se añade con sus fotos${K.kind === 'miembros' ? ' (y su cargo, si es de esta sección)' : ' y su rol, que luego puedes cambiar'}.</p>
 			<input class="f-in" type="search" placeholder="Buscar en ${esc(r.donde)}…" autocomplete="off">
 			<div class="f-reuse-list"><p class="f-h">Cargando…</p></div>
 			<p class="f-reuse-o">Si es nueva, rellena sus datos aquí abajo.</p>
@@ -590,6 +594,7 @@ function reuseBox(r: Reutilizar, path: string) {
 	const elegir = (f: Ficha) => {
 		setAt(path, r.copia(f.item));
 		if (Array.isArray(f.item.roles)) tagStore.seed('roles', f.item.roles);
+		if (K.kind === 'miembros') { const [, si, , mj] = path.split('.').map(Number); R.alEntrar(data, si, mj); }
 		renderPage();
 		open(path, false);
 		status(`Se ha añadido a <b>${esc(f.titulo)}</b> con sus fotos. Cambia su rol si hace falta.`, 'ok');
@@ -690,8 +695,234 @@ function itemActions(listPath: string, index: number) {
 	return el;
 }
 
+/* ───────────── Miembros: cargos por sección y repaso rápido de personas ───────────── */
+
+/** Ruta «secciones.1.miembros.4» → [1, 4] */
+const posDe = (p: string) => { const x = p.split('.'); return [Number(x[1]), Number(x[3])] as const; };
+
+function rolesField(f: Field, path: string) {
+	const mp = path.replace(/\.roles$/, '');
+	const [si, mj] = posDe(mp);
+	const v = getAt(path);
+	const picker = tagPicker('roles', Array.isArray(v) ? v : [], (f as any).placeholder ?? 'Añadir…', (val) => {
+		setAt(path, val);
+		const r = R.colocar(data, si, mj);
+		if (r.movida) {
+			renderPage();
+			open(`secciones.${r.si}.miembros.${r.mj}`);
+			status(val.length ? `Se ha movido a <b>${esc(r.movida)}</b> por su cargo.` : `Sin cargo: vuelve a <b>${esc(r.movida)}</b>.`, 'ok');
+		} else { schedule(); pintarAviso(); }
+	}, R.opcionesPicker(data, si, mj));
+	const el = wrapField(f, picker);
+	const $aviso = h(`<p class="f-aviso" hidden></p>`);
+	el.insertBefore($aviso, picker);
+	const pintarAviso = () => { const t = R.aviso(data, si, mj); $aviso.hidden = !t; $aviso.textContent = t ? `⚠ ${t}` : ''; };
+	pintarAviso();
+	return el;
+}
+
+/** El curso más reciente con personas (para empezar uno nuevo) */
+const cursoAnterior = () => otrosCursos.find((c) => c.secciones.some((s) => s.miembros.length) && c.curso !== (data as Curso).curso);
+
+/** Mete a todas las personas del curso anterior en la sección general, sin cargo */
+function traerPersonas() {
+	const prev = cursoAnterior();
+	if (!prev) return 0;
+	const d = data as Curso;
+	if (!d.secciones.length) d.secciones.push({ titulo: 'Miembros', orden: 'alfabetico', miembros: [] });
+	const ya = new Set(d.secciones.flatMap((s) => s.miembros.map((m) => m.nombre.trim().toLowerCase())));
+	const nuevas = R.personasDe(prev).filter((m) => !ya.has(m.nombre.trim().toLowerCase()));
+	d.secciones[R.seccionBase(d)].miembros.push(...nuevas);
+	return nuevas.length;
+}
+
+/** Repaso rápido: todas las personas del curso, con su cargo (se mueven solas de sección) y un botón para quitarlas */
+function personasBox() {
+	const el = h(`<div class="adm-personas"></div>`);
+	const opcionesCargo = (actual: string[]) => {
+		const secs = [...new Set([...R.seccionesConCargos(), ...(tagStore.list('roles').map(R.seccionDeRol).filter(Boolean) as string[])])];
+		const grupos = secs.map((t) => `<optgroup label="${esc(t)}">${tagStore.list('roles').filter((r) => R.seccionDeRol(r) === t)
+			.map((r) => `<option value="${esc(r)}"${actual.length === 1 && actual[0] === r ? ' selected' : ''}>${esc(r)}</option>`).join('')}</optgroup>`).join('');
+		const varios = actual.length > 1 ? `<option value="" selected disabled>${esc(actual.join(' + '))}</option>` : '';
+		return `<option value=""${actual.length ? '' : ' selected'}>Sin cargo</option>${varios}${grupos}`;
+	};
+	let filtro = '';
+	const pintar = () => {
+		const d = data as Curso;
+		const total = d.secciones.reduce((n, s) => n + s.miembros.length, 0);
+		const prev = cursoAnterior();
+		el.innerHTML = `
+			<p class="f-l">Personas de este curso <span class="adm-personas-n">${total}</span></p>
+			${!total && prev ? `<button type="button" class="adm-b adm-b-wide" data-traer>Traer a las personas de ${esc(prev.curso)}</button><small class="f-h">Se añaden todas como miembros, sin cargo. Luego quitas a quien no siga y eliges los cargos.</small>` : ''}
+			${total ? `<input class="f-in adm-personas-q" type="search" placeholder="Buscar persona…" value="${esc(filtro)}">` : ''}
+			<div class="adm-personas-l">${d.secciones.map((s, si) => !s.miembros.length ? '' : `
+				<p class="adm-personas-sec">${esc(s.titulo)} · ${s.miembros.length}</p>
+				${s.miembros.map((m, mj) => ({ m, mj })).sort((a, b) => (s.orden === 'alfabetico' ? a.m.nombre.localeCompare(b.m.nombre, 'es') : 0)).map(({ m, mj }) => {
+					const av = R.aviso(d, si, mj);
+					return `
+					<div class="adm-persona${av ? ' con-aviso' : ''}" data-p="${si}.${mj}" data-q="${esc(m.nombre.toLowerCase())}">
+						<span class="f-thumb">${thumb(m.foto)}</span>
+						<button type="button" class="adm-persona-n" data-go="secciones.${si}.miembros.${mj}" title="${esc(av || 'Abrir su ficha')}">${av ? '⚠ ' : ''}${esc(m.nombre || 'Sin nombre')}</button>
+						<select class="f-in" aria-label="Cargo de ${esc(m.nombre)}">${opcionesCargo(m.roles)}</select>
+						<button type="button" class="adm-persona-x" data-x title="Quitar de este curso" aria-label="Quitar a ${esc(m.nombre)}">×</button>
+					</div>`;
+				}).join('')}`).join('')}</div>`;
+		filtrar();
+	};
+	const filtrar = () => {
+		const t = filtro.trim().toLowerCase();
+		el.querySelectorAll<HTMLElement>('.adm-persona').forEach((x) => { x.hidden = !!t && !x.dataset.q!.includes(t); });
+	};
+	el.addEventListener('input', (e) => {
+		const q = e.target as HTMLInputElement;
+		if (!q.classList.contains('adm-personas-q')) return;
+		filtro = q.value;
+		filtrar();
+	});
+	el.addEventListener('click', (e) => {
+		const t = e.target as HTMLElement;
+		if (t.closest('[data-traer]')) { const n = traerPersonas(); renderPage(); pintar(); status(`Se han añadido <b>${n}</b> personas como miembros.`, 'ok'); return; }
+		const go = t.closest<HTMLElement>('[data-go]')?.dataset.go;
+		if (go) { open(go); return; }
+		if (t.closest('[data-x]')) {
+			const [si, mj] = t.closest<HTMLElement>('[data-p]')!.dataset.p!.split('.').map(Number);
+			const [m] = (data as Curso).secciones[si].miembros.splice(mj, 1);
+			renderPage(); pintar();
+			status(`Se ha quitado a <b>${esc(m.nombre)}</b> de este curso.`, 'ok');
+		}
+	});
+	el.addEventListener('change', (e) => {
+		const sel = e.target as HTMLSelectElement;
+		if (sel.tagName !== 'SELECT') return;
+		const [si, mj] = sel.closest<HTMLElement>('[data-p]')!.dataset.p!.split('.').map(Number);
+		const m = (data as Curso).secciones[si].miembros[mj];
+		m.roles = sel.value ? [sel.value] : [];
+		const r = R.colocar(data, si, mj);
+		renderPage(); pintar();
+		status(r.movida ? `<b>${esc(m.nombre)}</b> pasa a <b>${esc(r.movida)}</b>.` : `Cargo de <b>${esc(m.nombre)}</b> cambiado.`, 'ok');
+	});
+	pintar();
+	return el;
+}
+
+/**
+ * Curso nuevo: pantalla de inicio (solo la primera vez) con todas las personas del curso anterior.
+ * × para quitar a quien ya no esté, ▾ para elegir su cargo (por secciones) y «Terminar»: se colocan solas.
+ */
+function asistenteCurso(prev: Curso) {
+	const gente = R.personasDe(prev).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((m) => ({ m, fuera: false, rol: '' }));
+	// Secciones con sus cargos ya existentes: Junta → Presidente, Secretaria…; Vocales → Vocal de Taller…
+	const roles = tagStore.list('roles');
+	const secs = [...new Set([...R.seccionesConCargos(), ...(roles.map(R.seccionDeRol).filter(Boolean) as string[])])]
+		.map((t) => ({ t, roles: roles.filter((r) => R.seccionDeRol(r) === t) })).filter((x) => x.roles.length);
+
+	const el = h(`<div class="adm-asis" role="dialog" aria-modal="true" aria-label="Nuevo curso"><div class="asis-in"></div><div class="asis-menu" hidden></div></div>`);
+	const $in = el.querySelector<HTMLElement>('.asis-in')!;
+	const $menu = el.querySelector<HTMLElement>('.asis-menu')!;
+	let abierto = -1;
+
+	const pintar = () => {
+		const siguen = gente.filter((g) => !g.fuera);
+		const cuenta = (t: string) => siguen.filter((g) => g.rol && R.seccionDeRol(g.rol) === t).length;
+		$in.innerHTML = `
+			<header class="asis-head">
+				<p class="kicker"><span>Nuevo curso</span><span>${esc((data as Curso).curso)}</span></p>
+				<h2>¿Quién sigue este curso?</h2>
+				<p>Estas son las personas de <b>${esc(prev.curso)}</b>. Pasa el ratón por encima y pulsa <b>×</b> para quitar a quien ya no esté.
+				Con <b>▾</b> puedes darle ya su cargo, y irá solo a su sección. Los cargos son opcionales: también se pueden poner después.</p>
+			</header>
+			<div class="asis-grid">${gente.map((g, i) => `
+				<div class="asis-p${g.fuera ? ' fuera' : ''}${g.rol ? ' con-rol' : ''}" data-i="${i}">
+					<div class="asis-foto"><span class="asis-ini" aria-hidden="true">${esc(g.m.nombre.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase())}</span>${g.m.foto ? thumb(g.m.foto) : ''}
+						<button type="button" class="asis-x" data-x title="${g.fuera ? 'Volver a añadir' : 'No sigue este curso'}" aria-label="${g.fuera ? 'Volver a añadir' : 'Quitar'} a ${esc(g.m.nombre)}">${g.fuera ? '↺' : '×'}</button>
+						${g.fuera ? '<span class="asis-fuera">No sigue</span>' : ''}
+					</div>
+					<p class="asis-n">${esc(g.m.nombre)}</p>
+					${g.fuera ? '' : `<button type="button" class="asis-rol" data-rol aria-haspopup="menu">${g.rol ? `<b>${esc(g.rol)}</b>` : 'Miembro'} <span>▾</span></button>`}
+				</div>`).join('')}
+			</div>
+			<footer class="asis-pie">
+				<p class="asis-resumen"><b>${siguen.length}</b> de ${gente.length} siguen${secs.map((x) => (cuenta(x.t) ? ` · ${cuenta(x.t)} en ${esc(x.t)}` : '')).join('')}</p>
+				<button type="button" class="adm-b" data-saltar>Empezar sin nadie</button>
+				<button type="button" class="adm-b adm-b-main" data-fin>Terminar →</button>
+			</footer>`;
+	};
+
+	const cerrarMenu = () => { $menu.hidden = true; abierto = -1; };
+	const abrirMenu = (i: number, boton: HTMLElement) => {
+		abierto = i;
+		const actual = gente[i].rol;
+		$menu.innerHTML = `
+			<button type="button" class="asis-op${actual ? '' : ' is-on'}" data-set="">Miembro <small>sin cargo</small></button>
+			${secs.map((x) => `
+			<div class="asis-grupo"><span class="asis-op">${esc(x.t)} <i>›</i></span>
+				<div class="asis-sub">${x.roles.map((r) => `<button type="button" class="asis-op${r === actual ? ' is-on' : ''}" data-set="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+			</div>`).join('')}`;
+		$menu.hidden = false;
+		// Cada submenú (cargos de Junta, de Vocales…) se abre donde quepa: si por abajo se sale de la pantalla, sube;
+		// si por la derecha no hay sitio, se abre a la izquierda.
+		$menu.querySelectorAll<HTMLElement>('.asis-grupo').forEach((g) => {
+			const sub = g.querySelector<HTMLElement>('.asis-sub')!;
+			const colocarSub = () => {
+				$menu.querySelectorAll('.asis-grupo.is-open').forEach((x) => x !== g && x.classList.remove('is-open'));
+				g.classList.add('is-open');
+				sub.style.top = ''; sub.style.left = ''; sub.style.right = '';
+				const r = sub.getBoundingClientRect(), margen = 8;
+				const sobra = r.bottom - (innerHeight - margen);
+				if (sobra > 0) sub.style.top = `${-5 - Math.min(sobra, r.top - margen)}px`;
+				if (r.right > innerWidth - margen) { sub.style.left = 'auto'; sub.style.right = '100%'; }
+			};
+			g.addEventListener('mouseenter', colocarSub);
+			g.addEventListener('focusin', colocarSub);
+		});
+		const b = boton.getBoundingClientRect();
+		const w = $menu.offsetWidth, hgt = $menu.offsetHeight;
+		$menu.style.left = `${Math.min(b.left, innerWidth - w - 230)}px`;
+		$menu.style.top = `${b.bottom + hgt + 8 > innerHeight ? b.top - hgt - 4 : b.bottom + 4}px`;
+	};
+
+	el.addEventListener('click', (e) => {
+		const t = e.target as HTMLElement;
+		const set = t.closest<HTMLElement>('[data-set]');
+		if (set && abierto >= 0) { gente[abierto].rol = set.dataset.set!; cerrarMenu(); pintar(); return; }
+		if (t.closest('.asis-menu')) return;
+		const card = t.closest<HTMLElement>('[data-i]');
+		const i = card ? Number(card.dataset.i) : -1;
+		if (t.closest('[data-x]')) { gente[i].fuera = !gente[i].fuera; gente[i].rol = ''; cerrarMenu(); pintar(); return; }
+		if (t.closest('[data-rol]')) { if (abierto === i) cerrarMenu(); else abrirMenu(i, t.closest<HTMLElement>('[data-rol]')!); return; }
+		cerrarMenu();
+		if (t.closest('[data-saltar]')) terminar([]);
+		else if (t.closest('[data-fin]')) terminar(gente.filter((g) => !g.fuera));
+	});
+	el.addEventListener('keydown', (e) => { if (e.key === 'Escape' && abierto >= 0) { e.stopPropagation(); cerrarMenu(); } });
+	$in.addEventListener('scroll', cerrarMenu, { passive: true });
+
+	const terminar = (quienes: typeof gente) => {
+		const d = data as Curso;
+		if (!d.secciones.length) d.secciones.push({ titulo: 'Miembros', orden: 'alfabetico', miembros: [] });
+		const nuevas = quienes.map((g) => ({ ...g.m, roles: g.rol ? [g.rol] : [], meses: [] }));
+		d.secciones[R.seccionBase(d)].miembros.push(...nuevas);
+		// Los que tienen cargo, a su sección
+		for (const m of nuevas) if (m.roles.length) {
+			const b = R.seccionBase(d);
+			R.colocar(d, b, d.secciones[b].miembros.indexOf(m));
+		}
+		el.remove();
+		document.body.classList.remove('adm-asis-on');
+		renderPage();
+		open('');
+		const resumen = d.secciones.filter((x) => x.miembros.length).map((x) => `${x.miembros.length} en ${esc(x.titulo)}`).join(', ');
+		status(quienes.length ? `Curso preparado: ${resumen}. Revísalo y pulsa <b>${btn('save').textContent}</b>.` : 'Curso vacío: añade a las personas desde cada sección.', 'ok');
+	};
+
+	pintar();
+	document.body.append(el);
+	document.body.classList.add('adm-asis-on');
+}
+
 function rootExtras() {
 	const el = h(`<div class="adm-extras"></div>`);
+	if (K.kind === 'miembros') el.append(personasBox());
 	if (isNew && K.copiar && existingIds.length) el.append(plantillaBox());
 	const ed = !isNew && docId ? K.nuevaEdicion?.(K.normalize(data), docId) : undefined;
 	if (ed) {
@@ -942,8 +1173,12 @@ async function boot() {
 			savedJson = JSON.stringify(data);
 		}
 		if (K.kind === 'miembros') {
-			const roles = (d: any) => d?.secciones?.flatMap((s: any) => s.miembros.flatMap((m: any) => m.roles)) ?? [];
-			tagStore.seed('roles', [...roles(data), ...roles(prevDoc)]);
+			// Todos los cursos: de ellos se aprende de qué sección es cada cargo (Presidente → Junta…)
+			const ids = existingIds.filter((x) => x !== docId).sort().reverse();
+			otrosCursos = (await Promise.all(ids.map((id) => readFile(`${K.dir}/${id}.json`).then((t) => (t ? K.normalize(JSON.parse(t)) : null)).catch(() => null)))).filter(Boolean);
+			R.aprenderDe([data, ...otrosCursos]);
+			// Curso nuevo: empieza con todas las personas del último curso, como miembros sin cargo
+			if (isNew) { const prev = cursoAnterior(); if (prev) asistenteCurso(prev); }
 		}
 		if (Array.isArray(data.etiquetas)) tagStore.seed(K.kind, data.etiquetas);
 		btn('general').hidden = false;

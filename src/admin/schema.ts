@@ -4,12 +4,12 @@
  */
 import {
 	normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, normalizeInicio, renderCurso, renderEdicion, renderEntrada, renderPagina, renderInicio, cursoSlug, cursoCorto, slugify,
-	SECCIONES, type Curso, type Edicion, type Entrada, type Pagina, type Inicio, type Persona, type SeccionKey, type RenderCtx,
+	SECCIONES, MESES_CURSO, type Curso, type Edicion, type Entrada, type Pagina, type Inicio, type Persona, type SeccionKey, type RenderCtx,
 } from '../lib/render';
 
 export type Field =
 	| { key: string; label: string; type: 'check'; hint?: string }
-	| { key: string; label: string; type: 'refs'; hint?: string; options: () => { value: string; label: string; sub?: string }[] }
+	| { key: string; label: string; type: 'refs'; hint?: string; /** Opciones en columnas (p. ej. los 12 meses en 3 columnas) */ columnas?: number; options: () => { value: string; label: string; sub?: string }[] }
 	| { key: string; label: string; type: 'text'; hint?: string; placeholder?: string }
 	| { key: string; label: string; type: 'number'; hint?: string }
 	| { key: string; label: string; type: 'date'; hint?: string }
@@ -78,9 +78,14 @@ const miembroSchema: ObjSchema = {
 	nameKey: 'nombre',
 	fields: [
 		{ key: 'nombre', label: 'Nombre', type: 'text', placeholder: 'Nombre y apellido' },
-		{ key: 'roles', label: 'Rol o cargo', type: 'tags', group: 'roles', placeholder: 'Escribe o elige un rol…', hint: 'Los roles nuevos se guardan para los próximos cursos. Déjalo vacío para miembros sin cargo.' },
+		{ key: 'roles', label: 'Rol o cargo', type: 'tags', group: 'roles', placeholder: 'Escribe o elige un rol…', hint: 'Cada cargo es de una sección (Presidente → Junta, Vocal de… → Vocales): al ponérselo, la persona se mueve sola a esa sección, y sin cargo vuelve a Miembros. Los cargos nuevos se guardan para los próximos cursos.' },
 		{ key: 'foto', label: 'Foto', type: 'image', formato: 'retrato', hint: 'Vertical 2:3 (por ejemplo, 1200 × 1800 px). Se optimiza sola.' },
 		{ key: 'fotoHover', label: 'Foto al pasar el ratón', type: 'image', formato: 'retrato', hint: 'Opcional: la foto "divertida" que aparece al pasar el cursor. Vertical 2:3, como la principal.' },
+		{
+			key: 'meses', label: 'Resetero del mes', type: 'refs', columnas: 3,
+			hint: 'Marca los meses de este curso en los que ha sido resetero del mes. Sale un engranaje por cada uno en su foto, y mientras sea el último elegido se destaca en la página.',
+			options: () => MESES_CURSO.map((m) => ({ value: m, label: m[0].toUpperCase() + m.slice(1) })),
+		},
 	],
 };
 
@@ -99,7 +104,7 @@ const seccionMiembrosSchema: ObjSchema = {
 		},
 		{
 			key: 'miembros', label: 'Personas', type: 'list', item: miembroSchema, addLabel: 'Añadir persona',
-			newItem: () => ({ nombre: '', roles: [], foto: '', fotoHover: '' }),
+			newItem: () => ({ nombre: '', roles: [], foto: '', fotoHover: '', meses: [] }),
 			reutilizar: {
 				donde: 'otros cursos',
 				todos: (d: Curso) => d.secciones.flatMap((s) => s.miembros),
