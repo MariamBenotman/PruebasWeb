@@ -1,0 +1,12 @@
+{
+  "titulo": "Programación en C",
+  "fecha": "",
+  "etiquetas": [
+    "Programación"
+  ],
+  "resumen": "Introducción a C: condicionales, bucles y funciones. Pensado para quien nunca ha programado y quiere participar en Cybertech.",
+  "portada": "",
+  "cuerpo": "Taller de introducción a C en el que se enseñan conceptos básicos como condicionales, bucles y funciones. Su objetivo es asentar las bases para quienes no tienen experiencia programando y quieren participar en Cybertech.",
+  "galeria": [],
+  "enListado": false
+}

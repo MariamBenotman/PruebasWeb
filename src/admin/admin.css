@@ -41,6 +41,7 @@ body.adm-on { padding-bottom: 64px; }
 .adm-bar-l { display: flex; align-items: center; gap: .6rem; white-space: nowrap; }
 .adm-dot { width: 9px; height: 9px; border-radius: 50%; background: #3fbf6b; box-shadow: 0 0 0 3px rgba(63, 191, 107, .25); }
 .adm-bar.is-dirty .adm-dot { background: var(--naranja); box-shadow: 0 0 0 3px rgba(220, 135, 0, .3); }
+.adm-local { padding: .1rem .4rem; background: #3fbf6b; color: var(--negro); font-family: var(--f-mono); font-size: .66rem; letter-spacing: .08em; }
 .adm-doc { color: #aaa; font-family: var(--f-mono); font-size: .78rem; }
 .adm-doc:not(:empty)::before { content: '/ '; color: var(--naranja); }
 .adm-status { flex: 1; min-width: 0; font-size: .84rem; color: #ccc; }
@@ -68,6 +69,7 @@ body.adm-on { padding-bottom: 64px; }
 .adm-b-danger { background: transparent; border-color: #b8432c; color: #b8432c; }
 .adm-b-danger[data-armed] { background: #b8432c; color: #fff; }
 .adm-b-wide { width: 100%; padding: .8rem; }
+a.adm-b { display: block; text-align: center; text-decoration: none; }
 
 /* ── Panel lateral ── */
 .adm-drawer {
@@ -145,3 +147,37 @@ textarea.f-in { resize: vertical; line-height: 1.5; font-size: .9rem; min-height
 .f-gal-a button:disabled { opacity: .3; }
 .f-gal-add { aspect-ratio: 1; display: grid; place-content: center; gap: .3rem; border: 1.5px dashed var(--naranja); background: rgba(220, 135, 0, .05); color: #a45f00; cursor: pointer; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; }
 .f-gal-add small { text-transform: none; color: var(--gris); }
+
+/* Buscar a alguien de otros cursos */
+.f-reuse { display: grid; gap: .6rem; margin-bottom: 1.4rem; padding: 1rem; border: 1.5px dashed var(--naranja); background: rgba(220, 135, 0, .05); }
+.f-reuse-h { margin: 0; font-size: .88rem; line-height: 1.4; }
+.f-reuse-list { display: grid; gap: .3rem; max-height: 340px; overflow-y: auto; }
+.f-reuse-i { display: grid; grid-template-columns: 40px 1fr auto; gap: .7rem; align-items: center; padding: .35rem; border: 1px solid transparent; background: var(--blanco); text-align: left; cursor: pointer; font: inherit; }
+.f-reuse-i:hover, .f-reuse-i:focus-visible { border-color: var(--negro); outline: none; }
+.f-reuse-i .f-thumb { width: 40px; }
+.f-reuse-i b { display: block; font-size: .9rem; }
+.f-reuse-i small { display: block; font-size: .74rem; color: var(--gris); }
+.f-reuse-add { font-family: var(--f-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--naranja); }
+.f-reuse-o { margin: .2rem 0 0; font-family: var(--f-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); }
+
+.f-check { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; cursor: pointer; }
+.f-check input { width: 18px; height: 18px; accent-color: var(--naranja); margin: 0; }
+.f-check .f-l { margin: 0; }
+.f-check .f-h { flex-basis: 100%; }
+
+/* Elegir una foto ya subida */
+.f-pick { flex-basis: 100%; display: grid; gap: .6rem; margin-top: .8rem; padding: .8rem; border: 1px solid var(--negro); background: var(--blanco); }
+.f-pick-list { max-height: 420px; overflow-y: auto; }
+.f-pick-h { display: flex; justify-content: space-between; margin: .6rem 0 .4rem; font-family: var(--f-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--naranja); }
+.f-pick-h span { color: var(--gris); }
+.f-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: .4rem; }
+.f-pick-i { display: grid; gap: .2rem; padding: 0; border: 1px solid transparent; background: none; cursor: pointer; text-align: left; font: inherit; }
+.f-pick-i:hover, .f-pick-i:focus-visible { border-color: var(--naranja); outline: none; }
+.f-pick-i img, .f-pick-i video { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; background: var(--azul); }
+.f-pick-i small { font-size: .62rem; color: var(--gris); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 .15rem .15rem; }
+
+.f-refs { display: grid; gap: .1rem; padding: .4rem; border: 1px solid #bdb7aa; background: var(--blanco); max-height: 260px; overflow-y: auto; }
+.f-refs label { display: flex; align-items: center; gap: .6rem; padding: .35rem .4rem; cursor: pointer; font-size: .92rem; }
+.f-refs label:hover { background: var(--papel-2); }
+.f-refs input { width: 17px; height: 17px; accent-color: var(--naranja); margin: 0; flex: none; }
+.f-refs small { color: var(--gris); }

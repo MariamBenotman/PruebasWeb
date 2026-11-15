@@ -12,6 +12,11 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 			<p class="kicker"><span>Reset</span><span>Editores</span></p>
 			<h1 class="display">Modo <em>edición</em></h1>
 
+			<div class="local" hidden>
+				<p class="lede">Estás trabajando <b>en local</b> (<code>astro dev</code>): no hace falta clave. Los cambios se guardan directamente en los archivos de este ordenador; para publicarlos, haz commit y súbelos a GitHub.</p>
+				<button type="button" class="btn primary enable-local">Activar modo edición <span class="arr">→</span></button>
+			</div>
+
 			<div class="logged" hidden>
 				<p class="lede">Sesión iniciada en este ordenador. Navega por la web y verás los controles de edición abajo.</p>
 				<div class="go">
@@ -39,22 +44,30 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 			<ol>
 				<li>Entra en GitHub con la cuenta que administra el repositorio <code>{owner}/{repo}</code>.</li>
 				<li>Ve a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Settings → Developer settings → Fine-grained tokens → Generate new token</a>.</li>
-				<li>Nombre: <i>Web Reset</i>. Caducidad: 1 año (apúntate cuándo renovarla).</li>
+				<li>Nombre: el de la persona que la va a usar (<i>Web Reset – Ana</i>), para poder quitársela cuando deje la asociación. Caducidad: 1 año.</li>
 				<li><b>Repository access</b> → <i>Only select repositories</i> → <code>{repo}</code>.</li>
 				<li><b>Permissions</b> → <i>Contents</i>: <b>Read and write</b>. Opcional: <i>Actions</i>: <b>Read-only</b> (para ver cuándo termina de publicarse).</li>
 				<li>Genera el token, cópialo y pégalo aquí.</li>
 			</ol>
+			<h3>Clave de administración</h3>
+			<p>Con una clave normal se puede editar, añadir y <b>ocultar</b> todo, pero no <b>eliminar</b> páginas enteras. Para poder eliminar, crea la clave igual y añade además <i>Administration</i>: <b>Read-only</b>. Dásela solo a la junta.</p>
 			<p class="note">La clave solo da acceso a este repositorio y se queda guardada únicamente en este navegador. No la compartas por chats ni la pegues en otros sitios. Si se pierde un portátil, bórrala desde GitHub y crea otra.</p>
 		</aside>
 	</div>
 </Layout>
 
 <script>
-	import { checkToken, setToken, getToken, clearToken, GitHubError } from '../admin/github';
+	import { checkToken, setToken, getToken, clearToken, enableLocal, isLocal, GitHubError } from '../admin/github';
 	const form = document.querySelector<HTMLFormElement>('.login')!;
 	const logged = document.querySelector<HTMLElement>('.logged')!;
 	const msg = form.querySelector<HTMLElement>('.msg')!;
-	const show = () => { const t = !!getToken(); logged.hidden = !t; form.hidden = t; };
+	const localBox = document.querySelector<HTMLElement>('.local')!;
+	const active = () => document.documentElement.classList.contains('is-admin');
+	const show = () => {
+		if (isLocal()) { localBox.hidden = active(); logged.hidden = !active(); form.hidden = true; return; }
+		const t = !!getToken(); logged.hidden = !t; form.hidden = t;
+	};
+	document.querySelector('.enable-local')!.addEventListener('click', () => { enableLocal(); location.reload(); });
 	show();
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
@@ -89,6 +102,8 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 	.logout { margin-top: 2.5rem; border: 0; background: none; padding: 0; text-decoration: underline; color: var(--gris); cursor: pointer; }
 	.help { align-self: start; padding: 1.8rem; background: var(--blanco); border: 1px solid var(--negro); box-shadow: var(--sombra); font-size: .92rem; }
 	.help h2 { margin: 0 0 1rem; font-size: 1.1rem; }
+	.help h3 { margin: 1.4rem 0 .4rem; font-size: .98rem; }
+	.help h3 + p { margin: 0; font-size: .9rem; }
 	.help ol { padding-left: 1.2rem; display: grid; gap: .55rem; }
 	.help a { color: var(--azul); }
 	.help code { font-size: .85em; background: var(--papel-2); padding: .05em .3em; }

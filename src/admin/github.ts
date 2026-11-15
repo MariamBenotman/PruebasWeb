@@ -1,25 +1,41 @@
 /**
  * Conexión con GitHub: la web guarda los cambios haciendo commits en el repositorio.
  * GitHub Actions vuelve a compilar y publicar la web en 1–2 minutos.
+ *
+ * MODO LOCAL: con `astro dev` no hace falta token. Se lee y se escribe directamente en los
+ * archivos de este ordenador (ver scripts/editor-local.mjs) y luego se hace commit a mano.
  */
 
 const TOKEN_KEY = 'reset-admin-token';
 
 declare global {
 	interface Window {
-		__site: { gh: { owner: string; repo: string; branch: string }; base: string };
+		__site: { gh: { owner: string; repo: string; branch: string }; base: string; local?: boolean };
 		__img: (el: HTMLImageElement) => void;
 		__imgAdmin?: (el: HTMLImageElement) => boolean;
 	}
 }
 
 export const repo = () => window.__site.gh;
+export const isLocal = () => !!window.__site.local;
+
+async function local<T>(path: string, init?: RequestInit): Promise<T> {
+	const res = await fetch(`/__editor-local${path}`, { cache: 'no-store', ...init });
+	const data = await res.json().catch(() => ({}));
+	if (!res.ok) throw new GitHubError(res.status, data.message || res.statusText);
+	return data as T;
+}
 
 export const getToken = () => {
 	try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
 };
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+export const clearToken = () => {
+	localStorage.removeItem(TOKEN_KEY);
+	if (isLocal()) localStorage.setItem('reset-local-off', '1');
+};
+/** Vuelve a activar el modo edición local tras haber pulsado "Salir". */
+export const enableLocal = () => localStorage.removeItem('reset-local-off');
 
 export class GitHubError extends Error {
 	constructor(public status: number, message: string) { super(message); }
@@ -54,7 +70,20 @@ export async function checkToken(token: string) {
 	return info;
 }
 
-const b64ToUtf8 = (b64: string) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, '')), (c) => c.charCodeAt(0)));
+/**
+ * Clave de administración: además de "Contents: Read and write" tiene "Administration: Read-only".
+ * Solo con ella se pueden eliminar páginas enteras; con una clave normal solo se pueden ocultar.
+ * (Se detecta pidiendo algo que solo esa clave puede leer: las claves de acceso del repositorio.)
+ * En modo local (tu ordenador) siempre se puede.
+ */
+let esAdmin: Promise<boolean> | null = null;
+export function puedeBorrar(): Promise<boolean> {
+	if (isLocal()) return Promise.resolve(true);
+	esAdmin ??= api(`${R()}/keys`).then(() => true, () => false);
+	return esAdmin;
+}
+
+const b64ToUtf8 =(b64: string) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, '')), (c) => c.charCodeAt(0)));
 const utf8ToB64 = (s: string) => bytesToB64(new TextEncoder().encode(s));
 export function bytesToB64(bytes: Uint8Array) {
 	let bin = '';
@@ -64,6 +93,10 @@ export function bytesToB64(bytes: Uint8Array) {
 
 /** Lee un archivo de texto del repositorio (versión más reciente, no la publicada). Devuelve null si no existe. */
 export async function readFile(path: string): Promise<string | null> {
+	if (isLocal()) {
+		try { return (await local<{ text: string }>(`/file?path=${encodeURIComponent(path)}`)).text; }
+		catch (e) { if (e instanceof GitHubError && e.status === 404) return null; throw e; }
+	}
 	try {
 		const f = await api<any>(`${R()}/contents/${encodeURI(path)}?ref=${repo().branch}&t=${Date.now()}`);
 		return b64ToUtf8(f.content);
@@ -74,6 +107,7 @@ export async function readFile(path: string): Promise<string | null> {
 }
 
 export async function listDir(path: string): Promise<string[]> {
+	if (isLocal()) return (await local<{ names: string[] }>(`/dir?path=${encodeURIComponent(path)}`)).names;
 	try {
 		const items = await api<any[]>(`${R()}/contents/${encodeURI(path)}?ref=${repo().branch}&t=${Date.now()}`);
 		return items.map((i) => i.name);
@@ -90,6 +124,11 @@ export type FileChange =
 
 /** Hace UN commit con todos los cambios (JSON, fotos, borrados). Devuelve el SHA del commit. */
 export async function commit(changes: FileChange[], message: string): Promise<string> {
+	if (isLocal()) {
+		const payload = changes.map((c) => ('delete' in c ? c : 'text' in c ? c : { path: c.path, b64: bytesToB64(c.bytes) }));
+		await local('/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: payload, message }) });
+		return 'local';
+	}
 	const { branch } = repo();
 	const ref = await api<any>(`${R()}/git/ref/heads/${branch}`);
 	const parentSha: string = ref.object.sha;
@@ -119,7 +158,8 @@ export async function commit(changes: FileChange[], message: string): Promise<st
 }
 
 /** Estado de la publicación (GitHub Actions) para un commit. Devuelve null si no se puede consultar. */
-export async function deployStatus(sha: string): Promise<'pendiente' | 'publicando' | 'publicado' | 'error' | null> {
+export async function deployStatus(sha: string): Promise<'pendiente' | 'publicando' | 'publicado' | 'error' | 'local' | null> {
+	if (sha === 'local') return 'local';
 	try {
 		const r = await api<any>(`${R()}/actions/runs?head_sha=${sha}&per_page=5`);
 		const run = r.workflow_runs?.[0];

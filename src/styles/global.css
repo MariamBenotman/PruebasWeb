@@ -7,6 +7,8 @@
 /* La fuente de marca (LTAtomatic) se declara en Layout.astro: si el archivo no existe se usa Archivo. */
 
 :root {
+	/* Proporción A3/A4 apaisado (√2): la de casi todos los carteles */
+	--a3: 1.4142 / 1;
 	--azul: #0b3558;
 	--azul-hondo: #072440;
 	--azul-claro: #1a5a8f;
@@ -135,6 +137,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* Imagen a su tamaño natural (carteles, capturas…): sin recortes */
 .frame.natural { aspect-ratio: auto; min-height: 220px; }
 .frame.natural > img, .frame.natural > video { position: static; height: auto; max-height: 80vh; object-fit: contain; background: var(--negro); }
+/* Imagen con otra proporción que el marco: entera, sobre ella misma desenfocada (lo decide Layout.astro) */
+.frame.encaja > img:not(.encaja-fondo) { object-fit: contain; }
+/* El texto de reserva solo se ve si no hay imagen */
+.frame:has(> img:not(.alt))::before { visibility: hidden; }
+.frame > img.encaja-fondo { object-fit: cover; filter: blur(14px) brightness(.72) saturate(.9); transform: scale(1.15); clip-path: inset(6.6%); }
 
 /* ───── Etiquetas (roles, categorías) ───── */
 
@@ -193,7 +200,17 @@ html.js .sec-head.reveal.is-in .rule { transform: scaleX(1); }
 .m-sec.is-plain .m-grid { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 1.8rem 1.3rem; }
 
 .m-card { position: relative; }
-.m-photo { aspect-ratio: 4 / 5; overflow: visible; }
+.m-photo {
+	/* Las fotos de miembros son verticales 2:3 (p. ej. 1200 × 1800) */
+	aspect-ratio: 2 / 3; overflow: visible;
+	/* Sin foto: iniciales sobre el símbolo de Reset, grande, centrado y muy tenue */
+	background-image: var(--marca-agua), linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+	background-size: 82% auto, 14px 14px, 14px 14px;
+	background-position: 50% 32%, 0 0, 0 0;
+	background-repeat: no-repeat, repeat, repeat;
+}
+/* Iniciales abajo y el símbolo de Reset algo más arriba, para que no se monten */
+.m-photo::before { place-items: end center; padding-bottom: 10%; }
 .m-photo > img { filter: saturate(.92); transition: filter .4s var(--ease); }
 .m-photo > img.alt { clip-path: inset(0 0 0 100%); transition: clip-path .55s var(--ease); filter: none; }
 .m-card:hover .m-photo > img.alt, .m-card:focus-within .m-photo > img.alt { clip-path: inset(0 0 0 0); }
@@ -218,6 +235,9 @@ html.js .sec-head.reveal.is-in .rule { transform: scaleX(1); }
 .yearbar.on-dark { background: var(--azul-hondo); border-color: #1e4a73; color: #cfe0f0; }
 .yearbar.on-dark a:hover { border-color: #5c87b0; }
 .yearbar.on-dark a[aria-current] { background: var(--naranja); color: var(--negro); }
+.yearbar a.lbl { padding: .35rem 0; border: 0; font-size: .72rem; color: var(--gris); }
+.yearbar a.lbl::after { content: ' ↗'; color: var(--naranja); }
+.yearbar a.lbl:hover { color: var(--naranja); }
 
 /* ═══════════════ CYBERTECH ═══════════════ */
 
@@ -285,8 +305,55 @@ html.js .sec-head.reveal.is-in .rule { transform: scaleX(1); }
 
 @media (max-width: 760px) { .ct-block.has-media .ct-block-in { grid-template-columns: 1fr; } .ct-block.flip .ct-block-in > .frame { order: 0; } }
 
-.gal { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 120px; gap: 1rem; }
-.gal .frame { aspect-ratio: auto; grid-column: span 2; grid-row: span 2; --mark: transparent; }
-.gal .frame.g0 { grid-column: span 4; grid-row: span 3; }
-.gal .frame.g3 { grid-column: span 2; grid-row: span 3; }
-@media (max-width: 760px) { .gal { grid-template-columns: repeat(2, 1fr); } .gal .frame, .gal .frame.g0, .gal .frame.g3 { grid-column: span 1; grid-row: span 2; } .gal .frame.g0 { grid-column: span 2; } }
+/* Galería en mosaico: cada foto o cartel se ve entero, con su proporción */
+.gal { columns: 3 260px; column-gap: 1rem; }
+.gal .frame { aspect-ratio: auto; break-inside: avoid; margin: 0 0 1rem; --mark: transparent; }
+.gal .frame > img, .gal .frame > video { position: static; display: block; height: auto; object-fit: contain; }
+.gal .frame.is-missing, .gal .frame:not(:has(> img, > video)) { aspect-ratio: var(--a3); }
+
+/* ═══════════════ ENTRADAS (proyectos, talleres, servicios, noticias) ═══════════════ */
+
+.kicker a { text-decoration: none; }
+.kicker a + span::before, .kicker a + a::before { content: '/'; margin-right: .9rem; color: var(--naranja); }
+.kicker a:hover { color: var(--naranja); }
+.en-head { padding-bottom: clamp(1.5rem, 4vw, 2.5rem); }
+.en-t {
+	margin: 0; max-width: 20ch; font-family: var(--f-display); font-stretch: 118%; font-weight: 800;
+	font-size: clamp(2.2rem, 5.5vw, 4.4rem); line-height: .98; letter-spacing: -.03em;
+}
+.en-lede { max-width: 58ch; margin: 1.6rem 0 0; }
+.en-cover { margin-bottom: clamp(2rem, 5vw, 3.5rem); }
+.en-cover .frame { max-width: 980px; box-shadow: var(--sombra-n); }
+.en-body { padding-bottom: 2rem; }
+.en-body .prose { font-size: 1.08rem; }
+.en-gal { margin-top: 3rem; padding-bottom: 2rem; }
+
+/* ───────────── Apartados sueltos (Colaboradores, Contacto, Participa…) ───────────── */
+.gp { container-type: inline-size; }
+.gp-t { font-size: clamp(2.2rem, 8cqi, 5.8rem); overflow-wrap: anywhere; }
+.gp-lede { max-width: 56ch; margin-top: 1.8rem; }
+.gp-main.con-img { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 2rem clamp(2rem, 5vw, 4.5rem); align-items: start; }
+.gp-body:empty { display: none; }
+.gp-body, .gp-img { margin-bottom: 2.5rem; }
+.gp-extra { margin-bottom: 3rem; }
+.gp-end { padding-bottom: 3rem; }
+.gp-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0; border: 1px solid var(--negro); background: var(--blanco); }
+.gp-contact div { padding: 1.4rem; border-right: 1px solid var(--linea); }
+.gp-contact div:last-child { border-right: 0; }
+.gp-contact dt { font-family: var(--f-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--naranja); margin-bottom: .5rem; }
+.gp-contact dd { margin: 0; display: flex; flex-direction: column; gap: .2rem; }
+.gp-contact a { color: var(--azul); }
+@media (max-width: 860px) { .gp-main.con-img { grid-template-columns: 1fr; } }
+
+/* ───────────── Talleres de esta edición (Octubre Robótico) ───────────── */
+.en-incl { margin-top: 3rem; }
+.en-incl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; margin: 0; padding: 0; list-style: none; }
+.en-incl-grid a { position: relative; display: flex; flex-direction: column; height: 100%; text-decoration: none; background: var(--blanco); border: 1px solid var(--negro); transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+.en-incl-grid a:hover { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+.en-incl-grid .frame { --mark: transparent; aspect-ratio: var(--a3); border-bottom: 1px solid var(--negro); }
+.en-incl-grid a > div { padding: 1rem 1.2rem 2.4rem; }
+.en-incl-grid h3 { margin: 0 0 .35rem; font-size: 1.15rem; line-height: 1.2; }
+.en-incl-grid p { margin: 0; font-size: .9rem; color: #4a4943; }
+.en-incl-arr { position: absolute; left: 1.2rem; bottom: .8rem; color: var(--naranja); }
+.en-incl-grid .adm-add { width: 100%; height: 100%; min-height: 160px; }
+.adm-oculto { margin-top: 1.5rem; padding: .8rem 1rem; border: 1.5px dashed #b8432c; color: #b8432c; font-family: var(--f-mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }

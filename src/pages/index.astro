@@ -1,12 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getCursos, getEdiciones, getNoticias, href, fecha } from '../lib/data';
+import { getCursos, getEdiciones, getEntradas, href, img, fecha } from '../lib/data';
 
-const [ediciones, cursos, noticias] = await Promise.all([getEdiciones(), getCursos(), getNoticias()]);
+const [ediciones, cursos, noticias] = await Promise.all([getEdiciones(), getCursos(), getEntradas('noticias')]);
 const ct = ediciones[0];
 const curso = cursos[0];
-const ultimas = noticias.slice(0, 3);
-const img = (p?: string) => (p ? (/^(https?:|\/)/.test(p) ? p : href(p)) : '');
+const ultimas = noticias.filter((n) => !n.data.oculto).slice(0, 3);
 
 const areas = [
 	{ n: '01', t: 'Robótica', d: 'Robots autónomos y teleoperados, de la idea al pabellón de competición.' },
@@ -114,12 +113,12 @@ const servicios = [
 			<header class="sec-head reveal"><span class="idx">§03</span><h2>Noticias</h2><span class="rule"></span><a class="more" href={href('noticias')}>Todas →</a></header>
 			<div class="news-grid">
 				{ultimas.map((n, i) => (
-					<a class="news-card reveal" style={`--d:${i}`} href={href(`noticias/${n.id}`)}>
-						<figure class="frame" data-label={n.data.category ?? 'Reset'}>
-							{n.data.image && <img src={img(n.data.image)} alt="" loading="lazy" onerror="__img(this)" />}
+					<a class="news-card reveal" style={`--d:${i}`} href={n.url}>
+						<figure class="frame" data-label={n.data.etiquetas[0] ?? 'Reset'}>
+							{n.data.portada && <img src={img(n.data.portada)} alt="" loading="lazy" onerror="__img(this)" />}
 						</figure>
-						<p class="news-meta"><time datetime={n.data.pubDate.toISOString()}>{fecha(n.data.pubDate)}</time>{n.data.category && <span>{n.data.category}</span>}</p>
-						<h3>{n.data.title}</h3>
+						<p class="news-meta">{n.data.fecha && <time datetime={n.data.fecha}>{fecha(n.data.fecha)}</time>}{n.data.etiquetas[0] && <span>{n.data.etiquetas[0]}</span>}</p>
+						<h3>{n.data.titulo}</h3>
 					</a>
 				))}
 			</div>
@@ -203,7 +202,7 @@ const servicios = [
 	.more:hover { color: var(--naranja); }
 	.news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4rem 2rem; }
 	.news-card { text-decoration: none; }
-	.news-card .frame { aspect-ratio: 3 / 2; --mark: transparent; transition: box-shadow .25s var(--ease), transform .25s var(--ease); }
+	.news-card .frame { aspect-ratio: var(--a3); --mark: transparent; transition: box-shadow .25s var(--ease), transform .25s var(--ease); }
 	.news-card:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--sombra-n); }
 	.news-meta { display: flex; gap: 1rem; margin: 1.1rem 0 .4rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
 	.news-meta span { color: var(--naranja); }

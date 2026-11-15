@@ -18,5 +18,19 @@
     "Vocal de Taller",
     "Vocal Web"
   ],
-  "categorias": []
+  "proyectos": [
+    "En desarrollo",
+    "Finalizado"
+  ],
+  "talleres": [
+    "Cybertech",
+    "Octubre Robótico",
+    "Programación"
+  ],
+  "servicios": [],
+  "noticias": [
+    "Cybertech",
+    "Noticia",
+    "Talleres"
+  ]
 }

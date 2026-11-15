@@ -1,0 +1,20 @@
+{
+  "titulo": "Octubre Robótico 2023",
+  "fecha": "2023-10-04",
+  "etiquetas": [
+    "Octubre Robótico"
+  ],
+  "resumen": "Talleres de octubre para aprender desde cero: programación en C, Linux y Python.",
+  "portada": "fotos/talleres/octubre-robotico-2023/cartel.jpg",
+  "cuerpo": "Talleres de octubre pensados para aprender desde cero, sin experiencia previa.\n\n### Calendario\n\n- **Programación en C:** 4 de octubre\n- **Taller de Linux:** 6 y 10 de octubre\n- **Programación en Python:** 20 de octubre",
+  "galeria": [],
+  "serie": "octubre-robotico",
+  "descMenu": "",
+  "oculto": false,
+  "enListado": true,
+  "incluye": [
+    "programacion-en-c",
+    "taller-de-python"
+  ],
+  "destacado": false
+}

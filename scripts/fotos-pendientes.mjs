@@ -52,14 +52,18 @@ for (const { d } of readJson('src/content/cybertech')) {
 	(d.galeria ?? []).forEach((p, i) => add(g, p, `Galería, foto ${i + 1}`));
 }
 
-/* Noticias */
-const ng = grupo('Noticias');
-for (const f of readdirSync(join(ROOT, 'src/content/noticias')).filter((f) => f.endsWith('.md'))) {
-	const fm = readFileSync(join(ROOT, 'src/content/noticias', f), 'utf8').split('---')[1] ?? '';
-	const img = fm.match(/^image:\s*["']?([^"'\n]+)["']?/m)?.[1]?.trim();
-	const title = fm.match(/^title:\s*["']?(.+?)["']?$/m)?.[1];
-	if (img) add(ng, img.replace(/^\/PruebasWeb\//, ''), `Noticia «${title}»`);
+/* Proyectos, Talleres, Servicios y Noticias */
+for (const [sec, titulo] of [['proyectos', 'Proyectos'], ['talleres', 'Talleres'], ['servicios', 'Servicios'], ['noticias', 'Noticias']]) {
+	const g = grupo(titulo);
+	for (const { d } of readJson(`src/content/${sec}`)) {
+		add(g, d.portada, `«${d.titulo}» — imagen principal`);
+		(d.galeria ?? []).forEach((p, i) => add(g, p, `«${d.titulo}» — galería, foto ${i + 1}`));
+	}
 }
+
+/* Apartados (Colaboradores, Participa…) */
+const gp = grupo('Apartados de Conócenos');
+for (const { d } of readJson('src/content/paginas')) add(gp, d.imagen, `«${d.titulo}» — imagen`);
 
 /* Salida */
 const total = grupos.reduce((n, g) => n + g.items.length, 0);
@@ -73,7 +77,7 @@ let out = `# Fotos pendientes
 ## Cómo añadirlas
 
 - **La forma fácil:** entra en la web en modo edición (pie de página → *Acceso editores*), haz clic en la persona o el bloque y pulsa *Subir foto*. Se recorta, se optimiza y se guarda sola, con cualquier nombre de archivo.
-- **A mano:** guarda el archivo en la carpeta \`public/\` del proyecto con **exactamente** la ruta de la columna derecha. Por ejemplo, \`fotos/miembros/2022-23/antonio-cameo.jpg\` va en \`public/fotos/miembros/2022-23/antonio-cameo.jpg\`. Las fotos de personas deben ser **.jpg** y mejor verticales (proporción 4:5).
+- **A mano:** guarda el archivo en la carpeta \`public/\` del proyecto con **exactamente** la ruta de la columna derecha. Por ejemplo, \`fotos/miembros/2022-23/antonio-cameo.jpg\` va en \`public/fotos/miembros/2022-23/antonio-cameo.jpg\`. Las fotos de personas deben ser **.jpg** y **verticales 2:3** (por ejemplo, 1200 × 1800 px). Los carteles, **A3** horizontal o vertical (por ejemplo, 2000 × 1414 px).
 
 `;
 for (const g of grupos) {

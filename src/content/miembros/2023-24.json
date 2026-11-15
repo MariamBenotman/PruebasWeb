@@ -5,6 +5,7 @@
   "secciones": [
     {
       "titulo": "Junta",
+      "orden": "manual",
       "miembros": [
         {
           "nombre": "Mariam Benotman",
@@ -13,14 +14,6 @@
           ],
           "foto": "fotos/miembros/2023-24/mariam-benotman.jpg",
           "fotoHover": "fotos/miembros/2023-24/mariam-benotman-2.jpg"
-        },
-        {
-          "nombre": "Ricardo Estremera",
-          "roles": [
-            "Vicepresidente"
-          ],
-          "foto": "fotos/miembros/2023-24/ricardo-estremera.jpg",
-          "fotoHover": "fotos/miembros/2023-24/ricardo-estremera-2.jpg"
         },
         {
           "nombre": "Miguel Ángel García",
@@ -45,11 +38,20 @@
           ],
           "foto": "fotos/miembros/2023-24/clara-molina.jpg",
           "fotoHover": "fotos/miembros/2023-24/clara-molina-2.jpg"
+        },
+        {
+          "nombre": "Ricardo Estremera",
+          "roles": [
+            "Vicepresidente"
+          ],
+          "foto": "fotos/miembros/2023-24/ricardo-estremera.jpg",
+          "fotoHover": "fotos/miembros/2023-24/ricardo-estremera-2.jpg"
         }
       ]
     },
     {
       "titulo": "Vocales",
+      "orden": "manual",
       "miembros": [
         {
           "nombre": "Miguel González",
@@ -119,6 +121,7 @@
     },
     {
       "titulo": "Miembros",
+      "orden": "alfabetico",
       "miembros": [
         {
           "nombre": "Jaime Bravo",

@@ -1,0 +1,130 @@
+---
+/** Listado de Proyectos, Talleres, Servicios o Noticias. */
+import Layout from '../../layouts/Layout.astro';
+import { getArbol, href, img, fecha } from '../../lib/data';
+import { SECCIONES, type SeccionKey } from '../../lib/render';
+
+export function getStaticPaths() {
+	return Object.keys(SECCIONES).map((seccion) => ({ params: { seccion } }));
+}
+const seccion = Astro.params.seccion as SeccionKey;
+const sec = SECCIONES[seccion];
+// Lo que se repite cada año sale una sola vez (lo genérico); sus ediciones están en su página.
+// Lo oculto y lo que va solo dentro de otra página (p. ej. un taller del Octubre Robótico) solo se ve en modo edición.
+const { raiz, incluidaEn } = await getArbol(seccion);
+const entradas = raiz.map((r) => ({
+	...r,
+	tags: [...new Set([...r.data.etiquetas, ...r.visibles.flatMap((e) => e.data.etiquetas)])],
+	portada: r.data.portada || r.visibles.find((e) => e.data.portada)?.data.portada || '',
+	aviso: r.data.oculto ? 'Oculto' : !r.data.enListado ? (incluidaEn(r.id)[0] ? `Solo dentro de ${incluidaEn(r.id)[0].data.titulo}` : 'No sale en la sección') : '',
+}));
+const publicas = entradas.filter((e) => e.listada);
+const etiquetas = [...new Set(publicas.flatMap((e) => e.tags))];
+const lista = seccion === 'noticias';
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<Layout title={sec.titulo} description={sec.intro}>
+	<div class="wrap ls">
+		<header class="pg-head">
+			<p class="kicker"><span>Reset</span><span>{sec.titulo}</span><span>{pad(publicas.length)} {publicas.length === 1 ? sec.singular : `${sec.singular}s`}</span></p>
+			<h1 class="display">{sec.titulo}</h1>
+			<div class="ls-row">
+				<p class="lede">{sec.intro}</p>
+				<a class="btn primary adm-only" href={href(`editar?tipo=${seccion}`)}>+ {sec.nuevo}</a>
+			</div>
+		</header>
+
+		{etiquetas.length > 1 && (
+			<div class="ls-filter" role="toolbar" aria-label="Filtrar">
+				<button type="button" aria-pressed="true" data-tag="">Todo</button>
+				{etiquetas.map((t) => <button type="button" aria-pressed="false" data-tag={t}>{t}</button>)}
+			</div>
+		)}
+
+		<ol class:list={['ls-items', lista ? 'is-list' : 'is-grid']}>
+			{entradas.map((e, i) => (
+				<li class:list={['reveal', { 'adm-only ls-off': !e.listada }]} style={`--d:${i % 6}`} data-tags={JSON.stringify(e.tags)}>
+					<a href={e.url}>
+						{e.aviso && <span class="ls-aviso">{e.aviso}</span>}
+						<figure class="frame" data-label={e.data.titulo}>
+							{e.portada && <img src={img(e.portada)} alt="" loading="lazy" onerror="__img(this)" />}
+						</figure>
+						<div class="ls-txt">
+							<p class="meta">
+								{e.visibles.length > 0
+									? <b class="ed">{e.visibles.length} {e.visibles.length === 1 ? 'edición' : 'ediciones'}{e.reciente && ` · última ${e.reciente.slice(0, 4)}`}</b>
+									: e.data.fecha && <time datetime={e.data.fecha}>{fecha(e.data.fecha)}</time>}
+								{e.data.etiquetas.map((t) => <span>{t}</span>)}
+							</p>
+							<h2>{e.data.titulo}</h2>
+							{e.data.resumen && <p class="sum">{e.data.resumen}</p>}
+						</div>
+					</a>
+				</li>
+			))}
+			<li class="adm-only ls-add"><a class="adm-add" href={href(`editar?tipo=${seccion}`)}><span>+</span>{sec.nuevo}</a></li>
+		</ol>
+		{publicas.length === 0 && <p class="empty">Todavía no hay nada aquí.</p>}
+	</div>
+</Layout>
+
+<script>
+	const bar = document.querySelector('.ls-filter');
+	bar?.addEventListener('click', (e) => {
+		const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-tag]');
+		if (!b) return;
+		const tag = b.dataset.tag!;
+		bar.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+		document.querySelectorAll<HTMLElement>('.ls-items > li[data-tags]').forEach((li) => {
+			li.hidden = !!tag && !JSON.parse(li.dataset.tags!).includes(tag);
+		});
+	});
+</script>
+
+<style>
+	.ls { padding-bottom: 6rem; }
+	.ls-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1.5rem 3rem; margin-top: 1.8rem; }
+	.ls-row .lede { margin: 0; max-width: 56ch; }
+	.ls-filter { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 2rem; }
+	.ls-filter button {
+		padding: .4rem .8rem; border: 1px solid var(--negro); background: transparent; cursor: pointer;
+		font-family: var(--f-mono); font-size: .74rem; text-transform: uppercase; letter-spacing: .05em;
+	}
+	.ls-filter button:hover { background: var(--papel-2); }
+	.ls-filter button[aria-pressed='true'] { background: var(--negro); color: var(--papel); }
+
+	.ls-items { margin: 0; padding: 0; list-style: none; }
+	.ls-items a { text-decoration: none; }
+	.meta { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: 0 0 .5rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	.meta span { color: var(--naranja); }
+	.ls-off > a { opacity: .55; border-style: dashed !important; }
+	.ls-off > a:hover { opacity: 1; }
+	.ls-items > li > a { position: relative; }
+	.ls-aviso { position: absolute; z-index: 2; top: .6rem; left: .6rem; padding: .2rem .5rem; background: #b8432c; color: #fff; font-family: var(--f-mono); font-size: .66rem; text-transform: uppercase; letter-spacing: .05em; }
+	.meta .ed { font-weight: 500; color: var(--azul); }
+	h2 { margin: 0 0 .5rem; line-height: 1.2; }
+	.sum { margin: 0; color: #4a4943; }
+	.frame { --mark: transparent; }
+
+	.is-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1.6rem; }
+	.is-grid > li > a { display: flex; flex-direction: column; height: 100%; background: var(--blanco); border: 1px solid var(--negro); transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+	.is-grid > li > a:hover { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+	.is-grid .frame { aspect-ratio: var(--a3); border-bottom: 1px solid var(--negro); }
+	.is-grid .ls-txt { padding: 1.2rem 1.3rem 1.5rem; }
+	.is-grid h2 { font-size: 1.3rem; }
+	.is-grid .sum { font-size: .93rem; }
+
+	.is-list { border-top: 1px solid var(--negro); }
+	.is-list > li { border-bottom: 1px solid var(--linea); }
+	.is-list > li > a { display: grid; grid-template-columns: 220px 1fr; gap: 2rem; padding: 1.8rem 0; }
+	.is-list .frame { aspect-ratio: var(--a3); }
+	.is-list h2 { font-size: clamp(1.2rem, 2.2vw, 1.6rem); }
+	.is-list .sum { max-width: 70ch; }
+	.is-list > li > a:hover h2 { text-decoration: underline; text-decoration-color: var(--naranja); text-underline-offset: .2em; }
+	@media (max-width: 640px) { .is-list > li > a { grid-template-columns: 1fr; gap: 1rem; } }
+
+	.ls-add .adm-add { width: 100%; height: 100%; min-height: 160px; }
+	.is-list .ls-add { padding: 1.5rem 0; border: 0; }
+	.empty { color: var(--gris); font-family: var(--f-mono); }
+</style>

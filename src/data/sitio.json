@@ -3,5 +3,9 @@
     "owner": "MariamBenotman",
     "repo": "PruebasWeb",
     "branch": "main"
+  },
+  "menu": {
+    "maxPorDesplegable": 6,
+    "noticiasConFoto": 3
   }
 }

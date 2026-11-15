@@ -5,8 +5,8 @@ import Footer from '../components/Footer.astro';
 import sitio from '../data/sitio.json';
 import { href } from '../lib/data';
 
-interface Props { title?: string; description?: string }
-const { title, description = 'Asociación de Estudiantes Reset · ETSII-UPM. Robótica, electrónica, automática e informática. Organizadores de Cybertech.' } = Astro.props;
+interface Props { title?: string; description?: string; /** Página oculta: que no la indexen los buscadores */ noindex?: boolean }
+const { title, noindex = false, description = 'Asociación de Estudiantes Reset · ETSII-UPM. Robótica, electrónica, automática e informática. Organizadores de Cybertech.' } = Astro.props;
 const fullTitle = title ? `${title} · Reset` : 'Reset · Asociación de Estudiantes ETSII-UPM';
 const gh = sitio.github;
 ---
@@ -18,16 +18,21 @@ const gh = sitio.github;
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#0b3558" />
 		<meta name="description" content={description} />
+		{noindex && <meta name="robots" content="noindex" />}
 		<title>{fullTitle}</title>
 		<link rel="icon" href={href('marca/favicon.png')} />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-		<style set:html={`@font-face{font-family:'LTAtomatic';src:url('${href('fuentes/LTAtomatic.woff2')}') format('woff2');font-display:swap}`}></style>
-		<script is:inline define:vars={{ gh, base: href('') }}>
+		<style set:html={`@font-face{font-family:'LTAtomatic';src:url('${href('fuentes/LTAtomatic.woff2')}') format('woff2');font-display:swap}:root{--marca-agua:url('${href('marca/reset-marca-agua.svg')}')}`}></style>
+		<script is:inline define:vars={{ gh, base: href(''), local: import.meta.env.DEV }}>
 			document.documentElement.classList.add('js');
-			window.__site = { gh, base };
-			try { if (localStorage.getItem('reset-admin-token')) document.documentElement.classList.add('is-admin'); } catch {}
+			window.__site = { gh, base, local };
+			try {
+				// En local (astro dev) el modo edición está activo sin token, salvo que se haya pulsado "Salir".
+				var on = local ? !localStorage.getItem('reset-local-off') : !!localStorage.getItem('reset-admin-token');
+				if (on) document.documentElement.classList.add('is-admin');
+			} catch {}
 			// Si una imagen no existe: prueba alternativas (data-fb="a|b"); si no, se quita y queda el hueco de reserva.
 			window.__img = function (el) {
 				if (window.__imgAdmin && window.__imgAdmin(el)) return;
@@ -45,11 +50,51 @@ const gh = sitio.github;
 		</main>
 		<Footer />
 		<script>
-			// Animación de aparición al hacer scroll
+			// Animación de aparición al hacer scroll. Lo que aparece a la vez entra en cascada según su
+			// posición real en pantalla (fila a fila, de izquierda a derecha), sea cual sea el ancho de las filas.
 			const io = new IntersectionObserver((entries) => {
-				for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+				const vis = entries.filter((e) => e.isIntersecting);
+				const fila = (e: IntersectionObserverEntry) => Math.round(e.boundingClientRect.top / 40);
+				const filas = [...new Set(vis.map(fila))].sort((a, b) => a - b);
+				for (const e of vis) {
+					// columna = cuántos de su misma fila están más a la izquierda
+					const col = vis.filter((x) => fila(x) === fila(e) && x.boundingClientRect.left < e.boundingClientRect.left).length;
+					(e.target as HTMLElement).style.setProperty('--d', String(Math.min(filas.indexOf(fila(e)) * 2 + col, 14)));
+					e.target.classList.add('is-in');
+					io.unobserve(e.target);
+				}
 			}, { rootMargin: '0px 0px -8% 0px' });
-			const watch = () => document.querySelectorAll('.reveal:not(.is-in)').forEach((el) => io.observe(el));
+			// Fotos "al pasar el ratón": están ocultas (recortadas), así que el navegador no las decodifica
+			// hasta el primer hover y la animación llega antes que la foto. Se preparan al acercarse a la pantalla.
+			const prep = new IntersectionObserver((entries) => {
+				for (const e of entries) if (e.isIntersecting) {
+					const im = e.target as HTMLImageElement;
+					im.loading = 'eager';
+					im.decode?.().catch(() => {});
+					prep.unobserve(im);
+				}
+			}, { rootMargin: '400px 0px' });
+			// Imágenes que no tienen la proporción de su marco (un cartel A3 vertical en una tarjeta apaisada…):
+			// en vez de recortarlas, se ven enteras sobre un fondo hecho con la misma imagen desenfocada.
+			const encajar = (im: HTMLImageElement) => {
+				const fr = im.parentElement;
+				if (!fr || !fr.classList.contains('frame') || fr.classList.contains('natural') || im.classList.contains('alt') || im.classList.contains('encaja-fondo') || !im.naturalWidth) return;
+				const nat = im.naturalWidth / im.naturalHeight, box = fr.clientWidth / fr.clientHeight;
+				const corta = 1 - Math.min(nat, box) / Math.max(nat, box) > 0.1;
+				fr.classList.toggle('encaja', corta);
+				const fondo = fr.querySelector(':scope > img.encaja-fondo');
+				if (corta && !fondo) {
+					const f = im.cloneNode() as HTMLImageElement;
+					f.className = 'encaja-fondo'; f.alt = ''; f.removeAttribute('onerror'); f.setAttribute('aria-hidden', 'true');
+					fr.insertBefore(f, im);
+				} else if (!corta) fondo?.remove();
+			};
+			document.addEventListener('load', (e) => { if (e.target instanceof HTMLImageElement) encajar(e.target); }, true);
+			const watch = () => {
+				document.querySelectorAll('.reveal:not(.is-in)').forEach((el) => io.observe(el));
+				document.querySelectorAll('img.alt').forEach((el) => prep.observe(el));
+				document.querySelectorAll<HTMLImageElement>('.frame > img').forEach((im) => im.complete && encajar(im));
+			};
 			watch();
 			document.addEventListener('reset:rendered', watch);
 

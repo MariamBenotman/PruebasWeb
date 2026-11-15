@@ -1,14 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { paginas } from '../data/paginas';
-import { getCursos, getEdiciones, getNoticias, href } from '../lib/data';
+import { getCursos, getEdiciones, getEntradas, getPaginas } from '../lib/data';
+import { SECCIONES, type SeccionKey } from '../lib/render';
 
-const [noticias, cursos, ediciones] = await Promise.all([getNoticias(), getCursos(), getEdiciones()]);
+const [cursos, ediciones, paginas] = await Promise.all([getCursos(), getEdiciones(), getPaginas()]);
+const entradas = (await Promise.all((Object.keys(SECCIONES) as SeccionKey[]).map(async (s) => (await getEntradas(s)).map((e) => ({ s: SECCIONES[s].titulo, e }))))).flat();
 const index = [
 	...ediciones.map((e) => ({ t: e.label, s: 'Cybertech', d: [e.data.lema, e.data.categorias.map((c) => c.nombre).join(' ')].join(' '), u: e.url })),
 	...cursos.map((c) => ({ t: c.label, s: 'Miembros', d: c.data.secciones.flatMap((s) => s.miembros.map((m) => `${m.nombre} ${m.roles.join(' ')}`)).join(' · '), u: c.url })),
-	...noticias.map((n) => ({ t: n.data.title, s: 'Noticias', d: n.data.summary, u: href(`noticias/${n.id}`) })),
-	...paginas.map((p) => ({ t: p.titulo, s: p.seccion, d: p.intro, u: href(p.slug) })),
+	...entradas.filter(({ e }) => !e.data.oculto).map(({ s, e }) => ({ t: e.data.titulo, s, d: `${e.data.resumen} ${e.data.descMenu} ${e.data.etiquetas.join(' ')}`, u: e.url })),
+	...paginas.map((p) => ({ t: p.data.titulo, s: p.data.menu ? 'Conócenos' : 'Reset', d: `${p.data.intro} ${p.data.cuerpo}`, u: p.url })),
 ];
 ---
 

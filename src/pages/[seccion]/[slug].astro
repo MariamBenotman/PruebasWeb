@@ -1,0 +1,106 @@
+---
+/**
+ * Página de un proyecto, taller, servicio o noticia (editable en modo edición).
+ * Si se repite cada año (p. ej. Octubre Robótico), la página genérica lista todas sus ediciones
+ * y cada edición enlaza de vuelta a ella.
+ */
+import Layout from '../../layouts/Layout.astro';
+import { getEntradas, getArbol, href, img, fecha, BASE } from '../../lib/data';
+import { SECCIONES, renderEntrada, type SeccionKey } from '../../lib/render';
+
+export async function getStaticPaths() {
+	const out = [];
+	for (const seccion of Object.keys(SECCIONES) as SeccionKey[]) {
+		for (const e of await getEntradas(seccion)) out.push({ params: { seccion, slug: e.id }, props: { seccion, id: e.id } });
+	}
+	return out;
+}
+const { seccion, id } = Astro.props as { seccion: SeccionKey; id: string };
+const { todas, raiz, padreDe, incluidaEn, refs } = await getArbol(seccion);
+const e = todas.find((x) => x.id === id)!;
+const padre = padreDe(e);
+const yo = raiz.find((r) => r.id === id);
+const ediciones = yo?.ediciones ?? [];
+const sec = SECCIONES[seccion];
+
+// "Más…": hermanas si es una edición; si no, otras cosas de la sección (nunca lo oculto)
+const hermanas = padre ? raiz.find((r) => r.id === padre.id)!.visibles.filter((x) => x.id !== id) : [];
+const otras = padre
+	? hermanas.slice(0, 3)
+	: raiz.filter((x) => x.id !== id && x.listada).slice(0, 3);
+// Si este taller forma parte de alguna edición (Octubre Robótico 2024…), se indica discretamente
+const parteDe = incluidaEn(id);
+const masTitulo = padre ? `Otras ediciones de ${padre.data.titulo}` : `Más ${sec.titulo.toLowerCase()}`;
+const masUrl = padre ? padre.url : href(seccion);
+const puedeTenerEdiciones = !padre && sec.ediciones;
+---
+
+<Layout title={e.data.titulo} description={e.data.resumen || sec.intro} noindex={e.data.oculto}>
+	<div id="page-root" data-kind={seccion} data-id={id} set:html={renderEntrada(e.data, { base: BASE }, seccion, padre && { id: padre.id, titulo: padre.data.titulo }, refs)} />
+
+	{parteDe.length > 0 && (
+		<p class="wrap parte-de">Forma parte de {parteDe.map((x, i) => <>{i > 0 && ', '}<a href={x.url}>{x.data.titulo}</a></>)}</p>
+	)}
+
+	{(ediciones.length > 0 || puedeTenerEdiciones) && (
+		<section class:list={['wrap', 'eds', { 'adm-only': !ediciones.length }]}>
+			<header class="sec-head"><span class="idx">{String(yo?.visibles.length ?? 0).padStart(2, '0')}</span><h2>Ediciones</h2><span class="rule"></span></header>
+			{!ediciones.length && <p class="eds-note">¿Se repite cada año? Añade aquí cada edición (por ejemplo, «{e.data.titulo} {new Date().getFullYear()}»). Esta página pasará a ser la genérica y el menú mostrará las últimas.</p>}
+			<ol class="eds-grid">
+				{ediciones.map((x, i) => (
+					<li class:list={['reveal', { 'adm-only eds-off': x.data.oculto }]} style={`--d:${i % 6}`}>
+						<a href={x.url}>
+							<figure class="frame" data-label={x.data.titulo}>
+								{x.data.portada && <img src={img(x.data.portada)} alt="" loading="lazy" onerror="__img(this)" />}
+							</figure>
+							<div>
+								{x.data.fecha && <time datetime={x.data.fecha}>{fecha(x.data.fecha)}</time>}
+								<h3>{x.data.titulo}</h3>
+								{x.data.resumen && <p>{x.data.resumen}</p>}
+							</div>
+						</a>
+					</li>
+				))}
+				<li class="adm-only eds-add"><a class="adm-add" href={href(`editar?tipo=${seccion}&serie=${id}`)}><span>+</span>Nueva edición</a></li>
+			</ol>
+		</section>
+	)}
+
+	{otras.length > 0 && (
+		<aside class="wrap more">
+			<header class="sec-head"><span class="idx">+</span><h2>{masTitulo}</h2><span class="rule"></span><a href={masUrl}>Ver todo →</a></header>
+			<ul>
+				{otras.map((o) => (
+					<li><a href={o.url}><span class="idx">{o.data.fecha ? o.data.fecha.slice(0, 4) : (o.data.etiquetas[0] ?? sec.titulo)}</span><b>{o.data.titulo}</b></a></li>
+				))}
+			</ul>
+		</aside>
+	)}
+	{padre && !otras.length && (
+		<aside class="wrap more"><a class="btn" href={padre.url}>← {padre.data.titulo}</a></aside>
+	)}
+</Layout>
+
+<style>
+	.eds { margin-top: 1rem; padding-bottom: 2rem; }
+	.eds-off > a { opacity: .55; border-style: dashed !important; }
+	.parte-de { margin-top: 1rem; font-family: var(--f-mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); }
+	.parte-de a { color: var(--naranja); text-decoration: none; }
+	.parte-de a:hover { text-decoration: underline; }
+	.eds-note { max-width: 60ch; color: var(--gris); margin: 0 0 1.4rem; }
+	.eds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.4rem; margin: 0; padding: 0; list-style: none; }
+	.eds-grid > li > a { display: flex; flex-direction: column; height: 100%; text-decoration: none; background: var(--blanco); border: 1px solid var(--negro); transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+	.eds-grid > li > a:hover { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+	.eds-grid .frame { --mark: transparent; aspect-ratio: var(--a3); border-bottom: 1px solid var(--negro); }
+	.eds-grid a > div { padding: 1rem 1.2rem 1.3rem; }
+	.eds-grid time { font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	.eds-grid h3 { margin: .3rem 0 .4rem; font-size: 1.2rem; line-height: 1.2; }
+	.eds-grid p { margin: 0; font-size: .92rem; color: #4a4943; }
+	.eds-add .adm-add { width: 100%; height: 100%; min-height: 160px; }
+
+	.more { margin-top: 2rem; padding-bottom: 6rem; }
+	.more .sec-head a { font-family: var(--f-mono); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; text-decoration: none; white-space: nowrap; }
+	.more ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
+	.more li a { display: grid; gap: .3rem; height: 100%; padding: 1.1rem 1.2rem; border: 1px solid var(--negro); background: var(--blanco); text-decoration: none; transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+	.more li a:hover { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+</style>

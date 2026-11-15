@@ -11,7 +11,9 @@ import { marked } from 'marked';
 /* ───────────── Tipos ───────────── */
 
 export interface Miembro { nombre: string; roles: string[]; foto: string; fotoHover: string }
-export interface SeccionMiembros { titulo: string; miembros: Miembro[] }
+/** `alfabetico`: las personas salen por orden alfabético; `manual`: en el orden en que se colocan en el editor */
+export type OrdenMiembros = 'alfabetico' | 'manual';
+export interface SeccionMiembros { titulo: string; orden: OrdenMiembros; miembros: Miembro[] }
 export interface Curso { curso: string; intro: string; fotoGrupo: string; secciones: SeccionMiembros[] }
 
 export interface Prueba { nombre: string; descripcion: string; media: string }
@@ -44,6 +46,9 @@ export function normalizeCurso(raw: any = {}): Curso {
 		fotoGrupo: str(raw.fotoGrupo),
 		secciones: arr(raw.secciones, (s) => ({
 			titulo: str(s?.titulo),
+			// Por defecto: alfabético si nadie de la sección tiene cargo (p. ej. "Miembros"); manual si lo tienen (Junta, Vocales)
+			orden: s?.orden === 'alfabetico' || s?.orden === 'manual' ? s.orden
+				: (Array.isArray(s?.miembros) && s.miembros.some((m: any) => Array.isArray(m?.roles) && m.roles.length) ? 'manual' : 'alfabetico'),
 			miembros: arr(s?.miembros, (m) => ({
 				nombre: str(m?.nombre),
 				roles: arr(m?.roles, str).filter(Boolean),
@@ -156,6 +161,14 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 			</div>
 		</li>`;
 
+	// El índice original (j) se conserva para que el editor sepa qué persona es cada tarjeta
+	const ordenar = (s: SeccionMiembros) => {
+		const lista = s.miembros.map((m, j) => ({ m, j }));
+		return s.orden === 'alfabetico'
+			? lista.sort((a, b) => a.m.nombre.localeCompare(b.m.nombre, 'es', { sensitivity: 'base' }))
+			: lista;
+	};
+
 	const sections = d.secciones.map((s, i) => `
 		<section class="m-sec${i === 0 ? ' is-lead' : ''}${s.miembros.some((m) => m.roles.length) ? '' : ' is-plain'}">
 			<header class="sec-head${reveal(ctx)}"${editAttr(ctx, `secciones.${i}`)}>
@@ -165,7 +178,7 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 				<span class="count">${pad(s.miembros.length)}</span>
 			</header>
 			<ul class="m-grid">
-				${s.miembros.map((m, j) => card(m, i, j)).join('')}
+				${ordenar(s).map(({ m, j }) => card(m, i, j)).join('')}
 				${ctx.admin ? `<li class="m-card m-card-add">${addBtn(ctx, `secciones.${i}.miembros`, 'Añadir persona')}</li>` : ''}
 			</ul>
 		</section>`).join('');
@@ -188,6 +201,126 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 
 const frameAlt = (path: string, ctx: RenderCtx) =>
 	`<img class="alt" src="${esc(asset(path, ctx))}" alt="" loading="lazy" decoding="async" onerror="__img(this)" data-path="${esc(path)}">`;
+
+/* ───────────── Entradas: Proyectos, Talleres, Servicios y Noticias ───────────── */
+
+export interface Entrada {
+	titulo: string;
+	fecha: string;        // AAAA-MM-DD (opcional salvo en noticias)
+	etiquetas: string[];
+	resumen: string;
+	portada: string;
+	cuerpo: string;
+	galeria: string[];
+	/**
+	 * Para lo que se repite cada año: id de la entrada "genérica" de la que esta es una edición
+	 * (p. ej. "octubre-robotico-2024" tiene serie "octubre-robotico"). Vacío si es independiente.
+	 */
+	serie: string;
+	/** Texto corto, en gris, debajo del título en el menú desplegable ("C, Python, Linux, PCB…") */
+	descMenu: string;
+	/** Oculto: no sale en ningún sitio de la web, pero se conserva (para volver a mostrarlo otro año) */
+	oculto: boolean;
+	/** Sale en el menú y en el listado de su sección. Si no, solo se llega desde otras páginas (p. ej. desde un Octubre Robótico) */
+	enListado: boolean;
+	/** «Destacar en el menú»: sale el primero, con estrella y franja naranja */
+	destacado: boolean;
+	/** Talleres que incluye esta edición (ids), p. ej. Octubre Robótico 2024 → programacion-en-c, taller-de-python */
+	incluye: string[];
+}
+
+/** Entrada genérica a la que pertenece una edición (para las migas de pan). */
+export interface PadreRef { id: string; titulo: string }
+/** Otra entrada enlazada desde esta (bloque "Talleres de esta edición") */
+export interface RefEntrada { id: string; titulo: string; resumen: string; portada: string }
+
+export const SECCIONES = {
+	proyectos: { titulo: 'Proyectos', singular: 'proyecto', nuevo: 'Nuevo proyecto', intro: 'Proyectos de robótica, electrónica, automática e informática desarrollados por miembros de Reset. Cualquiera puede apuntarse a uno o proponer el suyo.', fecha: false, ediciones: false },
+	talleres: { titulo: 'Talleres', singular: 'taller', nuevo: 'Nuevo taller', intro: 'Talleres formativos y totalmente gratuitos organizados por Reset.', fecha: false, ediciones: true },
+	servicios: { titulo: 'Servicios', singular: 'servicio', nuevo: 'Nuevo servicio', intro: 'Servicios de Reset para el alumnado y el personal de la ETSII.', fecha: false, ediciones: false },
+	noticias: { titulo: 'Noticias', singular: 'noticia', nuevo: 'Nueva noticia', intro: 'Actualidad, actividades y proyectos de la Asociación de Estudiantes Reset.', fecha: true, ediciones: false },
+} as const;
+export type SeccionKey = keyof typeof SECCIONES;
+
+export function normalizeEntrada(raw: any = {}): Entrada {
+	return {
+		titulo: str(raw.titulo),
+		fecha: str(raw.fecha).slice(0, 10),
+		etiquetas: arr(raw.etiquetas, str).filter(Boolean),
+		resumen: str(raw.resumen),
+		portada: str(raw.portada),
+		cuerpo: str(raw.cuerpo),
+		galeria: arr(raw.galeria, str).filter(Boolean),
+		serie: str(raw.serie),
+		descMenu: str(raw.descMenu),
+		oculto: !!raw.oculto,
+		enListado: raw.enListado === undefined ? true : !!raw.enListado,
+		incluye: arr(raw.incluye, str).filter(Boolean),
+		destacado: !!raw.destacado,
+	};
+}
+
+/** "2021-11-15" → "15 de noviembre de 2021" */
+export function fechaLarga(iso: string) {
+	const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	if (!m) return iso;
+	const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+	return `${Number(m[3])} de ${meses[Number(m[2]) - 1]} de ${m[1]}`;
+}
+
+/** Orden de los listados: lo más reciente primero; lo que no tiene fecha, por orden alfabético al final. */
+export const ordenEntradas = (a: Entrada, b: Entrada) =>
+	(b.fecha || '').localeCompare(a.fecha || '') || a.titulo.localeCompare(b.titulo, 'es');
+
+export function renderEntrada(d: Entrada, ctx: RenderCtx, seccion: SeccionKey, padre?: PadreRef, refs: RefEntrada[] = []): string {
+	const sec = SECCIONES[seccion];
+	// Talleres de esta edición: solo los que existen (si se borró uno, simplemente no sale)
+	const incl = d.incluye.map((id) => refs.find((r) => r.id === id)).filter((r): r is RefEntrada => !!r);
+	const talleres = incl.length || (ctx.admin && seccion === 'talleres' && padre) ? `
+	<section class="wrap en-incl">
+		<header class="sec-head${reveal(ctx)}"${editAttr(ctx, '')}><span class="idx">${pad(incl.length)}</span><h2>${sec.titulo} de esta edición</h2><span class="rule"></span></header>
+		<ul class="en-incl-grid">
+			${incl.map((r, i) => `
+			<li class="${reveal(ctx).trim()}" style="--d:${i}">
+				<a href="${esc(joinBase(ctx.base, `${seccion}/${r.id}`))}">
+					${frame(r.portada, ctx, { label: r.titulo })}
+					<div><h3>${esc(r.titulo)}</h3>${r.resumen ? `<p>${esc(r.resumen)}</p>` : ''}<span class="en-incl-arr" aria-hidden="true">→</span></div>
+				</a>
+			</li>`).join('')}
+			${ctx.admin ? `<li><button type="button" class="adm-add" data-edit=""><span>+</span>Elegir ${sec.titulo.toLowerCase()} (en «Datos generales»)</button></li>` : ''}
+		</ul>
+	</section>` : '';
+	const migas = [
+		`<a href="${esc(joinBase(ctx.base, seccion))}">${sec.titulo}</a>`,
+		...(padre ? [`<a href="${esc(joinBase(ctx.base, `${seccion}/${padre.id}`))}">${esc(padre.titulo)}</a>`] : []),
+		...d.etiquetas.filter((t) => t !== padre?.titulo).map((t) => `<span>${esc(t)}</span>`),
+		...(d.fecha ? [`<span><time datetime="${esc(d.fecha)}">${esc(fechaLarga(d.fecha))}</time></span>`] : []),
+	];
+	const gal = d.galeria.length || ctx.admin ? `
+	<section class="wrap en-gal">
+		<header class="sec-head${reveal(ctx)}"${editAttr(ctx, 'galeria')}><span class="idx">§</span><h2>Galería</h2><span class="rule"></span></header>
+		<div class="gal"${editAttr(ctx, 'galeria')}>
+			${d.galeria.map((g, i) => frame(g, ctx, { label: `Foto ${pad(i + 1)}`, cls: `${reveal(ctx)} g${i % 5}` })).join('')}
+		</div>
+		${addBtn(ctx, 'galeria', 'Añadir fotos', 'adm-add-wide')}
+	</section>` : '';
+
+	return `
+	${ctx.admin && d.oculto ? `<p class="wrap adm-oculto"${editAttr(ctx, '')}>Oculto: no sale en la web. Desmarca «Ocultar» en «Datos generales» para volver a mostrarlo.</p>` : ''}
+	<article class="en">
+		<header class="wrap pg-head en-head"${editAttr(ctx, '')}>
+			<p class="kicker">${migas.join('')}</p>
+			<h1 class="en-t">${esc(d.titulo) || (ctx.admin ? `<span class="muted">Título ${sec.singular === 'noticia' ? 'de la noticia' : `del ${sec.singular}`}</span>` : '')}</h1>
+			${d.resumen || ctx.admin ? `<p class="lede en-lede">${esc(d.resumen) || (ctx.admin ? '<span class="muted">Resumen corto (sale también en el listado)…</span>' : '')}</p>` : ''}
+		</header>
+		${d.portada || ctx.admin ? `<div class="wrap en-cover${reveal(ctx)}"${editAttr(ctx, '')}>${frame(d.portada, ctx, { label: d.titulo || sec.titulo, cls: 'natural', eager: true })}</div>` : ''}
+		<div class="wrap en-body"${editAttr(ctx, '')}>
+			<div class="prose">${md(d.cuerpo) || (ctx.admin ? '<p class="muted">Escribe aquí el contenido…</p>' : '')}</div>
+		</div>
+		${talleres}
+		${gal}
+	</article>`;
+}
 
 /* ───────────── Página de Cybertech ───────────── */
 
@@ -275,4 +408,45 @@ export function renderEdicion(d: Edicion, ctx: RenderCtx): string {
 	</section>` : '';
 
 	return `${hero}${datos}<div class="ct-body">${intro}${cats}${secs}${ctx.admin ? `<div class="wrap">${addBtn(ctx, 'secciones', 'Añadir bloque de texto', 'adm-add-wide')}</div>` : ''}${gal}</div>`;
+}
+
+/* ───────────── Apartados sueltos: Colaboradores, Contacto, Participa… ───────────── */
+
+export interface Pagina {
+	titulo: string;
+	intro: string;
+	cuerpo: string;
+	/** Imagen junto al texto (opcional) */
+	imagen: string;
+	/** Sale en el desplegable "Conócenos" */
+	menu: boolean;
+	/** Posición en el menú (1, 2, 3…; vacío = al final) */
+	orden: number;
+}
+
+export function normalizePagina(raw: any = {}): Pagina {
+	return {
+		titulo: str(raw.titulo),
+		intro: str(raw.intro),
+		cuerpo: str(raw.cuerpo),
+		imagen: str(raw.imagen),
+		menu: raw.menu === undefined ? true : !!raw.menu,
+		orden: Number(raw.orden) || 0,
+	};
+}
+
+export function renderPagina(d: Pagina, ctx: RenderCtx): string {
+	const e = editAttr(ctx, '');
+	return `
+	<div class="wrap gp">
+		<header class="pg-head"${e}>
+			<p class="kicker"><span>${d.menu ? 'Conócenos' : 'Reset'}</span><span>${esc(d.titulo)}</span></p>
+			<h1 class="display gp-t">${esc(d.titulo) || (ctx.admin ? '<span class="muted">Título del apartado</span>' : '')}</h1>
+			${d.intro || ctx.admin ? `<p class="lede gp-lede">${esc(d.intro) || (ctx.admin ? '<span class="muted">Frase de presentación…</span>' : '')}</p>` : ''}
+		</header>
+		<div class="gp-main${d.imagen ? ' con-img' : ''}"${e}>
+			<div class="prose gp-body">${md(d.cuerpo) || (ctx.admin ? '<p class="muted">Escribe aquí el contenido…</p>' : '')}</div>
+			${d.imagen ? frame(d.imagen, ctx, { label: d.titulo, cls: 'natural gp-img' }) : ''}
+		</div>
+	</div>`;
 }
