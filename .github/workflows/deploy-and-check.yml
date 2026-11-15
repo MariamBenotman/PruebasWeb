@@ -36,7 +36,12 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run build
-      - run: gh workflow run deploy-and-check.yml --ref main --repo ${{ github.repository }}
+      # Pedir a main que vuelva a publicar. Si no puede (p. ej. mientras main no tenga aún este archivo),
+      # solo avisa: la vista previa se actualizará en la siguiente publicación de main.
+      - name: Pedir a main que publique la vista previa
+        run: |
+          gh workflow run deploy-and-check.yml --ref main --repo ${{ github.repository }} \
+            || echo "::warning::No se ha podido pedir la publicación a main. La vista previa se actualizará en la próxima publicación de main."
         env:
           GH_TOKEN: ${{ github.token }}
 
