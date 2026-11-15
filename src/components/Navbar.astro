@@ -25,6 +25,8 @@ interface Hijo {
 	resaltado?: boolean;
 	/** Plazo "desde|hasta" en el que sale, en naranja, «Inscripciones abiertas» (Cybertech) */
 	plazo?: string;
+	/** Curso ("2025/26"): si es el curso actual, sale «Este curso» (lo decide el navegador con la fecha de hoy) */
+	curso?: string;
 }
 interface Entrada { titulo: string; url: string; activo: string; hijos: Hijo[]; noticias?: Ficha[]; admin: Hijo[] }
 
@@ -111,7 +113,7 @@ const menu: Entrada[] = [
 	{
 		titulo: 'Conócenos', url: cursos[0]?.url ?? href(), activo: 'miembros',
 		hijos: [
-			...limitar(cursos.map((c) => ({ titulo: c.label, url: c.url })), MAX, 'Todos los cursos', href('miembros')),
+			...limitar(cursos.map((c) => ({ titulo: c.label, url: c.url, curso: c.data.curso })), MAX, 'Todos los cursos', href('miembros')),
 			// Apartados editables (Colaboradores, Contacto…), debajo de la línea
 			...paginas.filter((p) => p.data.menu).map((p, i) => ({ titulo: p.data.titulo, url: p.url, sep: i === 0 })),
 		],
@@ -166,7 +168,7 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 										<li class:list={{ sep: h.sep, 'has-fly': h.fly, 'fly-vacio': h.fly && !h.fly.hijos.length, resaltado: h.resaltado }}>
 											<a href={h.url}>
 												{h.resaltado && <i class="estrella" aria-hidden="true">★</i>}
-												<span class="t">{h.titulo}{h.desc && <small class="desc">{h.desc}</small>}{h.plazo && <em class="plazo" data-plazo={h.plazo} hidden>Inscripciones abiertas</em>}</span>
+												<span class="t">{h.titulo}{h.desc && <small class="desc">{h.desc}</small>}{h.plazo && <em class="plazo" data-plazo={h.plazo} hidden>¡Inscríbete!</em>}{h.curso && <em class="plazo" data-curso={h.curso} hidden>Este curso</em>}</span>
 											</a>
 											{h.fly && (
 												<div class="fly">
@@ -238,7 +240,8 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 	.has-sub > a { padding-right: 1.5rem; }
 	.has-sub > a::before { content: ''; position: absolute; right: .7rem; top: 50%; width: 5px; height: 5px; border-right: 1.5px solid; border-bottom: 1.5px solid; transform: translateY(-70%) rotate(45deg); opacity: .6; }
 	.sub {
-		position: absolute; top: 100%; left: 0; min-width: 230px; padding-top: 1px;
+		/* a la medida de su contenido (con un mínimo y un máximo), sin hueco de sobra */
+		position: absolute; top: 100%; left: 0; width: max-content; min-width: 170px; max-width: 340px; padding-top: 1px;
 		opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity .2s, transform .25s var(--ease), visibility 0s .25s;
 	}
 	.sub ul { margin: 0; padding: .4rem; list-style: none; background: var(--blanco); border: 1px solid var(--negro); box-shadow: var(--sombra); }
@@ -312,7 +315,7 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 		.nav-item { flex-direction: column; align-items: stretch; border-bottom: 1px solid var(--linea); }
 		.nav-item > a { height: auto; padding: .9rem 0; font-size: 1.15rem; }
 		.nav-item > a::after, .has-sub > a::before { display: none; }
-		.sub { position: static; opacity: 1; visibility: visible; transform: none; padding: 0 0 .8rem; }
+		.sub { position: static; opacity: 1; visibility: visible; transform: none; padding: 0 0 .8rem; width: auto; min-width: 0; max-width: none; }
 		.sub ul { border: 0; box-shadow: none; background: none; padding: 0; columns: 2; }
 		.sub a { padding: .35rem 0; color: var(--gris); }
 		.fly, .has-fly > a::after, .news-img { display: none; }

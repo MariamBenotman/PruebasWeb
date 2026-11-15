@@ -2,7 +2,7 @@
 
 > Archivo generado con `npm run fotos`. No lo edites a mano: vuelve a ejecutar el comando cuando añadas fotos.
 
-**Faltan 100 de 331 imágenes.** Mientras falte una, la web muestra un recuadro azul con las iniciales o el nombre.
+**Faltan 100 de 484 imágenes.** Mientras falte una, la web muestra un recuadro azul con las iniciales o el nombre.
 
 ## Cómo añadirlas
 
@@ -154,10 +154,28 @@ Los logos mejor en **SVG**. Si solo tienes PNG, usa el mismo nombre con .png (fo
 ## Cybertech 2022 — completo ✓
 
 
+## Cybertech 2021 — completo ✓
+
+
+## Cybertech 2020 — completo ✓
+
+
+## Cybertech 2019 — completo ✓
+
+
 ## Cybertech 2018 — completo ✓
 
 
+## Cybertech 2017 — completo ✓
+
+
+## Proyectos — completo ✓
+
+
 ## Talleres — completo ✓
+
+
+## Servicios — completo ✓
 
 
 ## Noticias — completo ✓

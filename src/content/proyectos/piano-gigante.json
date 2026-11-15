@@ -5,7 +5,22 @@
     "Finalizado"
   ],
   "resumen": "Piano interactivo de gran formato desarrollado por Reset para eventos de la ETSII.",
-  "portada": "",
+  "portada": "fotos/proyectos/piano-gigante/alfombra-piano.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [
+    "fotos/proyectos/piano-gigante/prototipo-teclas.jpg",
+    "fotos/proyectos/piano-gigante/planos-medidas.jpg",
+    "fotos/proyectos/piano-gigante/pcb-diseno.jpg",
+    "fotos/proyectos/piano-gigante/pcb-montada.jpg",
+    "fotos/proyectos/piano-gigante/pcb.jpg",
+    "fotos/proyectos/piano-gigante/cable-plano.jpg",
+    "fotos/proyectos/piano-gigante/galga.jpg",
+    "fotos/proyectos/piano-gigante/galga-entera.jpg",
+    "fotos/proyectos/piano-gigante/exhibicion-carpa.jpg"
+  ],
+  "cursos": [
+    "2017/18",
+    "2018/19",
+    "2019/20"
+  ]
 }

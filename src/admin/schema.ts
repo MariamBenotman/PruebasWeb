@@ -60,7 +60,7 @@ export interface DocKind<T = any> {
 	url: (id: string) => string;
 	nuevo: (existing: string[]) => T;
 	/** Copia la estructura de una entrada anterior al crear una nueva */
-	copiar?: { label: (prev: T) => string; apply: (actual: T, prev: T) => T };
+	copiar?: { label: (prev: T) => string; apply: (actual: T, prev: T) => T; /** qué se copia (se explica en el editor) */ que: string };
 	/** Qué entrada se ofrece copiar al crear una nueva (por defecto, la última por nombre de archivo) */
 	previo?: (existing: string[], nuevo: T) => string | undefined;
 	/** Dirección para crear una edición nueva de esta entrada (solo lo que puede repetirse) */
@@ -145,6 +145,7 @@ export const miembrosKind: DocKind<Curso> = {
 	},
 	copiar: {
 		label: (prev) => `Copiar las personas de ${prev.curso}`,
+		que: 'Se copian las secciones con sus personas.',
 		apply: (actual, prev) => ({ ...actual, secciones: structuredClone(prev.secciones) }),
 	},
 };
@@ -238,12 +239,16 @@ export const cybertechKind: DocKind<Edicion> = {
 	},
 	copiar: {
 		label: (prev) => `Copiar categorías y bloques de ${prev.anio}`,
+		que: 'Se copian lema, lugar, introducción, cifras, categorías con sus pruebas y bloques de texto; no el año, la temática, las fechas, los carteles ni las fotos.',
 		apply: (actual, prev) => ({
 			...actual,
 			lema: prev.lema,
 			lugar: prev.lugar,
-			categorias: structuredClone(prev.categorias),
-			secciones: structuredClone(prev.secciones),
+			intro: prev.intro,
+			datos: structuredClone(prev.datos),
+			// sin los carteles/vídeos de cada categoría, prueba y bloque: son de ese año
+			categorias: prev.categorias.map((c) => ({ ...structuredClone(c), media: '', pruebas: c.pruebas.map((x) => ({ ...structuredClone(x), media: '' })) })),
+			secciones: prev.secciones.map((x) => ({ ...structuredClone(x), media: '' })),
 		}),
 	},
 };
@@ -277,7 +282,16 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 	};
 	const proyectoFields: Field[] = [
 		{ key: 'activo', label: 'Proyecto activo (en marcha)', type: 'check', hint: 'Sale en «Proyectos activos» del menú. Cuando termine, desmárcalo: pasa a estar solo en el historial.' },
-		{ key: 'anio', label: 'Año (opcional)', type: 'text', placeholder: '2024', hint: 'Sirve para ordenar el historial de proyectos por año.' },
+		{
+			key: 'cursos', label: 'Cursos en los que se hizo (opcional)', type: 'refs',
+			hint: 'Marca uno o varios. Con varios se muestra el rango de años (20/21 + 21/22 → 2020–2022). El historial lo agrupa por el más reciente.',
+			// del curso siguiente al actual hacia atrás, hasta 2012/13
+			options: () => {
+				const hoy = new Date();
+				const y = (hoy.getMonth() >= 8 ? hoy.getFullYear() : hoy.getFullYear() - 1) + 1;
+				return Array.from({ length: y - 2012 + 1 }, (_, i) => y - i).map((a) => { const c = `${a}/${String((a + 1) % 100).padStart(2, '0')}`; return { value: c, label: c }; });
+			},
+		},
 		{
 			key: 'autores', label: 'Autores: miembros de Reset', type: 'refs',
 			hint: 'Marca quién lo ha hecho. Salen abajo, con su foto de la sección de Miembros.',
@@ -347,7 +361,8 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 		nuevaEdicion: !sec.ediciones ? undefined : (d, id) => (d.serie ? undefined : `editar?tipo=${seccion}&serie=${encodeURIComponent(id)}`),
 		copiar: {
 			label: (prev) => `Copiar el contenido de «${prev.titulo}»`,
-			apply: (actual, prev) => ({ ...actual, etiquetas: [...prev.etiquetas], resumen: prev.resumen, cuerpo: prev.cuerpo }),
+			que: 'Se copian etiquetas, resumen, contenido, descripción del menú y talleres incluidos; no el título, la fecha ni las fotos.',
+			apply: (actual, prev) => ({ ...actual, etiquetas: [...prev.etiquetas], resumen: prev.resumen, cuerpo: prev.cuerpo, descMenu: prev.descMenu, incluye: [...prev.incluye] }),
 		},
 	};
 }
@@ -387,6 +402,11 @@ export const paginasKind: DocKind<Pagina> = {
 		],
 	},
 	nuevo: () => normalizePagina({ menu: true }),
+	copiar: {
+		label: (prev) => `Copiar el contenido de «${prev.titulo}»`,
+		que: 'Se copian la frase de presentación, el contenido y si sale en el menú; no el título ni la imagen.',
+		apply: (actual, prev) => ({ ...actual, intro: prev.intro, cuerpo: prev.cuerpo, menu: prev.menu }),
+	},
 	noBorrar: (id) => (id === 'participa' ? 'Este apartado no se puede eliminar: el botón «Únete» de toda la web lleva aquí. Puedes cambiar su texto.' : undefined),
 };
 

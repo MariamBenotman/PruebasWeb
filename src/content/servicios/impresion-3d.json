@@ -3,7 +3,10 @@
   "fecha": "",
   "etiquetas": [],
   "resumen": "Servicio de impresión 3D limitado al alumnado y personal de la ETSII (UPM).",
-  "portada": "",
+  "portada": "fotos/servicios/impresion-3d/impresora-prusa-2023.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [
+    "fotos/servicios/impresion-3d/impresoras-3d.jpg",
+    "fotos/servicios/impresion-3d/impresora-prusa.jpg"
+  ]
 }

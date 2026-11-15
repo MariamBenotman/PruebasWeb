@@ -5,7 +5,10 @@
     "Finalizado"
   ],
   "resumen": "Proyecto Morphex de Reset.",
-  "portada": "",
+  "portada": "fotos/proyectos/morphex/hexapodo.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [],
+  "cursos": [
+    "2016/17"
+  ]
 }

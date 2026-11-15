@@ -5,7 +5,13 @@
     "Finalizado"
   ],
   "resumen": "Proyecto Espasmitos de Reset.",
-  "portada": "",
+  "portada": "fotos/proyectos/espasmitos/espasmitos.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [
+    "fotos/proyectos/espasmitos/cad.jpg",
+    "fotos/proyectos/espasmitos/interfaz.jpg",
+    "fotos/proyectos/espasmitos/arduino.jpg",
+    "fotos/proyectos/espasmitos/sensor-laser.jpg",
+    "fotos/proyectos/espasmitos/servo.jpg"
+  ]
 }

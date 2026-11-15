@@ -4,7 +4,7 @@
   "tematica": "Medieval",
   "fechas": "23–26 de abril de 2019",
   "lugar": "Pabellón de deportes de la ETSII",
-  "portada": "",
+  "portada": "fotos/cybertech/2019/cartel-presentacion.jpg",
   "intro": "Cybertech es la competición de robótica más grande de la [UPM](http://www.upm.es/), con suculentos premios (**¡3000 € en premios y créditos ECTS!**). Se celebra en la [Escuela Técnica Superior de Ingenieros Industriales](http://www.etsii.upm.es/), está organizada por la asociación de estudiantes Reset y cuenta con el apoyo del [Departamento de Automática, Ingeniería Electrónica e Informática Industrial](http://www.disam.upm.es/).\n\nCybertech 2019 tuvo lugar en el pabellón de deportes de la ETSII entre el 23 y el 26 de abril de 2019.\n\nEl concurso tuvo tres categorías: Classic, Sumo y Medieval.\n\nPuedes ver el [vídeo resumen de la edición](https://www.youtube.com/watch?v=28y0wBhcOTQ) en YouTube.",
   "datos": [
     {
@@ -94,5 +94,13 @@
       "media": ""
     }
   ],
-  "galeria": []
+  "galeria": [
+    "fotos/cybertech/2019/2019-pista-circular.jpg",
+    "fotos/cybertech/2019/2019-robot-dragon.jpg",
+    "fotos/cybertech/2019/2019-robot-sombrero.jpg",
+    "fotos/cybertech/2019/2019-robots-mesa.jpg",
+    "fotos/cybertech/2019/2019-salon-de-actos.jpg",
+    "fotos/cybertech/2019/2019-siguelineas-1.jpg",
+    "fotos/cybertech/2019/2019-siguelineas-2.jpg"
+  ]
 }

@@ -6,6 +6,7 @@
  */
 import Layout from '../layouts/Layout.astro';
 import Logo from '../components/Logo.astro';
+import { INSTITUCIONES } from '../data/instituciones';
 import { getCollection } from 'astro:content';
 import { getCursos, getEdiciones, getEntradas, href, img, fecha, BASE } from '../lib/data';
 import { normalizeInicio, renderInicio } from '../lib/render';
@@ -24,7 +25,11 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 <Layout>
 	<div class="inicio">
 		<!-- RESET en grande: al hacer scroll se encoge y vuela hasta el logo de la cabecera -->
-		<div class="wrap inicio-logo" aria-hidden="true"><Logo /></div>
+		<div class="wrap inicio-logo">
+			<div class="inicio-logo-in" aria-hidden="true"><Logo /></div>
+			<!-- Instituciones, en el hueco que deja el símbolo encima de la palabra RESET. Se desvanecen al bajar. -->
+			<p class="inicio-inst">{INSTITUCIONES.map((i) => <a href={i.url} target="_blank" rel="noopener" title={i.nombre}><img src={href(`marca/${i.logo}-negro.png`)} alt={i.nombre} onerror="this.parentNode.remove()" /></a>)}</p>
+		</div>
 		<!-- Invita a bajar: lleva al carrusel. Desaparece en cuanto se hace scroll. -->
 		<button class="baja" type="button" aria-label="Ir a la siguiente sección"><i class="baja-pista"></i><i class="baja-flecha"></i></button>
 
@@ -190,8 +195,17 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 	});
 
 
+	/* ───── Logos de las instituciones: se desvanecen en cuanto se empieza a bajar ───── */
+	const inst = document.querySelector<HTMLElement>('.inicio-inst');
+	if (inst) {
+		let pend = 0;
+		const fundir = () => { pend = 0; inst.style.setProperty('--inst-p', String(Math.min(1, scrollY / 140))); inst.style.visibility = scrollY > 140 ? 'hidden' : ''; };
+		addEventListener('scroll', () => { pend ||= requestAnimationFrame(fundir); }, { passive: true });
+		fundir();
+	}
+
 	/* ───── RESET en grande que vuela hasta la cabecera al hacer scroll ───── */
-	const grande = document.querySelector<HTMLImageElement>('.inicio-logo img');
+	const grande = document.querySelector<HTMLImageElement>('.inicio-logo .logo img');
 	const peque = document.querySelector<HTMLImageElement>('.nav-logo img');
 	const raiz = document.documentElement;
 	if (grande && peque && !reducido) {
@@ -234,7 +248,14 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 
 <style is:global>
 	/* ───── RESET grande ───── */
-	.inicio-logo { padding-top: clamp(2rem, 5vw, 4rem); }
+	.inicio-logo { padding-top: clamp(2rem, 5vw, 4rem); position: relative; container-type: inline-size; }
+	/* Logos de la ETSII, la UPM y el CAR: arriba a la derecha, sobre la palabra RESET (medidas en proporción al logo) */
+	.inicio-inst { position: absolute; top: clamp(2rem, 5vw, 4rem); right: 0; margin: 0; display: flex; align-items: center; gap: 2.4rem; height: 7cqi; max-height: 86px;
+		opacity: calc(1 - var(--inst-p, 0)); filter: blur(calc(var(--inst-p, 0) * 8px)); transform: translateY(calc(var(--inst-p, 0) * -14px)); }
+	.inicio-inst a { height: 100%; opacity: .8; transition: opacity .2s; }
+	.inicio-inst a:hover { opacity: 1; }
+	.inicio-inst img { display: block; height: 100%; width: auto; }
+	@media (max-width: 700px) { .inicio-inst { display: none; } }
 	.inicio-logo .logo { display: block; height: auto; }
 	.inicio-logo .logo img { display: block; width: min(100%, 980px); height: auto; transform-origin: 0 0; will-change: transform; position: relative; z-index: 60; }
 	/* Con un desplegable abierto, el logo pasa por debajo de la cabecera: el menú siempre delante */
@@ -243,7 +264,7 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 	/* Mientras vuela, el logo pequeño de la cabecera espera; al llegar, se cambian */
 	html.logo-volando .nav-logo { opacity: 0; transition: opacity .15s; }
 	html.logo-volando.logo-llegado .nav-logo { opacity: 1; }
-	html.logo-volando.logo-llegado .inicio-logo img { opacity: 0; }
+	html.logo-volando.logo-llegado .inicio-logo .logo img { opacity: 0; }
 
 
 	/* ───── Primera pantalla y botón para bajar ───── */
@@ -344,6 +365,8 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 	.inicio .ct-band-t { margin: 0; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; text-transform: uppercase; font-size: clamp(3.5rem, 11vw, 9.5rem); line-height: .82; letter-spacing: -.045em; }
 	.inicio .ct-band-t span { color: transparent; -webkit-text-stroke: 2px var(--naranja); margin-left: .08em; }
 	.inicio .ct-band-lema { margin: 0 0 1.5rem; font-size: 1.2rem; color: #d3e2f0; max-width: 32ch; }
+	/* «Inscríbete» encima de «Ver las pruebas»: con aire, para que la sombra de uno no pise al otro */
+	.inicio .ct-band .ct-inscripcion { margin: 0 0 1.6rem; }
 	.inicio .ct-band-cats { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 2rem; padding: 0; list-style: none; }
 	.inicio .ct-band-cats li { display: flex; gap: .5rem; align-items: baseline; padding: .4rem .8rem; border: 1px solid rgba(255,255,255,.35); font-weight: 600; }
 	.inicio .ct-band-hist { margin: 1.8rem 0 0; font-family: var(--f-mono); font-size: .76rem; color: #a9c3dc; }

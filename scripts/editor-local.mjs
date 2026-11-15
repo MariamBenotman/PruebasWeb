@@ -3,7 +3,7 @@
  * Permite usar el modo edición sin token: los cambios se escriben directamente
  * en los archivos de este ordenador. Después se revisan y se hace commit a mano.
  */
-import { readFile, readdir, writeFile, mkdir, rm } from 'node:fs/promises';
+import { readFile, readdir, writeFile, mkdir, rm, rmdir, stat } from 'node:fs/promises';
 import { resolve, relative, dirname, sep } from 'node:path';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
@@ -13,7 +13,8 @@ const ALLOWED = ['src/content/', 'src/data/etiquetas.json', 'public/fotos/'];
 function safe(path) {
 	const abs = resolve(ROOT, String(path || ''));
 	const rel = relative(ROOT, abs).split(sep).join('/');
-	if (rel.startsWith('..') || !ALLOWED.some((a) => rel === a || rel.startsWith(a))) {
+	// (la propia carpeta permitida, sin la barra final, también cuenta: «public/fotos» = «public/fotos/»)
+	if (rel.startsWith('..') || !ALLOWED.some((a) => rel === a || rel.startsWith(a) || `${rel}/` === a)) {
 		throw Object.assign(new Error(`Ruta no permitida: ${rel}`), { status: 403 });
 	}
 	return abs;
@@ -47,11 +48,31 @@ export function editorLocal() {
 						try { return send(res, 200, { names: await readdir(safe(url.searchParams.get('path').replace(/\/?$/, '/'))) }); }
 						catch (e) { if (e.code === 'ENOENT') return send(res, 200, { names: [] }); throw e; }
 					}
+					// Todos los archivos de una carpeta y sus subcarpetas (para la fototeca)
+					if (req.method === 'GET' && url.pathname === '/tree') {
+						const base = url.searchParams.get('path').replace(/\/?$/, '/');
+						const files = [];
+						const recorrer = async (rel) => {
+							let items = [];
+							try { items = await readdir(safe(rel), { withFileTypes: true }); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
+							for (const it of items) {
+								const p = `${rel}${it.name}`;
+								if (it.isDirectory()) await recorrer(`${p}/`);
+								else files.push({ path: p, size: (await stat(safe(p))).size });
+							}
+						};
+						await recorrer(base);
+						return send(res, 200, { files });
+					}
 					if (req.method === 'POST' && url.pathname === '/save') {
 						const { changes } = await body(req);
 						const targets = changes.map((c) => ({ ...c, abs: safe(c.path) })); // valida todo antes de escribir nada
 						for (const c of targets) {
-							if (c.delete) { await rm(c.abs, { force: true }); continue; }
+							if (c.delete) {
+								await rm(c.abs, { force: true });
+								await rmdir(dirname(c.abs)).catch(() => {}); // si la carpeta se queda vacía, fuera (como en GitHub)
+								continue;
+							}
 							await mkdir(dirname(c.abs), { recursive: true });
 							await writeFile(c.abs, c.b64 != null ? Buffer.from(c.b64, 'base64') : c.text);
 						}

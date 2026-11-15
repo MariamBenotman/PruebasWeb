@@ -1,0 +1,22 @@
+{
+  "curso": "2025/26",
+  "intro": "",
+  "fotoGrupo": "",
+  "secciones": [
+    {
+      "titulo": "Junta",
+      "orden": "manual",
+      "miembros": []
+    },
+    {
+      "titulo": "Vocales",
+      "orden": "manual",
+      "miembros": []
+    },
+    {
+      "titulo": "Miembros",
+      "orden": "alfabetico",
+      "miembros": []
+    }
+  ]
+}

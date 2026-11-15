@@ -104,6 +104,38 @@ const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 			watch();
 			document.addEventListener('reset:rendered', watch);
 
+			// Textos grandes: se mantienen a su tamaño (el máximo de su recuadro) y con las mismas líneas, pero repartidas
+			// para que todas midan lo más parecido posible: «ROBÓTICA / HECHA POR / ESTUDIANTES» en vez de
+			// «ROBÓTICA HECHA / POR / ESTUDIANTES». Se busca el ancho más estrecho en el que el texto sigue ocupando
+			// las mismas líneas: así la línea más larga es lo más corta posible y el bloque queda compacto.
+			const GRANDES = '.inicio .hero-t, .car-t, .about-big, .join .display, .pg-head h1, .en-t, .gp-t';
+			const lineas = (el: HTMLElement) => {
+				const cs = getComputedStyle(el);
+				const lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.2;
+				return Math.round(el.getBoundingClientRect().height / lh);
+			};
+			const ajustar = (el: HTMLElement) => {
+				el.style.maxWidth = '';
+				if (!el.offsetParent || !el.textContent?.trim()) return;
+				const l0 = lineas(el);
+				// Una línea: nada que repartir. Más de 5: es un párrafo, mejor que ocupe todo el ancho.
+				if (l0 <= 1 || l0 > 5) return;
+				let lo = 0, hi = el.getBoundingClientRect().width;
+				for (let i = 0; i < 12 && hi - lo > 1; i++) {
+					const mid = (lo + hi) / 2;
+					el.style.maxWidth = `${mid}px`;
+					// vale si no añade líneas y ninguna palabra se sale del ancho
+					if (lineas(el) <= l0 && el.scrollWidth <= Math.ceil(mid)) hi = mid; else lo = mid;
+				}
+				el.style.maxWidth = `${Math.ceil(hi) + 1}px`;
+			};
+			let pendienteAjuste = 0;
+			const ajustarTodo = () => { cancelAnimationFrame(pendienteAjuste); pendienteAjuste = requestAnimationFrame(() => document.querySelectorAll<HTMLElement>(GRANDES).forEach(ajustar)); };
+			ajustarTodo();
+			document.fonts?.ready.then(ajustarTodo);
+			addEventListener('resize', ajustarTodo);
+			document.addEventListener('reset:rendered', ajustarTodo);
+
 			// Lo que solo se ve dentro de un plazo (p. ej. «Inscripciones abiertas» de Cybertech): data-plazo="desde|hasta"
 			// Se decide aquí, en el navegador, con la fecha de hoy: aparece y desaparece solo, sin volver a publicar.
 			const hoy = new Date();
@@ -112,6 +144,11 @@ const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 				const [desde, hasta] = (el.dataset.plazo ?? '').split('|');
 				el.hidden = !((!desde || desde <= hoyIso) && (!hasta || hoyIso <= hasta));
 			});
+			// «Este curso»: el curso académico va de septiembre a agosto (en noviembre de 2026 → «2026/27»).
+			// Solo se marca si ese curso existe; si aún no se ha añadido, no se destaca ninguno.
+			const y0 = hoy.getMonth() >= 8 ? hoy.getFullYear() : hoy.getFullYear() - 1;
+			const cursoActual = `${y0}/${String((y0 + 1) % 100).padStart(2, '0')}`;
+			document.querySelectorAll<HTMLElement>('[data-curso]').forEach((el) => { el.hidden = el.dataset.curso !== cursoActual; });
 
 			// Modo edición: solo se descarga si hay sesión iniciada
 			if (document.documentElement.classList.contains('is-admin')) import('../admin/main');

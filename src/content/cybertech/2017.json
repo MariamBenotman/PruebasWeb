@@ -9,5 +9,29 @@
   "datos": [],
   "categorias": [],
   "secciones": [],
-  "galeria": []
+  "galeria": [
+    "fotos/cybertech/2017/2017-folletos.jpg",
+    "fotos/cybertech/2017/2017-foto-grupo.jpg",
+    "fotos/cybertech/2017/2017-laberinto-dibujo.jpg",
+    "fotos/cybertech/2017/2017-mesa-trabajo.jpg",
+    "fotos/cybertech/2017/2017-organizacion.jpg",
+    "fotos/cybertech/2017/2017-organizador-robot.jpg",
+    "fotos/cybertech/2017/2017-pabellon-publico.jpg",
+    "fotos/cybertech/2017/2017-participantes.jpg",
+    "fotos/cybertech/2017/2017-premiados-1.jpg",
+    "fotos/cybertech/2017/2017-premiados-2.jpg",
+    "fotos/cybertech/2017/2017-robots-mesa-1.jpg",
+    "fotos/cybertech/2017/2017-robots-mesa-2.jpg",
+    "fotos/cybertech/2017/2017-robots-mesa-3.jpg",
+    "fotos/cybertech/2017/2017-robots-mesa-4.jpg",
+    "fotos/cybertech/2017/2017-siguelineas-1.jpg",
+    "fotos/cybertech/2017/2017-siguelineas-2.jpg",
+    "fotos/cybertech/2017/2017-siguelineas-3.jpg",
+    "fotos/cybertech/2017/2017-sumo-participantes.jpg",
+    "fotos/cybertech/2017/2017-sumo-pista-1.jpg",
+    "fotos/cybertech/2017/2017-sumo-pista-2.jpg",
+    "fotos/cybertech/2017/2017-sumo-pista-3.jpg",
+    "fotos/cybertech/2017/2017-sumo-robot-1.jpg",
+    "fotos/cybertech/2017/2017-sumo-robot-2.jpg"
+  ]
 }

@@ -1,0 +1,58 @@
+---
+/**
+ * FOTOTECA (solo en modo edición): todas las fotos de la web, por carpetas, con dónde se usa cada una.
+ * Permite subir fotos a cualquier carpeta y eliminar las que sobren (eliminar: solo con la clave de administración).
+ * El listado de archivos se lee en el navegador (GitHub o, en local, el disco). El «dónde se usa» se calcula aquí,
+ * recorriendo todo el contenido de la web.
+ */
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { getCursos, getEdiciones, getEntradas, getPaginas, href } from '../lib/data';
+import { SECCIONES, type SeccionKey } from '../lib/render';
+
+type Uso = { titulo: string; url: string };
+const usos: Record<string, Uso[]> = {};
+// Cualquier texto del contenido que sea una ruta de foto (fotos/…, marca/…), en cualquier campo y a cualquier profundidad
+const buscar = (v: unknown, uso: Uso) => {
+	if (typeof v === 'string') {
+		if (/^(fotos|marca)\/.+\.\w+$/.test(v.trim())) (usos[v.trim()] ??= []).some((u) => u.url === uso.url) || usos[v.trim()].push(uso);
+	} else if (Array.isArray(v)) v.forEach((x) => buscar(x, uso));
+	else if (v && typeof v === 'object') Object.values(v).forEach((x) => buscar(x, uso));
+};
+const [cursos, ediciones, paginas, inicio] = await Promise.all([getCursos(), getEdiciones(), getPaginas(), getCollection('inicio')]);
+cursos.forEach((c) => buscar(c.data, { titulo: c.label, url: c.url }));
+ediciones.forEach((e) => buscar(e.data, { titulo: e.label, url: e.url }));
+paginas.forEach((p) => buscar(p.data, { titulo: p.data.titulo, url: p.url }));
+inicio.forEach((i) => buscar(i.data, { titulo: 'Portada', url: href() }));
+for (const s of Object.keys(SECCIONES) as SeccionKey[]) {
+	for (const e of await getEntradas(s)) buscar(e.data, { titulo: `${SECCIONES[s].titulo}: ${e.data.titulo}`, url: e.url });
+}
+const usosJson = JSON.stringify(usos).replace(/</g, '\\u003c');
+---
+
+<Layout title="Fototeca" noindex>
+	<div class="wrap ft-wrap">
+		<header class="pg-head">
+			<p class="kicker"><span>Modo edición</span><span>Fototeca</span></p>
+			<h1 class="display">Fototeca</h1>
+			<p class="lede">Todas las fotos de la web, por carpetas. Puedes ver dónde se usa cada una, subir fotos nuevas y eliminar las que sobren.</p>
+		</header>
+		<div id="fototeca" class="adm-only">
+			<p class="f-h">Cargando…</p>
+		</div>
+		<div class="ft-sin-sesion">
+			<p>Esta página es para editores. <a href={href('admin')}>Inicia sesión como editor</a> para usarla.</p>
+		</div>
+	</div>
+	<script type="application/json" id="usos-data" is:inline set:html={usosJson} />
+</Layout>
+
+<script>
+	if (document.documentElement.classList.contains('is-admin')) import('../admin/fototeca').then((m) => m.montar());
+</script>
+
+<style>
+	.ft-wrap { padding-bottom: 6rem; }
+	html.is-admin .ft-sin-sesion { display: none; }
+	.ft-sin-sesion { padding: 2rem 0; font-size: 1.05rem; }
+</style>

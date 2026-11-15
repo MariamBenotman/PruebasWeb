@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getCursos, BASE } from '../../lib/data';
+import { getCursos, BASE, href } from '../../lib/data';
 import { renderCurso, cursoCorto } from '../../lib/render';
 
 export async function getStaticPaths() {
@@ -16,7 +16,7 @@ const html = renderCurso(actual.data, { base: BASE });
 <Layout title={`Miembros ${cursoCorto(actual.data.curso)}`} description={`Equipo de la Asociación de Estudiantes Reset durante el curso ${actual.data.curso}.`}>
 	<nav class="yearbar" aria-label="Cursos">
 		<div class="wrap">
-			<span class="lbl">Cursos</span>
+			<a class="lbl" href={href('miembros')} title="Ver todos los cursos">Cursos</a>
 			{cursos.map((c) => <a href={c.url} aria-current={c.id === actual.id ? 'page' : undefined}>{cursoCorto(c.data.curso)}</a>)}
 		</div>
 	</nav>

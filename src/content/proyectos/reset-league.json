@@ -5,7 +5,10 @@
     "En desarrollo"
   ],
   "resumen": "Proyecto Reset League.",
-  "portada": "",
+  "portada": "fotos/proyectos/reset-league/logo.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [],
+  "cursos": [
+    "2021/22"
+  ]
 }

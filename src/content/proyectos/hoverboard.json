@@ -5,7 +5,9 @@
     "Finalizado"
   ],
   "resumen": "Proyecto Hoverboard de Reset.",
-  "portada": "",
+  "portada": "fotos/proyectos/hoverboard/monopatin.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [
+    "fotos/proyectos/hoverboard/monopatin-2.jpg"
+  ]
 }

@@ -7,7 +7,11 @@
   "resumen": "Talleres de octubre para aprender desde cero: programación en C, Linux y Python.",
   "portada": "fotos/talleres/octubre-robotico-2023/cartel.jpg",
   "cuerpo": "Talleres de octubre pensados para aprender desde cero, sin experiencia previa.\n\n### Calendario\n\n- **Programación en C:** 4 de octubre\n- **Taller de Linux:** 6 y 10 de octubre\n- **Programación en Python:** 20 de octubre",
-  "galeria": [],
+  "galeria": [
+    "fotos/talleres/octubre-robotico-2023/cartel-c.jpg",
+    "fotos/talleres/octubre-robotico-2023/cartel-linux.jpg",
+    "fotos/talleres/octubre-robotico-2023/cartel-python.jpg"
+  ],
   "serie": "octubre-robotico",
   "descMenu": "",
   "oculto": false,

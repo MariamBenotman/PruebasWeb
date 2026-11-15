@@ -7,7 +7,14 @@
   "resumen": "Como cada año vuelve el Octubre Robótico: C, Python, Linux, PCB, Fusion 360 y maquetación.",
   "portada": "fotos/talleres/octubre-robotico-2024/cartel.jpg",
   "cuerpo": "Como cada año vuelve el **Octubre Robótico** con talleres de todo tipo. Regresan clásicos como Linux, programación en C y Python, y se unen nuevos como Fusion 360 o diseño de PCB. Además, colaboramos con la revista AWA para traeros un taller de maquetación.\n\n### Calendario\n\n- **Taller de C:** 2 de octubre, 13:30, aula 15\n- **Taller de Python:** 3 de octubre, 13:30, aula 15\n- **Taller de Linux:** 8 de octubre, 13:30, aula 15\n- **Taller de PCB:** 9 de octubre, 13:30, aula 15\n- **Taller de Fusion 360:** 10 de octubre, 13:30, aula 15\n- **Taller de maquetación:** 10 de octubre, 18:00, aula 16",
-  "galeria": [],
+  "galeria": [
+    "fotos/talleres/octubre-robotico-2024/cartel-c.jpg",
+    "fotos/talleres/octubre-robotico-2024/cartel-linux.jpg",
+    "fotos/talleres/octubre-robotico-2024/cartel-pcbs.jpg",
+    "fotos/talleres/octubre-robotico-2024/cartel-fusion-360.jpg",
+    "fotos/talleres/octubre-robotico-2024/cartel-maquetacion.jpg",
+    "fotos/talleres/octubre-robotico-2024/cartel-python.jpg"
+  ],
   "serie": "octubre-robotico",
   "descMenu": "",
   "oculto": false,

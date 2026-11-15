@@ -5,8 +5,10 @@
     "Cybertech"
   ],
   "resumen": "Preparación para la categoría Classic: Arduino, diseño de robots, soldadura y sensores.",
-  "portada": "",
+  "portada": "fotos/talleres/talleres-de-cybertech/taller-aula.jpg",
   "cuerpo": "Durante las semanas previas a Cybertech, los equipos de la categoría **Classic** tienen talleres para aprender todo lo necesario:\n\n- Bienvenida, reparto de material e introducción a Arduino\n- Diseño de robots\n- Soldadura y sensores\n\nConsulta la página de cada edición de Cybertech para ver las fechas.",
-  "galeria": [],
+  "galeria": [
+    "fotos/talleres/talleres-de-cybertech/taller-clase.jpg"
+  ],
   "descMenu": "Conceptos básicos para competir: Arduino, soldadura y sensores"
 }

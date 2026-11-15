@@ -5,7 +5,12 @@
     "Finalizado"
   ],
   "resumen": "Proyecto Apophis de Reset.",
-  "portada": "",
+  "portada": "fotos/proyectos/apophis/serpiente-2.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [
+    "fotos/proyectos/apophis/serpiente-1.jpg"
+  ],
+  "cursos": [
+    "2017/18"
+  ]
 }

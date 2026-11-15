@@ -106,6 +106,14 @@ export async function readFile(path: string): Promise<string | null> {
 	}
 }
 
+/** Todos los archivos bajo una carpeta (con subcarpetas), con su tamaño. Una sola petición. */
+export async function listTree(prefix: string): Promise<{ path: string; size: number }[]> {
+	const base = prefix.replace(/\/?$/, '/');
+	if (isLocal()) return (await local<{ files: { path: string; size: number }[] }>(`/tree?path=${encodeURIComponent(base)}`)).files;
+	const t = await api<any>(`${R()}/git/trees/${repo().branch}?recursive=1&t=${Date.now()}`);
+	return (t.tree as any[]).filter((x) => x.type === 'blob' && x.path.startsWith(base)).map((x) => ({ path: x.path, size: x.size ?? 0 }));
+}
+
 export async function listDir(path: string): Promise<string[]> {
 	if (isLocal()) return (await local<{ names: string[] }>(`/dir?path=${encodeURIComponent(path)}`)).names;
 	try {

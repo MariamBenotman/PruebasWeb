@@ -240,8 +240,8 @@ export interface Entrada {
 	destacado: boolean;
 	/** Proyectos: en marcha (sale en «Proyectos activos») o ya terminado (solo en el historial) */
 	activo: boolean;
-	/** Proyectos: año (opcional), para ordenar el historial */
-	anio: string;
+	/** Proyectos: cursos en los que se hizo ("2020/21", "2021/22"…), del más antiguo al más reciente */
+	cursos: string[];
 	/** Proyectos: miembros de Reset que lo han hecho (por su nombre, tal como sale en Miembros) */
 	autores: string[];
 	/** Proyectos: otras personas que han colaborado y no están en Miembros */
@@ -284,10 +284,32 @@ export function normalizeEntrada(raw: any = {}): Entrada {
 		destacado: !!raw.destacado,
 		// Si no se ha marcado nunca, cuenta como activo lo que tiene la etiqueta «En desarrollo»
 		activo: raw.activo !== undefined ? !!raw.activo : arr(raw.etiquetas, str).includes('En desarrollo'),
-		anio: str(raw.anio).trim(),
+		cursos: normalizarCursos(raw),
 		autores: arr(raw.autores, str).filter(Boolean),
 		otrosAutores: str(raw.otrosAutores),
 	};
+}
+
+/** Cursos válidos ("2020/21"), ordenados y sin repetir. Acepta también el antiguo campo «anio» ("2021" → "2021/22"). */
+function normalizarCursos(raw: any): string[] {
+	let c = arr(raw.cursos, str).map((x) => x.trim()).filter((x) => /^\d{4}\/\d{2}$/.test(x));
+	if (!c.length && /^\d{4}$/.test(str(raw.anio).trim())) {
+		const a = Number(str(raw.anio).trim());
+		c = [`${a}/${String((a + 1) % 100).padStart(2, '0')}`];
+	}
+	return [...new Set(c)].sort();
+}
+
+/**
+ * Cómo se enseñan los cursos de un proyecto: uno solo → "2021/22"; varios → el rango de años
+ * (["2020/21", "2021/22"] → "2020–2022").
+ */
+export function rangoCursos(cursos: string[]): string {
+	if (!cursos.length) return '';
+	if (cursos.length === 1) return cursos[0];
+	const ini = Number(cursos[0].slice(0, 4));
+	const fin = Number(cursos[cursos.length - 1].slice(0, 4)) + 1;
+	return `${ini}–${fin}`;
 }
 
 /** "2021-11-15" → "15 de noviembre de 2021" */
@@ -342,7 +364,7 @@ export function renderEntrada(d: Entrada, ctx: RenderCtx, seccion: SeccionKey, p
 		...(padre ? [`<a href="${esc(joinBase(ctx.base, `${seccion}/${padre.id}`))}">${esc(padre.titulo)}</a>`] : []),
 		...d.etiquetas.filter((t) => t !== padre?.titulo).map((t) => `<span>${esc(t)}</span>`),
 		...(d.fecha ? [`<span><time datetime="${esc(d.fecha)}">${esc(fechaLarga(d.fecha))}</time></span>`] : []),
-		...(d.anio && !d.fecha ? [`<span>${esc(d.anio)}</span>`] : []),
+		...(d.cursos.length && !d.fecha ? [`<span>${esc(rangoCursos(d.cursos))}</span>`] : []),
 	];
 	const gal = d.galeria.length || ctx.admin ? `
 	<section class="wrap en-gal">
@@ -495,15 +517,18 @@ export function normalizePagina(raw: any = {}): Pagina {
 
 export function renderPagina(d: Pagina, ctx: RenderCtx): string {
 	const e = editAttr(ctx, '');
+	const lede = d.intro || ctx.admin ? `<p class="lede gp-lede">${esc(d.intro) || (ctx.admin ? '<span class="muted">Frase de presentación…</span>' : '')}</p>` : '';
+	// Con imagen, la frase va en la columna del texto y la imagen empieza a su altura (sin hueco encima de la imagen)
 	return `
-	<div class="wrap gp">
+	<div class="wrap gp${d.imagen ? ' gp-con-img' : ''}">
 		<header class="pg-head"${e}>
 			<p class="kicker"><span>${d.menu ? 'Conócenos' : 'Reset'}</span><span>${esc(d.titulo)}</span></p>
 			<h1 class="display gp-t">${esc(d.titulo) || (ctx.admin ? '<span class="muted">Título del apartado</span>' : '')}</h1>
-			${d.intro || ctx.admin ? `<p class="lede gp-lede">${esc(d.intro) || (ctx.admin ? '<span class="muted">Frase de presentación…</span>' : '')}</p>` : ''}
+			${d.imagen ? '' : lede}
 		</header>
 		<div class="gp-main${d.imagen ? ' con-img' : ''}"${e}>
 			<div class="gp-col">
+				${d.imagen ? lede : ''}
 				<div class="prose gp-body">${md(d.cuerpo) || (ctx.admin ? '<p class="muted">Escribe aquí el contenido…</p>' : '')}</div>
 				<div class="gp-acciones">
 					${d.formulario ? `<a class="btn primary" href="${esc(d.formulario)}"${/^https?:/.test(d.formulario) ? ' target="_blank" rel="noopener"' : ''}>${esc(d.formularioTexto || 'Rellenar el formulario')} <span class="arr">→</span></a>` : ''}

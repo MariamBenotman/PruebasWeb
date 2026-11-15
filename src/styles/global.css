@@ -386,3 +386,13 @@ a.en-autor:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--so
 .gp-main.con-img .gp-img { justify-self: end; width: 100%; max-width: 460px; position: sticky; top: 100px; }
 .gp-col .gp-body { margin-bottom: 1.8rem; }
 @media (max-width: 860px) { .gp-main.con-img { grid-template-columns: 1fr; } .gp-main.con-img .gp-img { position: static; justify-self: start; } }
+
+/* Textos grandes: líneas equilibradas (sin palabra suelta al final). El tamaño lo ajusta Layout.astro para usar el mínimo de líneas. */
+.pg-head h1, .en-t, .gp-t, .display, .about-big, .car-t, .hero-t { text-wrap: balance; }
+/* Apartado con imagen: menos aire bajo el título, la frase arriba de la columna de texto y la imagen a su altura */
+.gp-con-img .pg-head { padding-bottom: clamp(1.2rem, 2.5vw, 2rem); }
+.gp-con-img .gp-col .gp-lede { margin: 0 0 1.6rem; }
+.gp-con-img .gp-main.con-img .gp-img { margin-top: .4rem; }
+/* Imagen de un apartado (cartel, logo…): a su tamaño, sobre blanco (los logos con fondo transparente se ven bien) */
+.gp-main .gp-img.frame { min-height: 0; background: var(--blanco); }
+.gp-main .gp-img.frame > img { background: transparent; }

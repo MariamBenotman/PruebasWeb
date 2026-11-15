@@ -5,7 +5,9 @@
     "Finalizado"
   ],
   "resumen": "Proyecto BCI (interfaz cerebro-computadora) de Reset.",
-  "portada": "",
+  "portada": "fotos/proyectos/bci/casco-eeg.jpg",
   "cuerpo": "",
-  "galeria": []
+  "galeria": [
+    "fotos/proyectos/bci/casco-eeg-mesa.jpg"
+  ]
 }

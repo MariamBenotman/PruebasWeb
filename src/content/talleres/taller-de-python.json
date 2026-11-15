@@ -5,9 +5,11 @@
     "Programación"
   ],
   "resumen": "En este taller aprenderás lo basico y más importante para sentar las bases en el popular lenguaje de programacion Phyton",
-  "portada": "",
+  "portada": "fotos/talleres/octubre-robotico-2024/cartel-python.jpg",
   "cuerpo": "",
-  "galeria": [],
+  "galeria": [
+    "fotos/talleres/octubre-robotico-2023/cartel-python.jpg"
+  ],
   "serie": "",
   "enListado": false
 }

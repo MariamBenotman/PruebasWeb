@@ -7,7 +7,7 @@
  *  - "Guardar y publicar" hace un commit en GitHub y la web se actualiza sola
  */
 import './admin.css';
-import { clearToken, readFile, listDir, commit, deployStatus, rawUrl, isLocal, puedeBorrar, GitHubError, type FileChange } from './github';
+import { clearToken, readFile, listDir, listTree, commit, deployStatus, rawUrl, isLocal, puedeBorrar, GitHubError, type FileChange } from './github';
 import { kinds, type DocKind, type Field, type ObjSchema, type Reutilizar } from './schema';
 import { pending, processFile, pickFiles } from './media';
 import { tagStore, tagPicker } from './tags';
@@ -43,6 +43,7 @@ let docId: string | null = null;
 let isNew = false;
 let existingIds: string[] = [];
 let prevDoc: any = null;
+let prevId: string | undefined; // plantilla propuesta por defecto al crear algo nuevo
 let current: string | null = null; // ruta abierta en el panel ("" = datos generales)
 let saving = false;
 
@@ -66,6 +67,7 @@ const bar = h(`
 		<button type="button" class="adm-b" data-bar="general" hidden>Datos generales</button>
 		<button type="button" class="adm-b" data-bar="discard" hidden>Descartar cambios</button>
 		<button type="button" class="adm-b adm-b-main" data-bar="save" hidden>${isLocal() ? 'Guardar en este ordenador' : 'Guardar y publicar'}</button>
+		<a class="adm-b adm-b-ghost adm-fotos" href="${base}fototeca" title="Todas las fotos de la web: ver dónde se usan, subir y eliminar">Fotos</a>
 		<button type="button" class="adm-b adm-b-ghost" data-bar="logout" title="Cerrar sesión de editor">Salir</button>
 	</div>
 </div>`);
@@ -452,18 +454,18 @@ const VID_RE = /\.(mp4|webm|mov)$/i;
 type Carpeta = { carpeta: string; fotos: string[] };
 const galerias = new Map<string, Promise<Carpeta[]>>();
 
-/** Fotos ya subidas en la carpeta de este tipo de contenido (p. ej. fotos/miembros/<curso>/…), por subcarpetas. */
+/** Fotos ya subidas bajo una carpeta (p. ej. fotos/miembros, o todas: fotos), agrupadas por carpeta. */
 function fotosSubidas(base: string) {
 	if (!galerias.has(base)) {
 		galerias.set(base, (async () => {
-			const nombres = await listDir(`public/${base}`);
-			const sueltas = nombres.filter((n) => n.includes('.')).map((n) => `${base}/${n}`);
-			const subs = nombres.filter((n) => !n.includes('.')).sort().reverse();
-			const carpetas = await Promise.all(subs.map(async (s) => ({
-				carpeta: s,
-				fotos: (await listDir(`public/${base}/${s}`)).filter((n) => n.includes('.')).map((n) => `${base}/${s}/${n}`),
-			})));
-			return [...carpetas, ...(sueltas.length ? [{ carpeta: '(sin carpeta)', fotos: sueltas }] : [])];
+			const porCarpeta = new Map<string, string[]>();
+			for (const { path } of await listTree(`public/${base}`)) {
+				const p = path.replace(/^public\//, '');
+				const carpeta = p.split('/').slice(0, -1).join('/');
+				if (!porCarpeta.has(carpeta)) porCarpeta.set(carpeta, []);
+				porCarpeta.get(carpeta)!.push(p);
+			}
+			return [...porCarpeta].sort(([a], [b]) => b.localeCompare(a)).map(([carpeta, fotos]) => ({ carpeta, fotos: fotos.sort() }));
 		})());
 	}
 	return galerias.get(base)!;
@@ -471,25 +473,27 @@ function fotosSubidas(base: string) {
 
 function pickBox(f: Extract<Field, { type: 'image' }>, sugerencia: string, elegir: (p: string) => void) {
 	const propia = K.mediaFolder(K.normalize(data));
-	const base = propia.split('/').slice(0, -1).join('/') || propia;
+	const seccion = propia.split('/').slice(0, -1).join('/') || propia;
+	let base = seccion;
 	const el = h(`
 		<div class="f-pick">
-			<input class="f-in" type="search" placeholder="Filtrar por nombre de archivo…" value="${esc(sugerencia)}" autocomplete="off">
-			<div class="f-pick-list"><p class="f-h">Cargando las fotos de ${esc(base)}…</p></div>
+			<input class="f-in" type="search" placeholder="Filtrar por nombre de archivo o carpeta…" value="${esc(sugerencia)}" autocomplete="off">
+			<label class="f-pick-todas"><input type="checkbox"> Buscar en todas las fotos de Reset (también las del archivo)</label>
+			<div class="f-pick-list"><p class="f-h">Cargando las fotos…</p></div>
 		</div>`);
-	const $in = el.querySelector('input')!;
+	const $in = el.querySelector<HTMLInputElement>('input[type=search]')!;
 	const $list = el.querySelector<HTMLElement>('.f-pick-list')!;
 	let todas: Carpeta[] = [];
 	const vale = (p: string) => IMG_RE.test(p) || (!!f.media && VID_RE.test(p));
 	const pintar = () => {
 		const q = filtro($in.value);
 		const grupos = todas
-			.map((c) => ({ ...c, fotos: c.fotos.filter((p) => vale(p) && (!q || slugify(p.split('/').pop()!).includes(q))) }))
+			.map((c) => ({ ...c, fotos: c.fotos.filter((p) => vale(p) && (!q || slugify(p).includes(q))) }))
 			.filter((c) => c.fotos.length)
 			// primero la carpeta de lo que estás editando
-			.sort((a, b) => Number(`${base}/${b.carpeta}` === propia) - Number(`${base}/${a.carpeta}` === propia));
+			.sort((a, b) => Number(b.carpeta === propia) - Number(a.carpeta === propia));
 		$list.innerHTML = grupos.map((c) => `
-			<p class="f-pick-h">${esc(c.carpeta)} <span>${c.fotos.length}</span></p>
+			<p class="f-pick-h">${esc(c.carpeta.replace(/^fotos\//, ''))} <span>${c.fotos.length}</span></p>
 			<div class="f-pick-grid">${c.fotos.map((p) => `
 				<button type="button" class="f-pick-i" data-p="${esc(p)}" title="${esc(p)}">
 					${VID_RE.test(p) ? `<video src="${esc(asset(p, ctx()))}" muted preload="metadata" data-path="${esc(p)}" onerror="__img(this)"></video>` : `<img src="${esc(asset(p, ctx()))}" alt="" loading="lazy" decoding="async" data-path="${esc(p)}" onerror="__img(this)">`}
@@ -498,13 +502,21 @@ function pickBox(f: Extract<Field, { type: 'image' }>, sugerencia: string, elegi
 			</div>`).join('')
 			|| `<p class="f-h">${todas.length ? `No hay fotos que se llamen «${esc($in.value)}». Borra el filtro para verlas todas.` : 'Todavía no hay fotos subidas aquí.'}</p>`;
 	};
-	fotosSubidas(base).then((x) => {
-		todas = x;
-		const q = filtro($in.value);
-		// La sugerencia (el nombre de la persona) solo se usa si coincide con alguna foto
-		if (q && !todas.some((c) => c.fotos.some((p) => vale(p) && slugify(p.split('/').pop()!).includes(q)))) $in.value = '';
-		pintar();
-	}).catch((e) => { $list.innerHTML = `<p class="f-h">No se han podido cargar: ${authError(e)}</p>`; });
+	const cargar = (primera: boolean) => {
+		$list.innerHTML = '<p class="f-h">Cargando las fotos…</p>';
+		fotosSubidas(base).then((x) => {
+			todas = x;
+			const q = filtro($in.value);
+			// La sugerencia (el nombre de la persona) solo se usa si coincide con alguna foto
+			if (primera && q && !todas.some((c) => c.fotos.some((p) => vale(p) && slugify(p).includes(q)))) $in.value = '';
+			pintar();
+		}).catch((e) => { $list.innerHTML = `<p class="f-h">No se han podido cargar: ${authError(e)}</p>`; });
+	};
+	cargar(true);
+	el.querySelector<HTMLInputElement>('.f-pick-todas input')!.addEventListener('change', (e) => {
+		base = (e.target as HTMLInputElement).checked ? 'fotos' : seccion;
+		cargar(false);
+	});
 	$in.addEventListener('input', pintar);
 	$list.addEventListener('click', (e) => {
 		const p = (e.target as HTMLElement).closest<HTMLElement>('[data-p]')?.dataset.p;
@@ -680,16 +692,7 @@ function itemActions(listPath: string, index: number) {
 
 function rootExtras() {
 	const el = h(`<div class="adm-extras"></div>`);
-	if (isNew && K.copiar && prevDoc) {
-		const b = h<HTMLButtonElement>(`<button type="button" class="adm-b adm-b-wide">⧉ ${esc(K.copiar.label(prevDoc))}</button>`);
-		b.addEventListener('click', () => {
-			data = K.copiar!.apply(K.normalize(data), prevDoc);
-			renderPage();
-			open('');
-			status('Copiado. Ahora cambia, quita o añade lo que haga falta.', 'ok');
-		});
-		el.append(h(`<p class="f-h">¿Se parece al anterior? Empieza con una copia y ajusta lo que cambie.</p>`), b);
-	}
+	if (isNew && K.copiar && existingIds.length) el.append(plantillaBox());
 	const ed = !isNew && docId ? K.nuevaEdicion?.(K.normalize(data), docId) : undefined;
 	if (ed) {
 		el.append(
@@ -702,6 +705,44 @@ function rootExtras() {
 		const z = zonaEliminar();
 		if (z) el.append(z);
 	}
+	return el;
+}
+
+/* ───────────── Plantilla: empezar algo nuevo copiando uno que ya existe (cualquiera, no solo el último) ───────────── */
+
+const titulos = new Map<string, Promise<string>>();
+/** Título legible de un documento existente (se lee una vez) */
+const tituloDe = (id: string) => {
+	if (!titulos.has(id)) titulos.set(id, readFile(`${K.dir}/${id}.json`).then((t) => (t ? K.titulo(K.normalize(JSON.parse(t))) : id)).catch(() => id));
+	return titulos.get(id)!;
+};
+
+function plantillaBox() {
+	// Los más recientes primero (los nombres de archivo de cursos y ediciones empiezan por el año)
+	const ids = [...existingIds].sort((a, b) => b.localeCompare(a, 'es', { numeric: true }));
+	const el = h(`
+		<div class="adm-plantilla">
+			<p class="f-h">¿Se parece a otro que ya existe? Úsalo como plantilla y luego cambia lo que haga falta. ${esc(K.copiar!.que)}</p>
+			<label class="f"><span class="f-l">Usar como plantilla</span>
+				<select class="f-in">${ids.map((id) => `<option value="${esc(id)}"${id === prevId ? ' selected' : ''}>${esc(id)}</option>`).join('')}</select>
+			</label>
+			<button type="button" class="adm-b adm-b-wide">⧉ Copiar</button>
+		</div>`);
+	const sel = el.querySelector('select')!;
+	// Poner los títulos de verdad en el desplegable según se vayan leyendo
+	ids.forEach((id, i) => tituloDe(id).then((t) => { if (sel.options[i]) sel.options[i].textContent = t; }));
+	el.querySelector('button')!.addEventListener('click', async () => {
+		const id = sel.value;
+		status('Copiando…', 'busy');
+		try {
+			const txt = await readFile(`${K.dir}/${id}.json`);
+			if (!txt) throw new Error('Ese ya no existe.');
+			data = K.copiar!.apply(K.normalize(data), K.normalize(JSON.parse(txt)));
+			renderPage();
+			open('');
+			status(`Copiado de <b>${esc(await tituloDe(id))}</b>. Ahora cambia, quita o añade lo que haga falta.`, 'ok');
+		} catch (e) { status(`No se ha podido copiar: ${authError(e)}`, 'error'); }
+	});
 	return el;
 }
 
@@ -873,7 +914,9 @@ async function boot() {
 	const kindKey = kindAttr === 'nuevo' ? new URLSearchParams(location.search).get('tipo') : kindAttr;
 	const kind = kindKey ? kinds[kindKey] : undefined;
 	if (!root || !kind) {
-		status('Abre cualquier página de Miembros, Cybertech, Proyectos, Talleres, Servicios, Noticias o un apartado de Conócenos para editarla, o crea una nueva desde los menús.');
+		status(location.pathname.replace(/\/$/, '').endsWith('/fototeca')
+			? 'Fototeca: todas las fotos de la web. Aquí puedes ver dónde se usa cada una, subir fotos y eliminar las que sobren.'
+			: 'Abre cualquier página de Miembros, Cybertech, Proyectos, Talleres, Servicios, Noticias o un apartado de Conócenos para editarla, o crea una nueva desde los menús.');
 		return;
 	}
 	K = kind;
@@ -886,7 +929,7 @@ async function boot() {
 		if (kindAttr === 'nuevo') {
 			isNew = true;
 			data = K.nuevo(existingIds);
-			const prevId = K.previo ? K.previo(existingIds, data) : [...existingIds].sort().pop();
+			prevId = K.previo ? K.previo(existingIds, data) : [...existingIds].sort().pop();
 			const prevTxt = prevId ? await readFile(`${K.dir}/${prevId}.json`) : null;
 			prevDoc = prevTxt ? K.normalize(JSON.parse(prevTxt)) : null;
 			savedJson = JSON.stringify(data);

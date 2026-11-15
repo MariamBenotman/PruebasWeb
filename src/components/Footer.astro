@@ -1,4 +1,5 @@
 ---
+import { INSTITUCIONES } from '../data/instituciones';
 import Logo from './Logo.astro';
 import { getCursos, getEdiciones, getPaginas, href } from '../lib/data';
 import { contacto } from '../data/contacto';
@@ -28,7 +29,7 @@ const cols: { t: string; l: Enlace[] }[] = [
 				<a href={`mailto:${contacto.email}`}>{contacto.email}</a><br />
 				{contacto.direccion}
 			</address>
-			<a class="ft-etsii" href="https://www.etsii.upm.es/" target="_blank" rel="noopener"><img src={href('marca/etsii-logo-blanco.png')} alt="Industriales ETSII · UPM" loading="lazy" onerror="this.parentNode.remove()" /></a>
+			<p class="ft-inst">{INSTITUCIONES.map((i) => <a href={i.url} target="_blank" rel="noopener" title={i.nombre}><img src={href(`marca/${i.logo}-blanco.png`)} alt={i.nombre} loading="lazy" onerror="this.parentNode.remove()" /></a>)}</p>
 		</div>
 		{cols.map((c) => (
 			<div class="ft-col">
@@ -49,9 +50,10 @@ const cols: { t: string; l: Enlace[] }[] = [
 	.ft-in { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 2.5rem; padding-block: 4rem 3rem; }
 	.ft-logo { height: 40px; margin-bottom: 1.4rem; }
 	.ft-brand p { max-width: 38ch; margin: 0 0 1.2rem; font-size: .95rem; }
-	.ft-etsii { display: inline-block; margin-top: 1.8rem; opacity: .75; transition: opacity .2s; }
-	.ft-etsii:hover { opacity: 1; }
-	.ft-etsii img { display: block; height: 56px; width: auto; }
+	.ft-brand .ft-inst { display: flex; max-width: none; flex-wrap: wrap; align-items: center; gap: 1.2rem 1.8rem; margin: 1.8rem 0 0; }
+	.ft-inst a { opacity: .75; transition: opacity .2s; }
+	.ft-inst a:hover { opacity: 1; }
+	.ft-inst img { display: block; height: 52px; width: auto; }
 	address { font-style: normal; font-family: var(--f-mono); font-size: .8rem; line-height: 1.8; }
 	.ft a { text-decoration: none; }
 	.ft a:hover { color: var(--naranja-vivo); }

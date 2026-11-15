@@ -2,7 +2,7 @@
 /** Listado de Proyectos, Talleres, Servicios o Noticias. */
 import Layout from '../../layouts/Layout.astro';
 import { getArbol, href, img, fecha } from '../../lib/data';
-import { SECCIONES, type SeccionKey } from '../../lib/render';
+import { SECCIONES, rangoCursos, type SeccionKey } from '../../lib/render';
 
 export function getStaticPaths() {
 	return Object.keys(SECCIONES).map((seccion) => ({ params: { seccion } }));
@@ -26,8 +26,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
 // Proyectos: arriba los activos; debajo el historial completo, por año (lo que no tiene año, al final)
 const esProyectos = seccion === 'proyectos';
 const activos = entradas.filter((e) => e.data.activo);
-const porAnio = Object.entries(Object.groupBy(entradas, (e) => e.data.anio || 'Sin año'))
-	.sort(([a], [b]) => (a === 'Sin año' ? 1 : b === 'Sin año' ? -1 : b.localeCompare(a)));
+// Cada proyecto, en el grupo de su curso más reciente; lo que no tiene curso, al final
+const SIN = 'Sin curso';
+const porAnio = Object.entries(Object.groupBy(entradas, (e) => (e.data.cursos.length ? e.data.cursos[e.data.cursos.length - 1] : SIN)))
+	.sort(([a], [b]) => (a === SIN ? 1 : b === SIN ? -1 : b.localeCompare(a)));
 ---
 
 <Layout title={sec.titulo} description={sec.intro}>
@@ -52,7 +54,7 @@ const porAnio = Object.entries(Object.groupBy(entradas, (e) => e.data.anio || 'S
 									{e.aviso && <span class="ls-aviso">{e.aviso}</span>}
 									<figure class="frame" data-label={e.data.titulo}>{e.portada && <img src={img(e.portada)} alt="" loading="lazy" onerror="__img(this)" />}</figure>
 									<div class="ls-txt">
-										<p class="meta">{e.data.anio && <time>{e.data.anio}</time>}<span>En marcha</span></p>
+										<p class="meta">{e.data.cursos.length > 0 && <time>{rangoCursos(e.data.cursos)}</time>}<span>En marcha</span></p>
 										<h2>{e.data.titulo}</h2>
 										{e.data.resumen && <p class="sum">{e.data.resumen}</p>}
 									</div>
@@ -68,13 +70,13 @@ const porAnio = Object.entries(Object.groupBy(entradas, (e) => e.data.anio || 'S
 					<header class="sec-head"><span class="idx">{pad(publicas.length)}</span><h2>Historial de proyectos</h2><span class="rule"></span></header>
 					{porAnio.map(([anio, lista]) => (
 						<div class="pr-anio">
-							<h3 class="pr-anio-t">{anio}</h3>
+							<h3 class="pr-anio-t">{anio !== SIN && <small>Curso</small>}{anio}</h3>
 							<ol class="pr-lista">
 								{lista!.map((e) => (
 									<li class:list={{ 'adm-only ls-off': !e.listada }}>
 										<a href={e.url}>
 											<figure class="frame" data-label={e.data.titulo}>{e.portada && <img src={img(e.portada)} alt="" loading="lazy" onerror="__img(this)" />}</figure>
-											<span class="pr-t">{e.data.titulo}{e.aviso && <small class="pr-aviso"> · {e.aviso}</small>}</span>
+											<span class="pr-t">{e.data.titulo}{e.data.cursos.length > 1 && <small class="pr-rango"> {rangoCursos(e.data.cursos)}</small>}{e.aviso && <small class="pr-aviso"> · {e.aviso}</small>}</span>
 											<span class="pr-r">{e.data.resumen}</span>
 											<span class:list={['pr-estado', { on: e.data.activo }]}>{e.data.activo ? 'En marcha' : 'Terminado'}</span>
 										</a>
@@ -151,6 +153,7 @@ const porAnio = Object.entries(Object.groupBy(entradas, (e) => e.data.anio || 'S
 	/* Proyectos: activos + historial por año */
 	.pr-sec { margin-bottom: 4rem; scroll-margin-top: 90px; }
 	.pr-anio { display: grid; grid-template-columns: 110px 1fr; gap: 1rem 2rem; padding: 1.2rem 0; border-top: 1px solid var(--linea); }
+	.pr-anio-t small { display: block; font-family: var(--f-mono); font-size: .66rem; font-weight: 500; text-transform: uppercase; letter-spacing: .08em; color: var(--gris); }
 	.pr-anio-t { margin: .2rem 0 0; font-family: var(--f-display); font-stretch: 120%; font-weight: 800; font-size: 1.6rem; color: var(--naranja); }
 	.pr-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: .2rem; }
 	.pr-lista a { display: grid; grid-template-columns: 76px minmax(0, 14rem) minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; padding: .45rem .5rem; text-decoration: none; transition: background .2s; }
@@ -159,6 +162,7 @@ const porAnio = Object.entries(Object.groupBy(entradas, (e) => e.data.anio || 'S
 	.pr-lista .frame::before { font-size: .7rem; padding: .3rem; }
 	.pr-t { font-weight: 700; }
 	.pr-aviso { color: #b8432c; font-weight: 400; }
+	.pr-rango { font-family: var(--f-mono); font-size: .7rem; font-weight: 400; color: var(--gris); margin-left: .3rem; }
 	.pr-r { color: var(--gris); font-size: .92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.pr-estado { font-family: var(--f-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
 	.pr-estado.on { color: var(--naranja); }

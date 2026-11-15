@@ -1,5 +1,67 @@
 ---
-import { getCursos } from '../../lib/data';
-const [ultimo] = await getCursos();
-return Astro.redirect(ultimo?.url ?? import.meta.env.BASE_URL);
+/** Todos los cursos (el menú solo enseña los últimos). Cada uno con su foto de grupo o, si no tiene, el logo de Reset. */
+import Layout from '../../layouts/Layout.astro';
+import { getCursos, href, img } from '../../lib/data';
+import { cursoCorto } from '../../lib/render';
+
+const cursos = await getCursos();
+const personas = (c: (typeof cursos)[number]) => c.data.secciones.reduce((n, s) => n + s.miembros.length, 0);
 ---
+
+<Layout title="Miembros · Todos los cursos" description="Todos los equipos de la Asociación de Estudiantes Reset, curso a curso.">
+	<div class="wrap cur">
+		<header class="pg-head">
+			<p class="kicker"><span>Conócenos</span><span>{String(cursos.length).padStart(2, '0')} cursos</span></p>
+			<h1 class="display">Miembros</h1>
+			<div class="cur-row">
+				<p class="lede">Todas las personas que han hecho Reset, curso a curso.</p>
+				<a class="btn primary adm-only" href={href('editar?tipo=miembros')}>+ Nuevo curso</a>
+			</div>
+		</header>
+		<ol class="cur-grid">
+			{cursos.map((c, i) => (
+				<li class="reveal" style={`--d:${i % 6}`}>
+					<a href={c.url}>
+						<figure class="frame cur-foto" data-label={cursoCorto(c.data.curso)}>
+							{c.data.fotoGrupo && <img src={img(c.data.fotoGrupo)} alt={`Equipo de Reset, curso ${c.data.curso}`} loading="lazy" onerror="__img(this)" />}
+						</figure>
+						<div class="cur-txt">
+							<h2>Miembros {cursoCorto(c.data.curso)}</h2>
+							<p class="cur-meta">
+								<span>{personas(c)} {personas(c) === 1 ? 'persona' : 'personas'}</span>
+							</p>
+							<em class="plazo" data-curso={c.data.curso} hidden>Este curso</em>
+						</div>
+					</a>
+				</li>
+			))}
+			<li class="adm-only cur-add"><a class="adm-add" href={href('editar?tipo=miembros')}><span>+</span>Nuevo curso</a></li>
+		</ol>
+	</div>
+</Layout>
+
+<style>
+	.cur { padding-bottom: 6rem; }
+	.cur-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1.5rem 3rem; margin-top: 1.8rem; }
+	.cur-row .lede { margin: 0; max-width: 56ch; }
+	.cur-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.6rem; margin: 0; padding: 0; list-style: none; }
+	.cur-grid a { display: flex; flex-direction: column; height: 100%; text-decoration: none; background: var(--blanco); border: 1px solid var(--negro); transition: transform .2s var(--ease), box-shadow .2s var(--ease); }
+	.cur-grid a:hover { transform: translate(-3px, -3px); box-shadow: var(--sombra); }
+	/* Foto de grupo (horizontal). Sin foto: el símbolo de Reset de fondo y el curso abajo, como en las fichas sin foto */
+	.cur-foto {
+		--mark: transparent; aspect-ratio: 3 / 2; border-bottom: 1px solid var(--negro);
+		background-image: var(--marca-agua), linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px);
+		background-size: auto 78%, 14px 14px, 14px 14px;
+		background-position: 50% 30%, 0 0, 0 0;
+		background-repeat: no-repeat, repeat, repeat;
+	}
+	.cur-foto::before { place-items: end center; padding-bottom: 9%; }
+	.cur-txt { display: grid; gap: .35rem; padding: 1rem 1.2rem 1.3rem; }
+	.cur-txt h2 { margin: 0; font-size: 1.25rem; }
+	.cur-meta { display: flex; gap: 1rem; margin: 0; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	/* «Este curso», igual que en el menú */
+	.plazo { display: flex; align-items: center; gap: .4rem; font-style: normal; font-family: var(--f-mono); font-size: .66rem; font-weight: 500; text-transform: uppercase; letter-spacing: .05em; color: var(--naranja); }
+	.plazo[hidden] { display: none; }
+	.plazo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--naranja); }
+	.cur-add .adm-add { width: 100%; height: 100%; min-height: 220px; }
+</style>

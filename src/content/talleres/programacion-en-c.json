@@ -5,8 +5,14 @@
     "Programación"
   ],
   "resumen": "Introducción a C: condicionales, bucles y funciones. Pensado para quien nunca ha programado y quiere participar en Cybertech.",
-  "portada": "",
+  "portada": "fotos/talleres/octubre-robotico-2024/cartel-c.jpg",
   "cuerpo": "Taller de introducción a C en el que se enseñan conceptos básicos como condicionales, bucles y funciones. Su objetivo es asentar las bases para quienes no tienen experiencia programando y quieren participar en Cybertech.",
-  "galeria": [],
+  "galeria": [
+    "fotos/talleres/programacion-en-c/cartel-2018.jpg",
+    "fotos/talleres/programacion-en-c/cartel-2019.jpg",
+    "fotos/talleres/programacion-en-c/cartel-2020-octubre.jpg",
+    "fotos/talleres/programacion-en-c/cartel-2020-noviembre.jpg",
+    "fotos/talleres/octubre-robotico-2023/cartel-c.jpg"
+  ],
   "enListado": false
 }

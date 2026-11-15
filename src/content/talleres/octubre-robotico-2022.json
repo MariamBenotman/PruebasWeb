@@ -1,0 +1,17 @@
+{
+  "titulo": "Octubre Robótico 2022",
+  "fecha": "2022-10-05",
+  "etiquetas": [
+    "Octubre Robótico"
+  ],
+  "resumen": "Taller de octubre para aprender a programar tu propio brazo robótico, sin conocimientos previos.",
+  "portada": "fotos/talleres/octubre-robotico-2022/cartel.jpg",
+  "cuerpo": "¡Aprende a programar tu propio brazo robótico! No hacen falta conocimientos previos de programación.\n\n### Calendario\n\n- **5 y 10 de octubre:** en dos turnos posibles, mañana (12:30) o tarde (15:30)\n\nLas plazas son limitadas.",
+  "galeria": [],
+  "serie": "octubre-robotico",
+  "descMenu": "",
+  "oculto": false,
+  "enListado": true,
+  "incluye": [],
+  "destacado": false
+}

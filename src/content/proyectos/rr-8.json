@@ -5,7 +5,16 @@
     "En desarrollo"
   ],
   "resumen": "Nuestra versión del famoso BB-8 de Star Wars: un robot esférico con cabeza que se mueve en cualquier dirección.",
-  "portada": "",
+  "portada": "fotos/proyectos/rr-8/render.jpg",
   "cuerpo": "Diseño y construcción de una imitación del famoso (y muy mono) robot de la saga Star Wars, **BB-8**. Es un robot con forma esférica y cabeza, capaz de moverse sobre el suelo en cualquier dirección.\n\nTrabajan juntos miembros veteranos y gente recién llegada a la asociación. Si te interesa la robótica pero eres tímido o crees que no sabes lo suficiente, **es tu momento**: no hace falta ningún conocimiento previo. Pásate por nuestra salita en la ETSII (segunda planta) para informarte y apuntarte.",
-  "galeria": []
+  "galeria": [
+    "fotos/proyectos/rr-8/rr-8-1.jpg",
+    "fotos/proyectos/rr-8/rr-8-2.jpg",
+    "fotos/proyectos/rr-8/cad.jpg"
+  ],
+  "cursos": [
+    "2019/20",
+    "2020/21",
+    "2021/22"
+  ]
 }

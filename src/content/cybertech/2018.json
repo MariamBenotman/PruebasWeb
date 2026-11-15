@@ -8,9 +8,42 @@
   "intro": "Resumen de Cybertech 2018 en [vídeo](https://www.youtube.com/watch?v=fqYcPXIUTIs) y galería de fotos de la edición.",
   "datos": [],
   "categorias": [],
-  "secciones": [],
+  "secciones": [
+    {
+      "titulo": "Entrevistas a los equipos",
+      "contenido": "Algunos de los equipos participantes en Cybertech 2018 posan con sus robots durante las entrevistas.",
+      "media": "fotos/cybertech/2018/entrevista-gambizofrenicos-1.jpg"
+    }
+  ],
   "galeria": [
     "fotos/cybertech/2018/galeria-11.jpg",
-    "fotos/cybertech/2018/galeria-14.jpg"
+    "fotos/cybertech/2018/galeria-14.jpg",
+    "fotos/cybertech/2018/2018-hexapodo.jpg",
+    "fotos/cybertech/2018/2018-laberinto-1.jpg",
+    "fotos/cybertech/2018/2018-laberinto-2.jpg",
+    "fotos/cybertech/2018/2018-pabellon-2.jpg",
+    "fotos/cybertech/2018/2018-robot-coche.jpg",
+    "fotos/cybertech/2018/2018-roll-up-reset.jpg",
+    "fotos/cybertech/2018/2018-siguelineas-1.jpg",
+    "fotos/cybertech/2018/2018-siguelineas-2.jpg",
+    "fotos/cybertech/2018/2018-siguelineas-3.jpg",
+    "fotos/cybertech/2018/2018-siguelineas-4.jpg",
+    "fotos/cybertech/2018/2018-sumo-participante.jpg",
+    "fotos/cybertech/2018/2018-sumo-pista-1.jpg",
+    "fotos/cybertech/2018/2018-sumo-pista-2.jpg",
+    "fotos/cybertech/2018/2018-sumo-pista-3.jpg",
+    "fotos/cybertech/2018/2018-sumo-robot-1.jpg",
+    "fotos/cybertech/2018/2018-sumo-robot-2.jpg",
+    "fotos/cybertech/2018/entrevista-botzinga-1.jpg",
+    "fotos/cybertech/2018/entrevista-botzinga-2.jpg",
+    "fotos/cybertech/2018/entrevista-cabecera-entrevistas.jpg",
+    "fotos/cybertech/2018/entrevista-gambizofrenicos-2.jpg",
+    "fotos/cybertech/2018/entrevista-gambizofrenicos-3.jpg",
+    "fotos/cybertech/2018/entrevista-matlah-1.jpg",
+    "fotos/cybertech/2018/entrevista-matlah-2.jpg",
+    "fotos/cybertech/2018/entrevista-necesito-pasta-1.jpg",
+    "fotos/cybertech/2018/entrevista-necesito-pasta-2.jpg",
+    "fotos/cybertech/2018/entrevista-necesito-pasta-3.jpg",
+    "fotos/cybertech/2018/entrevista-servos-de-fourier-1.jpg"
   ]
 }
