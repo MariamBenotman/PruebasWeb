@@ -8,7 +8,22 @@
   "portada": "fotos/proyectos/reset-league/logo.jpg",
   "cuerpo": "",
   "galeria": [],
+  "secciones": [
+    {
+      "titulo": "",
+      "bloques": []
+    }
+  ],
+  "serie": "",
+  "descMenu": "",
+  "oculto": false,
+  "enListado": false,
+  "incluye": [],
+  "destacado": false,
+  "activo": false,
   "cursos": [
     "2021/22"
-  ]
+  ],
+  "autores": [],
+  "otrosAutores": ""
 }

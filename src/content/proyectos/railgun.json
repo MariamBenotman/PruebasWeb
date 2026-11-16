@@ -1,0 +1,19 @@
+{
+  "titulo": "Railgun",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Un cañón electromagnético: lanza un proyectil sin pólvora, solo con electricidad y magnetismo.",
+  "portada": "",
+  "cuerpo": "Diseño y construcción de una **railgun** (cañón de raíles), un lanzador electromagnético.\n\nFunciona haciendo pasar una corriente muy alta por dos raíles conductores y por el proyectil que los une: esa corriente genera un campo magnético y la fuerza resultante (la fuerza de Lorentz) empuja el proyectil a lo largo de los raíles.",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2023/24"
+  ],
+  "autores": [
+    "Marina Lara",
+    "Miguel González"
+  ],
+  "otrosAutores": ""
+}

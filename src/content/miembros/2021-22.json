@@ -1,10 +1,13 @@
 {
   "curso": "2021/22",
   "intro": "",
-  "fotoGrupo": "",
+  "fotosGrupo": [
+    "fotos/miembros/2021-22/grupo.jpg"
+  ],
   "secciones": [
     {
       "titulo": "Junta",
+      "orden": "cargo",
       "miembros": [
         {
           "nombre": "Lorenzo Prat",
@@ -50,6 +53,7 @@
     },
     {
       "titulo": "Miembros",
+      "orden": "alfabetico",
       "miembros": [
         {
           "nombre": "Héctor Gutiérrez",
@@ -79,7 +83,11 @@
           "nombre": "Elena Muñoz-Bellido",
           "roles": [],
           "foto": "fotos/miembros/2021-22/elena-munoz-bellido.jpg",
-          "fotoHover": "fotos/miembros/2021-22/elena-munoz-bellido-2.jpg"
+          "fotoHover": "fotos/miembros/2021-22/elena-munoz-bellido-2.jpg",
+          "meses": [
+            "septiembre",
+            "marzo"
+          ]
         },
         {
           "nombre": "Diego Efler",
@@ -103,7 +111,10 @@
           "nombre": "Javier Martínez",
           "roles": [],
           "foto": "fotos/miembros/2021-22/javier-martinez.jpg",
-          "fotoHover": "fotos/miembros/2021-22/javier-martinez-2.jpg"
+          "fotoHover": "fotos/miembros/2021-22/javier-martinez-2.jpg",
+          "meses": [
+            "octubre"
+          ]
         },
         {
           "nombre": "Adrián Rieker",
@@ -115,10 +126,13 @@
           "nombre": "Jaime Bravo",
           "roles": [],
           "foto": "fotos/miembros/2021-22/jaime-bravo.jpg",
-          "fotoHover": "fotos/miembros/2021-22/jaime-bravo-2.jpg"
+          "fotoHover": "fotos/miembros/2021-22/jaime-bravo-2.jpg",
+          "meses": [
+            "febrero"
+          ]
         },
         {
-          "nombre": "Miguel Ángel García",
+          "nombre": "Miguel Ángel García de Vicente",
           "roles": [],
           "foto": "fotos/miembros/2021-22/miguel-angel-garcia.jpg",
           "fotoHover": "fotos/miembros/2021-22/miguel-angel-garcia-2.jpg"
@@ -127,7 +141,10 @@
           "nombre": "Mariam Benotman",
           "roles": [],
           "foto": "fotos/miembros/2021-22/mariam-benotman.jpg",
-          "fotoHover": "fotos/miembros/2021-22/mariam-benotman-2.jpg"
+          "fotoHover": "fotos/miembros/2021-22/mariam-benotman-2.jpg",
+          "meses": [
+            "noviembre"
+          ]
         },
         {
           "nombre": "Clara Molina",

@@ -1,7 +1,9 @@
 ---
+import fs from 'node:fs';
+import path from 'node:path';
 import Layout from '../../layouts/Layout.astro';
 import { getCursos, BASE, href } from '../../lib/data';
-import { renderCurso, cursoCorto } from '../../lib/render';
+import { renderCurso, cursoCorto, indiceFotos } from '../../lib/render';
 
 export async function getStaticPaths() {
 	const cursos = await getCursos();
@@ -10,7 +12,12 @@ export async function getStaticPaths() {
 
 const cursos = await getCursos();
 const actual = cursos.find((c) => c.id === Astro.props.id)!;
-const html = renderCurso(actual.data, { base: BASE });
+// Quien no tiene foto este curso sale con la de otro curso suyo (la más cercana en el tiempo)
+// (solo las fotos cuyo archivo existe, para no probar rutas vacías)
+const fotosDe = indiceFotos(cursos.map((c) => c.data), actual.data.curso);
+const hoverDe = indiceFotos(cursos.map((c) => c.data), actual.data.curso, 'fotoHover');
+const existe = (p: string) => /^(https?:|\/)/.test(p) || fs.existsSync(path.join(process.cwd(), 'public', p));
+const html = renderCurso(actual.data, { base: BASE, fotosDe: (n) => fotosDe(n).filter(existe), hoverDe: (n) => hoverDe(n).filter(existe) });
 ---
 
 <Layout title={`Miembros ${cursoCorto(actual.data.curso)}`} description={`Equipo de la Asociación de Estudiantes Reset durante el curso ${actual.data.curso}.`}>

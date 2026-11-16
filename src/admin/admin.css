@@ -14,8 +14,16 @@ body.adm-on { padding-bottom: 64px; }
 [data-edit]:hover::before { outline-color: rgba(220, 135, 0, .6); }
 [data-edit].adm-current::before { outline: 2px solid var(--naranja); }
 .ct-hero[data-edit]::before, .ct-stats[data-edit]::before { inset: 4px; }
-.frame[data-path]:not(:has(img, video))::before { content: attr(data-label) '\A' attr(data-path); white-space: pre-wrap; font-size: .9rem; }
-.frame[data-path]:not(:has(img, video))::before { color: rgba(255, 255, 255, .55); }
+/* Foto que aún no existe: su ruta, centrada abajo y partida en líneas (solo en modo edición) */
+.adm-ruta { display: none; }
+html.is-admin .frame:not(:has(img, video)) > .adm-ruta { display: block; position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 1; text-align: center;
+	font-family: var(--f-mono); font-size: .6rem; line-height: 1.35; color: rgba(255, 255, 255, .6); overflow-wrap: anywhere; pointer-events: none; }
+html.is-admin .frame.m-photo:not(:has(img, video))::before { padding-bottom: 22%; }
+/* Foto prestada de otro curso (la persona no tiene foto en este): aviso solo en modo edición */
+.adm-prestada { display: none; }
+html.is-admin .frame.es-prestada:has(img) > .adm-prestada { display: block; position: absolute; left: 6px; bottom: 6px; z-index: 2;
+	padding: .2rem .45rem; border-radius: 4px; background: rgba(10, 20, 40, .78); color: #fff;
+	font-family: var(--f-mono); font-size: .6rem; letter-spacing: .02em; pointer-events: none; }
 
 .adm-add {
 	display: inline-flex; align-items: center; justify-content: center; gap: .55rem; cursor: pointer;
@@ -42,6 +50,9 @@ body.adm-on { padding-bottom: 64px; }
 .adm-dot { width: 9px; height: 9px; border-radius: 50%; background: #3fbf6b; box-shadow: 0 0 0 3px rgba(63, 191, 107, .25); }
 .adm-bar.is-dirty .adm-dot { background: var(--naranja); box-shadow: 0 0 0 3px rgba(220, 135, 0, .3); }
 .adm-local { padding: .1rem .4rem; background: #3fbf6b; color: var(--negro); font-family: var(--f-mono); font-size: .66rem; letter-spacing: .08em; }
+.adm-quien { padding: .1rem .45rem; border: 1px solid #555; color: #ddd; font-family: var(--f-mono); font-size: .66rem; letter-spacing: .04em; text-decoration: none; white-space: nowrap; }
+.adm-quien:hover { border-color: var(--naranja); color: #fff; }
+@media (max-width: 760px) { .adm-quien { display: none; } }
 .adm-doc { color: #aaa; font-family: var(--f-mono); font-size: .78rem; }
 .adm-doc:not(:empty)::before { content: '/ '; color: var(--naranja); }
 .adm-status { flex: 1; min-width: 0; font-size: .84rem; color: #ccc; }
@@ -177,6 +188,12 @@ textarea.f-in { resize: vertical; line-height: 1.5; font-size: .9rem; min-height
 .f-pick-i small { font-size: .62rem; color: var(--gris); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 .15rem .15rem; }
 
 .f-refs { display: grid; gap: .1rem; padding: .4rem; border: 1px solid #bdb7aa; background: var(--blanco); max-height: 260px; overflow-y: auto; }
+.f-refs label[hidden], .f-list > .f-row[hidden] { display: none; }
+.f-buscar { margin-bottom: .4rem; }
+.f-buscar-nada { margin: 0 0 .4rem; }
+/* Campo al que se llega al pulsar algo en la página: destello breve */
+.adm-drawer .f-ir { animation: f-ir 1.8s var(--ease, ease); border-radius: 4px; }
+@keyframes f-ir { 0%, 35% { background: rgba(240, 140, 30, .16); box-shadow: 0 0 0 6px rgba(240, 140, 30, .16); } 100% { background: transparent; box-shadow: 0 0 0 6px transparent; } }
 .f-refs label { display: flex; align-items: center; gap: .6rem; padding: .35rem .4rem; cursor: pointer; font-size: .92rem; }
 .f-refs label:hover { background: var(--papel-2); }
 .f-refs input { width: 17px; height: 17px; accent-color: var(--naranja); margin: 0; flex: none; }
@@ -298,3 +315,14 @@ body.adm-asis-on { overflow: hidden; }
 .asis-foto > img { position: relative; }
 .asis-ini { position: absolute; inset: 0; display: grid; place-items: end center; padding-bottom: 12%; font-family: var(--f-display); font-stretch: 125%; font-weight: 800; font-size: 1.5rem; color: rgba(255, 255, 255, .3);
 	background: var(--marca-agua) 50% 32% / 82% auto no-repeat; }
+
+/* Secciones libres de una entrada */
+.adm-vacio { margin: 0; padding: 1.4rem 1rem; border: 1.5px dashed var(--naranja); background: rgba(220, 135, 0, .05); color: var(--gris); font-family: var(--f-mono); font-size: .75rem; text-align: center; }
+.en-sec-add { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: 1.4rem; font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+.en-sec-add .adm-add { padding: .45rem .8rem; }
+.en-sec-nueva { margin-top: 2rem; }
+
+/* Miembros en orden automático: aviso junto a «Mover antes / después» (desactivados) */
+.adm-orden-auto { flex-basis: 100%; margin: .2rem 0 0; }
+.adm-link { padding: 0; border: 0; background: none; color: var(--azul); text-decoration: underline; font: inherit; cursor: pointer; }
+.adm-link:hover { color: var(--naranja); }

@@ -1,11 +1,13 @@
 {
   "curso": "2023/24",
   "intro": "",
-  "fotoGrupo": "",
+  "fotosGrupo": [
+    "fotos/miembros/2023-24/grupo.jpg"
+  ],
   "secciones": [
     {
       "titulo": "Junta",
-      "orden": "manual",
+      "orden": "cargo",
       "miembros": [
         {
           "nombre": "Mariam Benotman",
@@ -16,7 +18,7 @@
           "fotoHover": "fotos/miembros/2023-24/mariam-benotman-2.jpg"
         },
         {
-          "nombre": "Miguel Ángel García",
+          "nombre": "Miguel Ángel García de Vicente",
           "roles": [
             "Secretario"
           ],
@@ -51,7 +53,7 @@
     },
     {
       "titulo": "Vocales",
-      "orden": "manual",
+      "orden": "vocalia",
       "miembros": [
         {
           "nombre": "Miguel González",

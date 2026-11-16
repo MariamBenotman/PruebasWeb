@@ -32,6 +32,7 @@ export const getToken = () => {
 export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
 export const clearToken = () => {
 	localStorage.removeItem(TOKEN_KEY);
+	localStorage.removeItem('reset-codigo');
 	if (isLocal()) localStorage.setItem('reset-local-off', '1');
 };
 /** Vuelve a activar el modo edición local tras haber pulsado "Salir". */
@@ -70,6 +71,11 @@ export async function checkToken(token: string) {
 	return info;
 }
 
+/** Usuario de GitHub dueño del token (cada guardado queda en el historial a su nombre). */
+export async function usuarioGitHub(): Promise<{ login: string; name: string | null }> {
+	return api<any>('/user');
+}
+
 /**
  * Clave de administración: además de "Contents: Read and write" tiene "Administration: Read-only".
  * Solo con ella se pueden eliminar páginas enteras; con una clave normal solo se pueden ocultar.
@@ -90,6 +96,22 @@ export function bytesToB64(bytes: Uint8Array) {
 	for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
 	return btoa(bin);
 }
+
+/** Lee un archivo del repositorio SIN token (el repositorio es público). Para entrar con un código de acceso. */
+export async function leerPublico(path: string): Promise<string | null> {
+	if (isLocal()) return readFile(path);
+	const { owner, repo: r, branch } = repo();
+	const res = await fetch(`https://api.github.com/repos/${owner}/${r}/contents/${encodeURI(path)}?ref=${branch}&t=${Date.now()}`, { cache: 'no-store', headers: { Accept: 'application/vnd.github.raw+json' } });
+	if (res.ok) return res.text();
+	if (res.status === 404) return null;
+	// Límite de peticiones sin token: se lee la copia «raw» (puede tardar unos minutos en actualizarse)
+	const raw = await fetch(`${rawUrl(path)}?t=${Date.now()}`, { cache: 'no-store' });
+	return raw.ok ? raw.text() : null;
+}
+
+/** Autor de los commits: quien entra con un código de acceso aparece con su nombre en el historial */
+let autor: { name: string; email: string } | null = null;
+export const setAutor = (a: typeof autor) => { autor = a; };
 
 /** Lee un archivo de texto del repositorio (versión más reciente, no la publicada). Devuelve null si no existe. */
 export async function readFile(path: string): Promise<string | null> {
@@ -152,7 +174,7 @@ export async function commit(changes: FileChange[], message: string): Promise<st
 	const newTree = await api<any>(`${R()}/git/trees`, { method: 'POST', body: JSON.stringify({ base_tree: parent.tree.sha, tree }) });
 	const newCommit = await api<any>(`${R()}/git/commits`, {
 		method: 'POST',
-		body: JSON.stringify({ message, tree: newTree.sha, parents: [parentSha] }),
+		body: JSON.stringify({ message, tree: newTree.sha, parents: [parentSha], ...(autor ? { author: { ...autor, date: new Date().toISOString() } } : {}) }),
 	});
 	try {
 		await api(`${R()}/git/refs/heads/${branch}`, { method: 'PATCH', body: JSON.stringify({ sha: newCommit.sha }) });

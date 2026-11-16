@@ -2,10 +2,11 @@
  * FOTOTECA: todas las fotos de public/fotos, por carpetas.
  *  - dónde se usa cada una (lo calcula la página al compilar: #usos-data)
  *  - subir fotos a cualquier carpeta (se optimizan igual que en el editor y se guardan al momento)
- *  - eliminar las que sobren (solo con la clave de administración; avisa si la foto se usa en algún sitio)
+ *  - eliminar las que sobren (solo con el nivel «Administración»; avisa si la foto se usa en algún sitio)
  */
 import './admin.css';
-import { listTree, commit, puedeBorrar, isLocal, GitHubError } from './github';
+import { listTree, commit, isLocal, GitHubError } from './github';
+import { sesion, puedeEliminar } from './permisos';
 import { processFile, pickFiles, pending } from './media';
 import { esc, slugify } from '../lib/render';
 
@@ -27,7 +28,7 @@ export async function montar() {
 	const root = document.getElementById('fototeca')!;
 	const usos: Record<string, Uso[]> = JSON.parse(document.getElementById('usos-data')?.textContent || '{}');
 	let fotos: Foto[] = [];
-	const admin = puedeBorrar();
+	const admin = sesion().then(puedeEliminar, () => false);
 
 	root.innerHTML = `
 		<div class="ftk-barra">
@@ -149,7 +150,7 @@ export async function montar() {
 		}
 		const b = t.closest<HTMLButtonElement>('[data-borrar]');
 		if (!b) return;
-		if (!(await admin)) { estado('Eliminar fotos está reservado a la clave de administración.', 'error'); return; }
+		if (!(await admin)) { estado('Eliminar fotos está reservado al nivel «Administración».', 'error'); return; }
 		const u = usos[p] ?? [];
 		if (!b.dataset.armed) {
 			b.dataset.armed = '1';

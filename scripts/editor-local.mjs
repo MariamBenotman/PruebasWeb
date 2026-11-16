@@ -8,7 +8,7 @@ import { resolve, relative, dirname, sep } from 'node:path';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 // Solo se puede leer/escribir aquí:
-const ALLOWED = ['src/content/', 'src/data/etiquetas.json', 'public/fotos/'];
+const ALLOWED = ['src/content/', 'src/data/etiquetas.json', 'src/data/permisos.json', 'public/fotos/'];
 
 function safe(path) {
 	const abs = resolve(ROOT, String(path || ''));

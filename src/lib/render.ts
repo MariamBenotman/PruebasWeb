@@ -24,10 +24,47 @@ export function mesDelCurso(curso: string, mes: string): string {
 	const n = (i + 8) % 12 + 1;
 	return `${i < 4 ? y0 : y0 + 1}-${String(n).padStart(2, '0')}`;
 }
-/** `alfabetico`: las personas salen por orden alfabético; `manual`: en el orden en que se colocan en el editor */
-export type OrdenMiembros = 'alfabetico' | 'manual';
-export interface SeccionMiembros { titulo: string; orden: OrdenMiembros; miembros: Miembro[] }
-export interface Curso { curso: string; intro: string; fotoGrupo: string; secciones: SeccionMiembros[] }
+/**
+ * Orden automático de una sección de miembros:
+ * `cargo`: por cargo, siempre en el mismo orden (Presidencia, Vicepresidencia, Secretaría, Tesorería, Logística; el resto después,
+ * por nombre). Es el de la Junta. `vocalia`: juntos los de la misma vocalía (por orden alfabético de vocalía) y, dentro, por nombre.
+ * `alfabetico`: por nombre.
+ * Si la sección tiene `manual`, en cambio, van en el orden en que se colocan en el editor.
+ */
+export type OrdenMiembros = 'cargo' | 'vocalia' | 'alfabetico';
+/** Orden de los cargos de la Junta (vale masculino y femenino: Presidente/Presidenta…) */
+export const ORDEN_CARGOS = [/^presiden/i, /^vicepresiden/i, /^secretari/i, /^tesorer/i, /^log[ií]st/i];
+const rangoCargo = (roles: string[]) => Math.min(ORDEN_CARGOS.length, ...roles.map((r) => {
+	const i = ORDEN_CARGOS.findIndex((re) => re.test(r.trim()));
+	return i < 0 ? ORDEN_CARGOS.length : i;
+}));
+/** Orden por defecto de una sección según su título: la Junta, por cargo; Vocales, por vocalía; el resto, alfabético */
+export const ordenPorDefecto = (titulo: string): OrdenMiembros => (/junta/i.test(titulo) ? 'cargo' : /vocal/i.test(titulo) ? 'vocalia' : 'alfabetico');
+export interface SeccionMiembros { titulo: string; orden: OrdenMiembros; /** Ordenadas a mano en el editor (si no, orden automático) */ manual: boolean; miembros: Miembro[] }
+
+/**
+ * Las personas de una sección en el orden en que salen en la web. Conserva el índice original (j) para que el editor
+ * sepa qué persona es cada tarjeta.
+ */
+export function ordenarMiembros(s: Pick<SeccionMiembros, 'orden' | 'manual' | 'miembros'>) {
+	const lista = s.miembros.map((m, j) => ({ m, j }));
+	if (s.manual) return lista;
+	const cmp = (a: string, b: string) => a.localeCompare(b, 'es', { sensitivity: 'base' });
+	const porNombre = (a: { m: Miembro }, b: { m: Miembro }) => cmp(a.m.nombre, b.m.nombre);
+	if (s.orden === 'cargo') return lista.sort((a, b) => rangoCargo(a.m.roles) - rangoCargo(b.m.roles) || porNombre(a, b));
+	if (s.orden === 'vocalia') {
+		// Sin vocalía, al final
+		const voc = (m: Miembro) => (m.roles[0] ?? '').trim();
+		return lista.sort((a, b) => (+!voc(a.m) - +!voc(b.m)) || cmp(voc(a.m), voc(b.m)) || porNombre(a, b));
+	}
+	return lista.sort(porNombre);
+}
+export interface Curso {
+	curso: string; intro: string;
+	/** Fotos de grupo: salen abajo del todo (con varias, van rotando). La primera es la de la lista de cursos. */
+	fotosGrupo: string[];
+	secciones: SeccionMiembros[];
+}
 
 export interface Prueba { nombre: string; descripcion: string; media: string }
 export interface Categoria { nombre: string; descripcion: string; media: string; pruebas: Prueba[] }
@@ -38,7 +75,12 @@ export interface Edicion {
 	datos: Dato[]; categorias: Categoria[]; secciones: SeccionEdicion[]; galeria: string[];
 	/** Plazo de inscripción (AAAA-MM-DD, ambos incluidos) y enlace al formulario. Dentro del plazo sale «Inscripciones abiertas». */
 	inscripcionDesde: string; inscripcionHasta: string; inscripcionEnlace: string;
+	/** Usuario de GitHub que la creó desde el editor (los niveles básicos solo editan lo suyo) */
+	creadoPor?: string;
 }
+
+/** Quién lo creó desde el editor: solo se guarda si se sabe (para no ensuciar los archivos antiguos) */
+const conAutor = (raw: any) => (raw?.creadoPor ? { creadoPor: str(raw.creadoPor) } : {});
 
 /**
  * Atributos para lo que solo debe verse dentro de un plazo (lo enseña Layout.astro en el navegador,
@@ -55,6 +97,32 @@ export interface RenderCtx {
 	admin?: boolean;
 	/** Permite al editor sustituir rutas de fotos aún no subidas por su vista previa local */
 	resolve?: (path: string) => string | undefined;
+	/** Miembros: fotos de esa persona en otros cursos (la del curso más cercano primero), por si no tiene foto en este */
+	fotosDe?: (nombre: string) => string[];
+	/** Igual, para la foto de «al pasar el ratón» */
+	hoverDe?: (nombre: string) => string[];
+}
+
+/**
+ * Fotos de cada persona en los demás cursos, de la del curso más cercano al actual a la más lejana.
+ * Así, quien no tiene foto un año sale con la de otro año (mejor eso que un hueco).
+ */
+export function indiceFotos(cursos: Curso[], actual: string, campo: 'foto' | 'fotoHover' = 'foto') {
+	const anio = (c: string) => parseInt(c, 10) || 0;
+	const a0 = anio(actual);
+	const fotos = new Map<string, string[]>();
+	[...cursos]
+		.filter((c) => c.curso !== actual)
+		.sort((a, b) => Math.abs(anio(a.curso) - a0) - Math.abs(anio(b.curso) - a0) || anio(b.curso) - anio(a.curso))
+		.forEach((c) => c.secciones.forEach((s) => s.miembros.forEach((m) => {
+			const k = clavePersona(m.nombre);
+			const f = m[campo];
+			if (!k || !f) return;
+			const l = fotos.get(k) ?? [];
+			if (!l.includes(f)) l.push(f);
+			fotos.set(k, l);
+		})));
+	return (nombre: string) => fotos.get(clavePersona(nombre)) ?? [];
 }
 
 /* ───────────── Normalización (rellena huecos para que nunca falle) ───────────── */
@@ -66,12 +134,14 @@ export function normalizeCurso(raw: any = {}): Curso {
 	return {
 		curso: str(raw.curso),
 		intro: str(raw.intro),
-		fotoGrupo: str(raw.fotoGrupo),
+		// (antes era una sola: «fotoGrupo»)
+		fotosGrupo: Array.isArray(raw.fotosGrupo) ? arr(raw.fotosGrupo, str).filter(Boolean) : raw.fotoGrupo ? [str(raw.fotoGrupo)] : [],
 		secciones: arr(raw.secciones, (s) => ({
 			titulo: str(s?.titulo),
 			// Por defecto: alfabético si nadie de la sección tiene cargo (p. ej. "Miembros"); manual si lo tienen (Junta, Vocales)
-			orden: s?.orden === 'alfabetico' || s?.orden === 'manual' ? s.orden
-				: (Array.isArray(s?.miembros) && s.miembros.some((m: any) => Array.isArray(m?.roles) && m.roles.length) ? 'manual' : 'alfabetico'),
+			orden: ['cargo', 'vocalia', 'alfabetico'].includes(s?.orden) ? s.orden : ordenPorDefecto(str(s?.titulo)),
+			// (antes «manual» era un tipo de orden más)
+			manual: !!s?.manual || s?.orden === 'manual',
 			miembros: arr(s?.miembros, (m) => ({
 				nombre: str(m?.nombre),
 				roles: arr(m?.roles, str).filter(Boolean),
@@ -104,6 +174,7 @@ export function normalizeEdicion(raw: any = {}): Edicion {
 		})),
 		secciones: arr(raw.secciones, (s) => ({ titulo: str(s?.titulo), contenido: str(s?.contenido), media: str(s?.media) })),
 		galeria: arr(raw.galeria, str).filter(Boolean),
+		...conAutor(raw),
 	};
 }
 
@@ -146,19 +217,28 @@ const initials = (name: string) =>
  * Imagen con hueco de reserva: si el archivo aún no existe se ve un marco de plano
  * con una etiqueta (y en modo edición, la ruta donde debe ir la foto).
  */
-function frame(path: string, ctx: RenderCtx, opts: { label: string; cls?: string; alt?: string; extra?: string; eager?: boolean }) {
-	const src = asset(path, ctx);
+function frame(path: string, ctx: RenderCtx, opts: { label: string; cls?: string; alt?: string; extra?: string; eager?: boolean; respaldo?: string[] }) {
+	// Respaldo: otras fotos que probar, en orden, si esta no existe (o no hay). Si se usa una, la figura lleva .es-prestada.
+	const resp = (opts.respaldo ?? []).filter((p) => p && p !== path && !isVideo(p));
+	const prestada = !path && resp.length > 0;
+	const usar = prestada ? resp[0] : path;
+	const fb = (prestada ? resp.slice(1) : resp).map((p) => asset(p, ctx));
+	const src = asset(usar, ctx);
 	let inner = '';
 	if (src) {
-		inner = isVideo(path)
-			? `<video src="${esc(src)}" autoplay muted loop playsinline preload="metadata" onerror="__img(this)" data-path="${esc(path)}"></video>`
-			: `<img src="${esc(src)}" alt="${esc(opts.alt ?? '')}" ${opts.eager ? '' : 'loading="lazy"'} decoding="async" onerror="__img(this)" data-path="${esc(path)}">`;
+		inner = isVideo(usar)
+			? `<video src="${esc(src)}" autoplay muted loop playsinline preload="metadata" onerror="__img(this)" data-path="${esc(usar)}"></video>`
+			: `<img src="${esc(src)}" alt="${esc(opts.alt ?? '')}" ${opts.eager ? '' : 'loading="lazy"'} decoding="async" onerror="__img(this)" data-path="${esc(usar)}"${fb.length ? ` data-fb="${esc(fb.join('|'))}"` : ''}>`;
 	}
-	return `<figure class="frame ${opts.cls ?? ''}" data-label="${esc(opts.label)}"${path ? ` data-path="${esc(path)}"` : ''}>${inner}${opts.extra ?? ''}</figure>`;
+	if (prestada) opts = { ...opts, cls: `${opts.cls ?? ''} es-prestada` };
+	// En modo edición, si la foto aún no existe, se ve dónde debe ir (centrado y partido en líneas para que no se corte)
+	const ruta = ctx.admin && path ? `<span class="adm-ruta">${esc(path)}</span>` : '';
+	return `<figure class="frame ${opts.cls ?? ''}" data-label="${esc(opts.label)}"${path ? ` data-path="${esc(path)}"` : ''}>${inner}${ruta}${opts.extra ?? ''}</figure>`;
 }
 
-const addBtn = (ctx: RenderCtx, path: string, label: string, cls = '') =>
-	ctx.admin ? `<button type="button" class="adm-add ${cls}" data-add="${path}"><span>+</span>${esc(label)}</button>` : '';
+/** Botón «+» del modo edición. `nuevo`: valores iniciales de lo que se añade (p. ej. un bloque de tipo «fotos») */
+const addBtn = (ctx: RenderCtx, path: string, label: string, cls = '', nuevo?: object) =>
+	ctx.admin ? `<button type="button" class="adm-add ${cls}" data-add="${path}"${nuevo ? ` data-nuevo="${esc(JSON.stringify(nuevo))}"` : ''}><span>+</span>${esc(label)}</button>` : '';
 
 const editAttr = (ctx: RenderCtx, path: string) => (ctx.admin ? ` data-edit="${path}"` : '');
 const reveal = (ctx: RenderCtx) => (ctx.admin ? '' : ' reveal');
@@ -192,7 +272,7 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 		(m.meses.length === MESES_CURSO.length
 			? `<span class="rda" title="Resetero del mes los 12 meses del curso">${ENGRANAJE}<span>Resetero del año</span></span>`
 			: `<span class="rdm" role="img" aria-label="Resetero del mes: ${esc(m.meses.join(', '))}">${
-				m.meses.map((mes, k) => `<i style="--k:${m.meses.length - 1 - k}" title="Resetero del mes · ${esc(mes)}">${ENGRANAJE}</i>`).join('')}</span>`)
+				m.meses.map((mes, k) => `<i style="--k:${m.meses.length - 1 - k}" data-mes="${esc(mes[0].toUpperCase() + mes.slice(1))} ${esc(mesDelCurso(d.curso, mes).slice(0, 4))}">${ENGRANAJE}</i>`).join('')}</span>`)
 		+ '<span class="rdm-marco" aria-hidden="true"></span>';
 	const card = (m: Miembro, i: number, j: number) => `
 		<li class="m-card${reveal(ctx)}" style="--d:${j % 12}"${m.meses.length ? ` data-rdm="${m.meses.map((x) => mesDelCurso(d.curso, x)).join(' ')}"` : ''}${editAttr(ctx, `secciones.${i}.miembros.${j}`)}>
@@ -200,24 +280,19 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 				label: initials(m.nombre),
 				cls: 'm-photo',
 				alt: m.nombre,
-				extra: (m.fotoHover ? frameAlt(m.fotoHover, ctx) : '') + engranajes(m),
+				respaldo: ctx.fotosDe?.(m.nombre),
+				extra: frameAlt(m.fotoHover, ctx, ctx.hoverDe?.(m.nombre) ?? []) + engranajes(m)
+					+ (ctx.admin ? '<span class="adm-prestada" title="No tiene foto en este curso: se muestra la de otro. Pulsa en la tarjeta para poner la de este curso.">Foto de otro curso</span>' : ''),
 			})}
 			<div class="m-meta">
 				<h3>${esc(m.nombre) || '<span class="muted">Sin nombre</span>'}</h3>
-				${ctx.admin && !m.roles.length && d.secciones[i].orden === 'manual' && /junta|vocal/i.test(d.secciones[i].titulo) ? `<p class="adm-aviso-card">⚠ Falta su cargo de ${esc(d.secciones[i].titulo)}</p>` : ''}
+				${ctx.admin && !m.roles.length && /junta|vocal/i.test(d.secciones[i].titulo) ? `<p class="adm-aviso-card">⚠ Falta su cargo de ${esc(d.secciones[i].titulo)}</p>` : ''}
 				${m.roles.length || m.meses.length ? `<ul class="tags">${m.roles.map((r) => `<li>${esc(r)}</li>`).join('')}${m.meses.length ? '<li class="rdm-tag">Resetero del mes</li>' : ''}</ul>` : ''}
 			</div>
 		</li>`;
 	// La leyenda solo sale si este curso tiene algún resetero del mes
 	const hayRdm = d.secciones.some((s) => s.miembros.some((m) => m.meses.length));
 
-	// El índice original (j) se conserva para que el editor sepa qué persona es cada tarjeta
-	const ordenar = (s: SeccionMiembros) => {
-		const lista = s.miembros.map((m, j) => ({ m, j }));
-		return s.orden === 'alfabetico'
-			? lista.sort((a, b) => a.m.nombre.localeCompare(b.m.nombre, 'es', { sensitivity: 'base' }))
-			: lista;
-	};
 
 	const sections = d.secciones.map((s, i) => `
 		<section class="m-sec${i === 0 ? ' is-lead' : ''}${s.miembros.some((m) => m.roles.length) ? '' : ' is-plain'}">
@@ -228,7 +303,7 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 				<span class="count">${pad(s.miembros.length)}</span>
 			</header>
 			<ul class="m-grid">
-				${ordenar(s).map(({ m, j }) => card(m, i, j)).join('')}
+				${ordenarMiembros(s).map(({ m, j }) => card(m, i, j)).join('')}
 				${ctx.admin ? `<li class="m-card m-card-add">${addBtn(ctx, `secciones.${i}.miembros`, 'Añadir persona')}</li>` : ''}
 			</ul>
 		</section>`).join('');
@@ -243,16 +318,51 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 				${total ? `<div class="tally-col"><dl class="tally"><div><dt>Personas</dt><dd>${pad(total)}</dd></div>${tally}</dl>${hayRdm ? `<p class="rdm-leyenda">Cada <span class="rdm-ico" role="img" aria-label="engranaje">${ENGRANAJE}</span> representa un mes como resetero del mes</p>` : ''}</div>` : ''}
 			</div>
 		</header>
-		${d.fotoGrupo || ctx.admin ? `<div class="group-photo${reveal(ctx)}"${editAttr(ctx, '')}>${frame(d.fotoGrupo, ctx, { label: 'Foto de grupo', cls: 'wide' })}</div>` : ''}
 		${sections || (ctx.admin ? '' : '<p class="empty">Todavía no hay personas en este curso.</p>')}
 		${addBtn(ctx, 'secciones', 'Añadir sección', 'adm-add-wide')}
+		${fotosGrupo(d, ctx)}
 	</div>`;
 }
 
-const frameAlt = (path: string, ctx: RenderCtx) =>
-	`<img class="alt" src="${esc(asset(path, ctx))}" alt="" loading="lazy" decoding="async" onerror="__img(this)" data-path="${esc(path)}">`;
+/** Fotos de grupo, abajo del todo. Con varias, van rotando solas (lo hace Layout.astro: [data-rotar]) y con puntos para elegir. */
+function fotosGrupo(d: Curso, ctx: RenderCtx) {
+	const n = d.fotosGrupo.length;
+	if (!n && !ctx.admin) return '';
+	const alt = `Equipo de Reset, curso ${d.curso}`;
+	return `
+	<section class="m-grupo${reveal(ctx)}">
+		<header class="sec-head"${editAttr(ctx, 'fotosGrupo')}><span class="idx">§</span><h2>${n > 1 ? 'Fotos de grupo' : 'Foto de grupo'}</h2><span class="rule"></span>${n > 1 ? `<span class="count">${pad(n)}</span>` : ''}</header>
+		${n ? `<div class="m-grupo-fotos"${n > 1 ? ' data-rotar' : ''}${editAttr(ctx, 'fotosGrupo')}>
+			${d.fotosGrupo.map((f, k) => frame(f, ctx, { label: 'Foto de grupo', alt, cls: `wide${k === 0 ? ' is-on' : ''}` })).join('')}
+		</div>
+		${n > 1 ? `<div class="m-grupo-dots" role="group" aria-label="Elegir foto">${d.fotosGrupo.map((_, k) => `<button type="button" data-i="${k}"${k === 0 ? ' aria-current="true"' : ''} aria-label="Foto ${k + 1} de ${n}"></button>`).join('')}</div>` : ''}` : ''}
+		${addBtn(ctx, 'fotosGrupo', n ? 'Añadir más fotos de grupo (irán rotando)' : 'Añadir fotos de grupo (con varias, van rotando)', 'adm-add-wide')}
+	</section>`;
+}
+
+/** Foto de «al pasar el ratón». Si no hay (o no existe), se prueban las de otros cursos (respaldo), en orden. */
+function frameAlt(path: string, ctx: RenderCtx, respaldo: string[] = []) {
+	const lista = [path, ...respaldo].filter((p, i, a) => p && a.indexOf(p) === i);
+	if (!lista.length) return '';
+	const [usar, ...resto] = lista;
+	return `<img class="alt" src="${esc(asset(usar, ctx))}" alt="" loading="lazy" decoding="async" onerror="__img(this)" data-path="${esc(usar)}"${resto.length ? ` data-fb="${esc(resto.map((p) => asset(p, ctx)).join('|'))}"` : ''}>`;
+}
 
 /* ───────────── Entradas: Proyectos, Talleres, Servicios y Noticias ───────────── */
+
+/**
+ * Secciones libres de una entrada (proyecto, taller, servicio o noticia): cada una con un título opcional y sus bloques,
+ * en el orden que se quiera: texto, fotos (una grande o varias en mosaico) o foto y texto uno al lado del otro.
+ */
+export type TipoBloque = 'texto' | 'fotos' | 'foto-texto';
+export interface Bloque { tipo: TipoBloque; texto: string; fotos: string[]; /** En «foto y texto»: dónde va la foto */ lado: 'izquierda' | 'derecha' }
+export interface SeccionEntrada { titulo: string; bloques: Bloque[] }
+const normBloque = (b: any): Bloque => ({
+	tipo: ['texto', 'fotos', 'foto-texto'].includes(b?.tipo) ? b.tipo : 'texto',
+	texto: str(b?.texto),
+	fotos: arr(b?.fotos, str).filter(Boolean),
+	lado: b?.lado === 'derecha' ? 'derecha' : 'izquierda',
+});
 
 export interface Entrada {
 	titulo: string;
@@ -262,6 +372,8 @@ export interface Entrada {
 	portada: string;
 	cuerpo: string;
 	galeria: string[];
+	/** Secciones libres (título + bloques de texto, fotos o foto y texto). Salen después del contenido principal. */
+	secciones: SeccionEntrada[];
 	/**
 	 * Para lo que se repite cada año: id de la entrada "genérica" de la que esta es una edición
 	 * (p. ej. "octubre-robotico-2024" tiene serie "octubre-robotico"). Vacío si es independiente.
@@ -281,8 +393,10 @@ export interface Entrada {
 	cursos: string[];
 	/** Proyectos: miembros de Reset que lo han hecho (por su nombre, tal como sale en Miembros) */
 	autores: string[];
-	/** Proyectos: otras personas que han colaborado y no están en Miembros */
+	/** Proyectos: texto libre debajo de los autores («También han participado…», «Mención especial a…»). Markdown. */
 	otrosAutores: string;
+	/** Usuario de GitHub que lo creó desde el editor (los niveles básicos solo editan lo suyo) */
+	creadoPor?: string;
 	/** Talleres que incluye esta edición (ids), p. ej. Octubre Robótico 2024 → programacion-en-c, taller-de-python */
 	incluye: string[];
 }
@@ -313,6 +427,10 @@ export function normalizeEntrada(raw: any = {}): Entrada {
 		portada: str(raw.portada),
 		cuerpo: str(raw.cuerpo),
 		galeria: arr(raw.galeria, str).filter(Boolean),
+		secciones: Array.isArray(raw.secciones)
+			? arr(raw.secciones, (s) => ({ titulo: str(s?.titulo), bloques: arr(s?.bloques, normBloque) }))
+			// (versión anterior: «galerías con título»)
+			: arr(raw.galerias, (g) => ({ titulo: str(g?.titulo), bloques: arr(g?.fotos, str).filter(Boolean).length ? [normBloque({ tipo: 'fotos', fotos: g.fotos })] : [] })),
 		serie: str(raw.serie),
 		descMenu: str(raw.descMenu),
 		oculto: !!raw.oculto,
@@ -324,6 +442,7 @@ export function normalizeEntrada(raw: any = {}): Entrada {
 		cursos: normalizarCursos(raw),
 		autores: arr(raw.autores, str).filter(Boolean),
 		otrosAutores: str(raw.otrosAutores),
+		...conAutor(raw),
 	};
 }
 
@@ -363,11 +482,11 @@ export const ordenEntradas = (a: Entrada, b: Entrada) =>
 
 export function renderEntrada(d: Entrada, ctx: RenderCtx, seccion: SeccionKey, padre?: PadreRef, refs: RefEntrada[] = [], personas: Persona[] = []): string {
 	const sec = SECCIONES[seccion];
-	// Autores (proyectos): miembros con su foto, y luego otros colaboradores en texto
-	const otros = d.otrosAutores.split(/[,\n]/).map((x) => x.trim()).filter(Boolean);
+	// Autores (proyectos): miembros con su foto, y debajo un texto libre (otros colaboradores, menciones especiales…)
+	const otros = d.otrosAutores.trim();
 	const autores = seccion === 'proyectos' && (d.autores.length || otros.length || ctx.admin) ? `
 	<section class="wrap en-autores">
-		<header class="sec-head${reveal(ctx)}"${editAttr(ctx, '')}><span class="idx">${pad(d.autores.length + otros.length)}</span><h2>Quién lo ha hecho</h2><span class="rule"></span></header>
+		<header class="sec-head${reveal(ctx)}"${editAttr(ctx, '')}><span class="idx">${pad(d.autores.length)}</span><h2>Quién lo ha hecho</h2><span class="rule"></span></header>
 		<ul class="en-autores-grid"${editAttr(ctx, '')}>
 			${d.autores.map((n, i) => {
 				const p = personas.find((x) => clavePersona(x.nombre) === clavePersona(n));
@@ -376,9 +495,10 @@ export function renderEntrada(d: Entrada, ctx: RenderCtx, seccion: SeccionKey, p
 					${frame(p?.foto ?? '', ctx, { label: initials(n), cls: 'm-photo' })}
 					<span>${esc(n)}</span></${tag}></li>`;
 			}).join('')}
-			${ctx.admin && !d.autores.length && !otros.length ? `<li><button type="button" class="adm-add" data-edit=""><span>+</span>Elegir autores (en «Datos generales»)</button></li>` : ''}
+			${ctx.admin && !d.autores.length ? `<li><button type="button" class="adm-add" data-edit="" data-campo="autores"><span>+</span>Elegir autores (en «Datos generales»)</button></li>` : ''}
 		</ul>
-		${otros.length ? `<p class="en-otros">También han colaborado: ${otros.map(esc).join(', ')}</p>` : ''}
+		${otros ? `<div class="en-otros prose"${editAttr(ctx, '')} data-campo="otrosAutores">${md(otros)}</div>`
+			: ctx.admin ? `<p class="en-otros adm-vacio"${editAttr(ctx, '')} data-campo="otrosAutores">Aquí puedes añadir un texto libre, por ejemplo «También han participado…» o «Mención especial a…» (en «Datos generales»).</p>` : ''}
 	</section>` : '';
 	// Talleres de esta edición: solo los que existen (si se borró uno, simplemente no sale)
 	const incl = d.incluye.map((id) => refs.find((r) => r.id === id)).filter((r): r is RefEntrada => !!r);
@@ -412,6 +532,37 @@ export function renderEntrada(d: Entrada, ctx: RenderCtx, seccion: SeccionKey, p
 		${addBtn(ctx, 'galeria', 'Añadir fotos', 'adm-add-wide')}
 	</section>` : '';
 
+	// Secciones libres: título + bloques (texto, fotos, foto y texto) en el orden que se quiera
+	const muted = (t: string) => (ctx.admin ? `<p class="muted">${t}</p>` : '');
+	const bloque = (b: Bloque, i: number, j: number) => {
+		const e = editAttr(ctx, `secciones.${i}.bloques.${j}`);
+		if (b.tipo === 'texto') {
+			if (!b.texto && !ctx.admin) return '';
+			return `<div class="en-b en-b-texto${reveal(ctx)}"${e}><div class="prose">${md(b.texto) || muted('Escribe aquí el texto…')}</div></div>`;
+		}
+		if (b.tipo === 'fotos') {
+			if (!b.fotos.length) return ctx.admin ? `<div class="en-b"${e}><p class="adm-vacio">Bloque de fotos vacío: pulsa aquí para añadir fotos.</p></div>` : '';
+			return b.fotos.length === 1
+				? `<div class="en-b en-b-foto${reveal(ctx)}"${e}>${frame(b.fotos[0], ctx, { label: 'Foto', cls: 'natural' })}</div>`
+				: `<div class="en-b"${e}><div class="gal">${b.fotos.map((f, k) => frame(f, ctx, { label: `Foto ${pad(k + 1)}`, cls: `${reveal(ctx)} g${k % 5}` })).join('')}</div></div>`;
+		}
+		if (!b.texto && !b.fotos.length && !ctx.admin) return '';
+		const foto = b.fotos[0] ? frame(b.fotos[0], ctx, { label: 'Foto', cls: 'natural' }) : (ctx.admin ? '<p class="adm-vacio">Sin foto: pulsa aquí para añadirla.</p>' : '');
+		return `<div class="en-b en-ft foto-${b.lado}${b.fotos[0] || ctx.admin ? '' : ' sin-foto'}${reveal(ctx)}"${e}>${foto}<div class="prose">${md(b.texto) || muted('Escribe aquí el texto…')}</div></div>`;
+	};
+	const secciones = d.secciones.map((s, i) => {
+		const cuerpo = s.bloques.map((b, j) => bloque(b, i, j)).join('');
+		// Una sección vacía (p. ej. «Después», sin fotos aún) no sale en la web
+		if (!ctx.admin && !cuerpo.trim()) return '';
+		return `
+	<section class="wrap en-sec">
+		${s.titulo || ctx.admin ? `<header class="sec-head${reveal(ctx)}"${editAttr(ctx, `secciones.${i}`)}><span class="idx">§${pad(i + 1)}</span><h2>${esc(s.titulo) || (ctx.admin ? '<span class="muted">Sección sin título</span>' : '')}</h2><span class="rule"></span></header>` : ''}
+		${cuerpo}
+		${ctx.admin ? `<div class="en-sec-add"><span>Añadir a «${esc(s.titulo || 'esta sección')}»:</span>${addBtn(ctx, `secciones.${i}.bloques`, 'Texto', '', { tipo: 'texto' })}${addBtn(ctx, `secciones.${i}.bloques`, 'Fotos', '', { tipo: 'fotos' })}${addBtn(ctx, `secciones.${i}.bloques`, 'Foto y texto', '', { tipo: 'foto-texto' })}</div>` : ''}
+	</section>`;
+	}).join('')
+		+ (ctx.admin ? `<div class="wrap en-sec-nueva">${addBtn(ctx, 'secciones', 'Añadir una sección (texto, fotos o foto y texto, en el orden que quieras)', 'adm-add-wide')}</div>` : '');
+
 	return `
 	${ctx.admin && d.oculto ? `<p class="wrap adm-oculto"${editAttr(ctx, '')}>Oculto: no sale en la web. Desmarca «Ocultar» en «Datos generales» para volver a mostrarlo.</p>` : ''}
 	<article class="en">
@@ -424,6 +575,7 @@ export function renderEntrada(d: Entrada, ctx: RenderCtx, seccion: SeccionKey, p
 		<div class="wrap en-body"${editAttr(ctx, '')}>
 			<div class="prose">${md(d.cuerpo) || (ctx.admin ? '<p class="muted">Escribe aquí el contenido…</p>' : '')}</div>
 		</div>
+		${secciones}
 		${talleres}
 		${autores}
 		${gal}

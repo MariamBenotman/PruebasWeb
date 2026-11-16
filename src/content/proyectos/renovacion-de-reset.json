@@ -1,0 +1,61 @@
+{
+  "titulo": "Renovación de Reset",
+  "fecha": "",
+  "etiquetas": [
+    "En desarrollo"
+  ],
+  "resumen": "Renovamos el local de Reset: así era antes y así queda después.",
+  "portada": "fotos/proyectos/renovacion-de-reset/antes-local.jpg",
+  "cuerpo": "Durante el curso 2025/26 renovamos el local de Reset para tener un espacio de trabajo más cómodo y ordenado para los proyectos, el taller y las reuniones.\n\nAquí abajo puedes ver cómo era el local antes de la renovación y cómo ha quedado después, con estanterías nuevas para el material y una pared con los carteles de las ediciones de Cybertech.",
+  "galeria": [],
+  "secciones": [
+    {
+      "titulo": "Antes",
+      "bloques": [
+        {
+          "tipo": "fotos",
+          "texto": "",
+          "fotos": [
+            "fotos/proyectos/renovacion-de-reset/antes-local.jpg",
+            "fotos/proyectos/renovacion-de-reset/antes-mesa.jpg",
+            "fotos/proyectos/renovacion-de-reset/antes-taller.jpg"
+          ],
+          "lado": "izquierda"
+        }
+      ]
+    },
+    {
+      "titulo": "Después",
+      "bloques": [
+        {
+          "tipo": "fotos",
+          "texto": "",
+          "fotos": [
+            "fotos/proyectos/renovacion-de-reset/despues-mesa.jpg",
+            "fotos/proyectos/renovacion-de-reset/despues-carteles.jpg"
+          ],
+          "lado": "izquierda"
+        }
+      ]
+    }
+  ],
+  "serie": "",
+  "descMenu": "",
+  "oculto": false,
+  "enListado": true,
+  "incluye": [],
+  "destacado": false,
+  "activo": false,
+  "cursos": [
+    "2023/24"
+  ],
+  "autores": [
+    "Alberto Sevilla",
+    "Clara Molina",
+    "Eduardo Clavijo",
+    "Juan Martínez",
+    "Mariam Benotman",
+    "Miguel Ángel García de Vicente"
+  ],
+  "otrosAutores": "Especial mención a todos los demás miembros de la asociación que han hecho posible la renovación de la salita."
+}

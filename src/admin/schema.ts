@@ -5,9 +5,16 @@
 import {
 	normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, normalizeInicio, renderCurso, renderEdicion, renderEntrada, renderPagina, renderInicio, cursoSlug, cursoCorto, slugify,
 	SECCIONES, MESES_CURSO, type Curso, type Edicion, type Entrada, type Pagina, type Inicio, type Persona, type SeccionKey, type RenderCtx,
+	ordenarMiembros,
 } from '../lib/render';
 
-export type Field =
+/** Común a todos los campos: `si` = solo se muestra si se cumple (p. ej. según el tipo de bloque); `reabrir` = al cambiarlo, se redibuja el panel */
+type ComunCampo = {
+	si?: (obj: any) => boolean; reabrir?: boolean;
+	/** Al cambiar el valor (check / select): para ajustar otras cosas del mismo objeto */
+	alCambiar?: (obj: any, valor: any) => void;
+};
+export type Field = ComunCampo & (
 	| { key: string; label: string; type: 'check'; hint?: string }
 	| { key: string; label: string; type: 'refs'; hint?: string; /** Opciones en columnas (p. ej. los 12 meses en 3 columnas) */ columnas?: number; options: () => { value: string; label: string; sub?: string }[] }
 	| { key: string; label: string; type: 'text'; hint?: string; placeholder?: string }
@@ -18,7 +25,8 @@ export type Field =
 	| { key: string; label: string; type: 'tags'; group: string; hint?: string; placeholder?: string }
 	| { key: string; label: string; type: 'select'; hint?: string; options: () => { value: string; label: string }[] }
 	| { key: string; label: string; type: 'list'; hint?: string; item: ObjSchema; addLabel: string; newItem: () => any; reutilizar?: Reutilizar }
-	| { key: string; label: string; type: 'images'; hint?: string; maxSize?: number };
+	| { key: string; label: string; type: 'images'; hint?: string; maxSize?: number }
+);
 
 /**
  * Permite añadir a una lista algo que ya estaba en otro documento del mismo tipo
@@ -71,6 +79,49 @@ export interface DocKind<T = any> {
 
 const MB = 1024 * 1024;
 
+/* ───────────── Secciones libres de una entrada: título + bloques ───────────── */
+
+const TIPOS_BLOQUE: Record<string, string> = { texto: 'Texto', fotos: 'Fotos', 'foto-texto': 'Foto y texto' };
+const bloqueEntradaSchema: ObjSchema = {
+	title: (b) => {
+		const t = TIPOS_BLOQUE[b?.tipo] ?? 'Bloque';
+		const extra = (b?.texto ?? '').replace(/[*_#>\[\]()-]/g, '').trim().slice(0, 32);
+		return extra ? `${t}: ${extra}…` : b?.fotos?.length ? `${t} (${b.fotos.length})` : t;
+	},
+	fields: [
+		{
+			key: 'tipo', label: 'Tipo de bloque', type: 'select', reabrir: true,
+			options: () => [
+				{ value: 'texto', label: 'Texto' },
+				{ value: 'fotos', label: 'Fotos (una grande, o varias en mosaico)' },
+				{ value: 'foto-texto', label: 'Foto y texto, uno al lado del otro' },
+			],
+		},
+		{
+			key: 'lado', label: 'Posición de la foto', type: 'select', si: (b) => b?.tipo === 'foto-texto',
+			options: () => [
+				{ value: 'izquierda', label: 'Foto a la izquierda, texto a la derecha' },
+				{ value: 'derecha', label: 'Texto a la izquierda, foto a la derecha' },
+			],
+		},
+		{ key: 'fotos', label: 'Fotos', type: 'images', si: (b) => b?.tipo !== 'texto', hint: 'En «Foto y texto» se usa la primera foto.' },
+		{ key: 'texto', label: 'Texto', type: 'markdown', rows: 8, si: (b) => b?.tipo !== 'fotos' },
+	],
+};
+
+const seccionEntradaSchema: ObjSchema = {
+	title: (s) => s?.titulo || 'Sección sin título',
+	nameKey: 'titulo',
+	fields: [
+		{ key: 'titulo', label: 'Título de la sección (opcional)', type: 'text', placeholder: 'Antes, Después, Cómo lo hicimos…' },
+		{
+			key: 'bloques', label: 'Bloques', type: 'list', item: bloqueEntradaSchema, addLabel: 'Añadir bloque',
+			hint: 'Texto, fotos o foto y texto, en el orden que quieras: cambia el orden con ↑ ↓.',
+			newItem: () => ({ tipo: 'texto', texto: '', fotos: [], lado: 'izquierda' }),
+		},
+	],
+};
+
 /* ───────────── Miembros ───────────── */
 
 const miembroSchema: ObjSchema = {
@@ -95,11 +146,17 @@ const seccionMiembrosSchema: ObjSchema = {
 	fields: [
 		{ key: 'titulo', label: 'Título de la sección', type: 'text', placeholder: 'Junta, Vocales, Miembros…' },
 		{
-			key: 'orden', label: 'Orden de las personas', type: 'select',
-			hint: 'En Junta y Vocales suele ir el orden que tú elijas (con ↑ ↓); en Miembros, alfabético.',
+			key: 'manual', label: 'Ordenar a mano', type: 'check', reabrir: true,
+			hint: 'Desmarcado, el orden es automático (el de aquí abajo) y no se puede mover a nadie. Márcalo para colocar a las personas como quieras con «Mover antes» y «Mover después»; si lo vuelves a desmarcar, vuelven al orden automático.',
+			// Al marcarlo se parte del orden que se ve ahora en la página
+			alCambiar: (s, manual) => { if (manual) s.miembros = ordenarMiembros({ ...s, manual: false }).map(({ m }) => m); },
+		},
+		{
+			key: 'orden', label: 'Orden automático', type: 'select', si: (s) => !s?.manual,
 			options: () => [
+				{ value: 'cargo', label: 'Por cargo: Presidencia, Vicepresidencia, Secretaría, Tesorería, Logística' },
+				{ value: 'vocalia', label: 'Por vocalía (juntos los de la misma) y por nombre' },
 				{ value: 'alfabetico', label: 'Alfabético (por nombre)' },
-				{ value: 'manual', label: 'El que yo elija (con ↑ ↓)' },
 			],
 		},
 		{
@@ -133,7 +190,7 @@ export const miembrosKind: DocKind<Curso> = {
 		fields: [
 			{ key: 'curso', label: 'Curso', type: 'text', placeholder: '2025/26', hint: 'Formato 2025/26. Define también la dirección de la página.' },
 			{ key: 'intro', label: 'Presentación (opcional)', type: 'markdown', rows: 3 },
-			{ key: 'fotoGrupo', label: 'Foto de grupo (opcional)', type: 'image', hint: 'Horizontal. Aparece arriba, antes de las secciones.' },
+			{ key: 'fotosGrupo', label: 'Fotos de grupo (opcional)', type: 'images', hint: 'Horizontales. Salen abajo del todo; con varias, van rotando. La primera es la que se ve en la lista de cursos.' },
 			{
 				key: 'secciones', label: 'Secciones', type: 'list', item: seccionMiembrosSchema, addLabel: 'Añadir sección',
 				newItem: () => ({ titulo: 'Nueva sección', miembros: [] }),
@@ -145,7 +202,7 @@ export const miembrosKind: DocKind<Curso> = {
 		const y = last ? Number(last.slice(0, 4)) + 1 : new Date().getFullYear();
 		return normalizeCurso({
 			curso: `${y}/${String((y + 1) % 100).padStart(2, '0')}`,
-			secciones: [{ titulo: 'Junta', orden: 'manual' }, { titulo: 'Vocales', orden: 'manual' }, { titulo: 'Miembros', orden: 'alfabetico' }],
+			secciones: [{ titulo: 'Junta', orden: 'cargo' }, { titulo: 'Vocales', orden: 'vocalia' }, { titulo: 'Miembros', orden: 'alfabetico' }],
 		});
 	},
 	copiar: {
@@ -302,7 +359,7 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 			hint: 'Marca quién lo ha hecho. Salen abajo, con su foto de la sección de Miembros.',
 			options: () => personas().map((p) => ({ value: p.nombre, label: p.nombre })),
 		},
-		{ key: 'otrosAutores', label: 'Otros colaboradores (opcional)', type: 'text', placeholder: 'Nombre Apellido, Otra Persona…', hint: 'Personas que no están en Miembros, separadas por comas.' },
+		{ key: 'otrosAutores', label: 'Texto debajo de los autores (opcional)', type: 'markdown', rows: 4, hint: 'Escribe lo que quieras: sale tal cual debajo de las fotos de los autores. Por ejemplo: «También han participado: …», «Mención especial a … por …» o «Gracias a … por prestarnos …».' },
 	];
 	const incluyeField: Field = {
 		key: 'incluye', label: `${sec.titulo} de esta edición (opcional)`, type: 'refs',
@@ -345,6 +402,11 @@ function entradaKind(seccion: SeccionKey): DocKind<Entrada> {
 				...(sec.ediciones ? [incluyeField] : []),
 				...(seccion === 'proyectos' ? proyectoFields : []),
 				{ key: 'galeria', label: 'Galería de fotos', type: 'images' },
+				{
+					key: 'secciones', label: 'Secciones (opcional)', type: 'list', addLabel: 'Añadir sección',
+					hint: 'Partes con su propio título (por ejemplo «Antes» y «Después»), cada una con texto, fotos o foto y texto, en el orden que quieras. Salen después del contenido.',
+					item: seccionEntradaSchema, newItem: () => ({ titulo: '', bloques: [] }),
+				} as Field,
 				...(seccion === 'noticias' ? [] : [
 					{ key: 'descMenu', label: 'Descripción corta en el menú (opcional)', type: 'text', placeholder: sec.ediciones ? 'C, Python, Linux, PCB…' : '', hint: 'Sale en gris debajo del título en el desplegable. Una línea como mucho.' } as Field,
 					{ key: 'enListado', label: `Mostrar en el menú y en la lista de ${sec.titulo}`, type: 'check', hint: sec.ediciones ? 'Desmárcalo si este taller solo va dentro de otro (por ejemplo, dentro de un Octubre Robótico).' : undefined } as Field,

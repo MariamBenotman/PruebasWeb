@@ -23,7 +23,7 @@ const personas = (c: (typeof cursos)[number]) => c.data.secciones.reduce((n, s) 
 				<li class="reveal" style={`--d:${i % 6}`}>
 					<a href={c.url}>
 						<figure class="frame cur-foto" data-label={cursoCorto(c.data.curso)}>
-							{c.data.fotoGrupo && <img src={img(c.data.fotoGrupo)} alt={`Equipo de Reset, curso ${c.data.curso}`} loading="lazy" onerror="__img(this)" />}
+							{c.data.fotosGrupo[0] && <img src={img(c.data.fotosGrupo[0])} alt={`Equipo de Reset, curso ${c.data.curso}`} loading="lazy" onerror="__img(this)" />}
 						</figure>
 						<div class="cur-txt">
 							<h2>Miembros {cursoCorto(c.data.curso)}</h2>

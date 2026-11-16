@@ -1,0 +1,166 @@
+{
+  "curso": "2019/20",
+  "intro": "",
+  "fotosGrupo": [],
+  "secciones": [
+    {
+      "titulo": "Junta",
+      "orden": "cargo",
+      "manual": false,
+      "miembros": [
+        {
+          "nombre": "Alejandro Campanero",
+          "roles": [
+            "Presidente"
+          ],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Elena Muñoz-Bellido",
+          "roles": [
+            "Vicepresidenta"
+          ],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Marta Centeno",
+          "roles": [
+            "Secretaria"
+          ],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Fernando Burón",
+          "roles": [
+            "Tesorero"
+          ],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Diego Efler",
+          "roles": [
+            "Logista"
+          ],
+          "foto": "",
+          "fotoHover": ""
+        }
+      ]
+    },
+    {
+      "titulo": "Miembros",
+      "orden": "alfabetico",
+      "manual": false,
+      "miembros": [
+        {
+          "nombre": "Héctor Gutiérrez",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Lucía García",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Carlos Polvorinos",
+          "roles": [],
+          "foto": "",
+          "fotoHover": "",
+          "meses": [
+            "septiembre"
+          ]
+        },
+        {
+          "nombre": "Alejandro Martín",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Gonzalo López",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "David Pastor",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Alfonso Salcedo",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "José Luis Millán",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Chechu Pareja",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Montse Díaz-Carrasco",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Jaime Bravo",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Lorenzo Prat",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Jaime Portolés",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Juanín Gallego",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Javier Martínez",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Miguel Prieto",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Luis Menéndez",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        }
+      ]
+    }
+  ]
+}

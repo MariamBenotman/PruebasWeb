@@ -1,0 +1,18 @@
+{
+  "titulo": "Enclosure para la impresora 3D",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Un cerramiento alrededor de la impresora 3D del taller para imprimir mejor y con más seguridad.",
+  "portada": "",
+  "cuerpo": "Diseño y construcción de un **enclosure** (cerramiento) para la impresora 3D de la asociación: una estructura que la rodea por completo.\n\nAl aislarla, la temperatura alrededor de la pieza se mantiene más estable y las corrientes de aire no la afectan, lo que ayuda a que las impresiones salgan mejor, sobre todo con materiales más exigentes. Además, reduce el ruido y protege la impresora.",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2024/25"
+  ],
+  "autores": [
+    "Fernando Torres-Quevedo Paz"
+  ],
+  "otrosAutores": ""
+}

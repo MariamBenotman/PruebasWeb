@@ -1,10 +1,11 @@
 {
   "curso": "2020/21",
   "intro": "",
-  "fotoGrupo": "",
+  "fotosGrupo": [],
   "secciones": [
     {
       "titulo": "Junta",
+      "orden": "cargo",
       "miembros": [
         {
           "nombre": "Jaime Portolés",
@@ -50,6 +51,7 @@
     },
     {
       "titulo": "Miembros",
+      "orden": "alfabetico",
       "miembros": [
         {
           "nombre": "Héctor Gutiérrez",
@@ -112,7 +114,7 @@
           "fotoHover": "fotos/miembros/2020-21/antonio-cameo-2.jpg"
         },
         {
-          "nombre": "Miguel Ángel García",
+          "nombre": "Miguel Ángel García de Vicente",
           "roles": [],
           "foto": "fotos/miembros/2020-21/miguel-angel-garcia.jpg",
           "fotoHover": "fotos/miembros/2020-21/miguel-angel-garcia-2.jpg"
@@ -158,6 +160,36 @@
           "roles": [],
           "foto": "fotos/miembros/2020-21/luis-menendez.jpg",
           "fotoHover": "fotos/miembros/2020-21/luis-menendez-2.jpg"
+        },
+        {
+          "nombre": "Jaime Bravo",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Alejandro Campanero",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "José Luis Millán",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Chechu Pareja",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
+        },
+        {
+          "nombre": "Fernando Burón",
+          "roles": [],
+          "foto": "",
+          "fotoHover": ""
         }
       ]
     }

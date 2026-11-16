@@ -1,0 +1,18 @@
+{
+  "titulo": "Escáner 3D",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Un escáner 3D hecho en Reset para convertir objetos reales en modelos 3D.",
+  "portada": "",
+  "cuerpo": "Diseño y construcción de un **escáner 3D**: un sistema que captura la forma de un objeto real y la convierte en un modelo digital en 3D.\n\nEse modelo se puede editar en el ordenador, usar como referencia para diseñar piezas o imprimirlo directamente en la impresora 3D del taller.",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2024/25"
+  ],
+  "autores": [
+    "Miguel Plaza"
+  ],
+  "otrosAutores": ""
+}

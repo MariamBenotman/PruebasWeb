@@ -7,13 +7,14 @@
  *  - "Guardar y publicar" hace un commit en GitHub y la web se actualiza sola
  */
 import './admin.css';
-import { clearToken, readFile, listDir, listTree, commit, deployStatus, rawUrl, isLocal, puedeBorrar, GitHubError, type FileChange } from './github';
+import { clearToken, readFile, listDir, listTree, commit, deployStatus, rawUrl, isLocal, GitHubError, type FileChange } from './github';
+import { sesion, puedeCrear, puedeEditar, puedeEliminar, motivoNoEditar, nombreNivel, AccesoRevocado } from './permisos';
 import { kinds, type DocKind, type Field, type ObjSchema, type Reutilizar } from './schema';
 import { pending, processFile, pickFiles } from './media';
 import { tagStore, tagPicker } from './tags';
 import * as R from './roles';
 import type { Curso } from '../lib/render';
-import { esc, asset, joinBase, slugify } from '../lib/render';
+import { esc, asset, joinBase, slugify, indiceFotos, ordenarMiembros } from '../lib/render';
 
 const base = window.__site.base;
 const root = document.getElementById('page-root');
@@ -34,7 +35,12 @@ const h = <T extends HTMLElement = HTMLElement>(html: string) => {
 	return t.content.firstElementChild as T;
 };
 const pad = (n: number) => String(n).padStart(2, '0');
-const ctx = () => ({ base, admin: true, resolve: (p: string) => pending.get(p)?.url ?? uploaded.get(p) });
+const ctx = () => ({
+	base, admin: true, resolve: (p: string) => pending.get(p)?.url ?? uploaded.get(p),
+	// Miembros: quien no tiene foto este curso se ve con la de otro curso suyo (como en la web)
+	fotosDe: otrosCursos.length && data?.curso !== undefined ? indiceFotos(otrosCursos, String(data.curso)) : undefined,
+	hoverDe: otrosCursos.length && data?.curso !== undefined ? indiceFotos(otrosCursos, String(data.curso), 'fotoHover') : undefined,
+});
 
 /* ───────────── Estado ───────────── */
 
@@ -64,7 +70,7 @@ const isDirty = () => JSON.stringify(data) !== savedJson || tagStore.dirty;
 
 const bar = h(`
 <div class="adm-bar" role="region" aria-label="Modo edición">
-	<div class="adm-bar-l"><span class="adm-dot"></span><b>Modo edición</b>${isLocal() ? '<span class="adm-local" title="Los cambios se guardan en los archivos de este ordenador, no en GitHub">LOCAL</span>' : ''}<span class="adm-doc"></span></div>
+	<div class="adm-bar-l"><span class="adm-dot"></span><b>Modo edición</b>${isLocal() ? '<span class="adm-local" title="Los cambios se guardan en los archivos de este ordenador, no en GitHub">LOCAL</span>' : ''}<a class="adm-quien" href="${base}admin" hidden></a><span class="adm-doc"></span></div>
 	<div class="adm-status" aria-live="polite"></div>
 	<div class="adm-bar-r">
 		<button type="button" class="adm-b" data-bar="general" hidden>Datos generales</button>
@@ -79,6 +85,21 @@ document.body.classList.add('adm-on');
 const $status = bar.querySelector<HTMLElement>('.adm-status')!;
 const $doc = bar.querySelector<HTMLElement>('.adm-doc')!;
 const btn = (k: string) => bar.querySelector<HTMLButtonElement>(`[data-bar="${k}"]`)!;
+
+/* ───────────── Quién eres y qué puedes hacer ───────────── */
+
+let soloLectura = false; // esta página no la puede editar tu nivel
+sesion().then((s) => {
+	const q = bar.querySelector<HTMLAnchorElement>('.adm-quien')!;
+	q.textContent = `${s.login === 'local' ? '' : s.login.startsWith('codigo:') ? `${s.nombre} · ` : `@${s.login} · `}${nombreNivel(s.nivel)}`;
+	q.title = `Tu nivel de acceso: ${nombreNivel(s.nivel)} (${s.motivo}). Pulsa para ver los detalles.`;
+	q.hidden = false;
+	// Los «+ Nuevo…» de los menús y las páginas: solo los que tu nivel puede crear
+	document.querySelectorAll<HTMLAnchorElement>('a[href*="editar?tipo="]').forEach((a) => {
+		const tipo = new URL(a.href, location.href).searchParams.get('tipo') ?? '';
+		if (!puedeCrear(s, tipo)) (a.closest<HTMLElement>('li.sub-add') ?? a).hidden = true;
+	});
+}).catch(() => {});
 
 function status(msg: string, tone: 'info' | 'ok' | 'error' | 'busy' = 'info') {
 	$status.innerHTML = msg;
@@ -120,7 +141,7 @@ window.addEventListener('beforeunload', (e) => {
 	if (K && isDirty()) e.preventDefault();
 });
 window.addEventListener('keydown', (e) => {
-	if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && K) { e.preventDefault(); save(); }
+	if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's' && K && !soloLectura) { e.preventDefault(); save(); }
 	if (e.key === 'Escape' && current !== null && !(e.target as HTMLElement).closest('.f-tags')) close();
 });
 
@@ -154,13 +175,75 @@ function highlight(scroll: boolean) {
 }
 
 root?.addEventListener('click', (e) => {
-	if (!K) return;
+	if (!K || soloLectura) return;
 	const t = e.target as HTMLElement;
 	const add = t.closest<HTMLElement>('[data-add]');
-	if (add) { e.preventDefault(); addTo(add.dataset.add!); return; }
+	if (add) { e.preventDefault(); addTo(add.dataset.add!, add.dataset.nuevo ? JSON.parse(add.dataset.nuevo) : undefined); return; }
 	const ed = t.closest<HTMLElement>('[data-edit]');
-	if (ed) { e.preventDefault(); open(ed.dataset.edit!, false); }
+	if (ed) { e.preventDefault(); const pista = pistaDe(t, ed); open(ed.dataset.edit!, false); irAlCampo(pista); }
 });
+
+/* ───────────── Ir al campo de lo que se ha pulsado ───────────── */
+
+/** Qué se ha pulsado en la página: un campo indicado (data-campo), una foto (su ruta) o un texto */
+type Pista = { campo?: string; foto?: string; texto?: string; esFoto?: boolean };
+function pistaDe(t: HTMLElement, ed: HTMLElement): Pista {
+	const dentro = <T extends HTMLElement>(x: T | null) => (x && ed.contains(x) ? x : null);
+	const campo = dentro(t.closest<HTMLElement>('[data-campo]'))?.dataset.campo;
+	// La ruta del marco (su foto principal, aunque se vea la de «al pasar el ratón» o una prestada de otro curso)
+	const foto = dentro(t.closest<HTMLElement>('figure[data-path]') ?? t.closest<HTMLElement>('[data-path]'))?.dataset.path;
+	const esFoto = !!dentro(t.closest<HTMLElement>('.frame'));
+	const bloque = dentro(t.closest<HTMLElement>('h1,h2,h3,h4,h5,h6,p,li,dt,dd,figcaption,blockquote,td,th,a,strong,em,b,i,span,small,time,label')) ?? t;
+	const texto = bloque.innerText?.trim() ?? '';
+	return { campo, foto, esFoto, texto: !esFoto && texto.length <= 400 ? texto : undefined };
+}
+
+/** Texto comparable: sin tildes, mayúsculas, enlaces ni símbolos de formato */
+const plano = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+	.replace(/https?:\/\/\S+/g, ' ').replace(/[*_#>`[\]()|~«»"“”:;.,!¡?¿-]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+/** Tras abrir el panel, lo lleva hasta el campo de lo que se ha pulsado (y pone ahí el cursor) */
+function irAlCampo(p: Pista) {
+	const campos = [...$body.querySelectorAll<HTMLElement>('[data-campo]')];
+	const valor = (c: HTMLElement) => getAt(c.dataset.ruta!);
+	let el = p.campo ? campos.find((c) => c.dataset.campo === p.campo) : undefined;
+	if (!el && p.foto) el = campos.find((c) => { const v = valor(c); return v === p.foto || (Array.isArray(v) && v.includes(p.foto)); });
+	if (!el && p.texto) {
+		const q = plano(p.texto);
+		let mejor = 0;
+		if (q.length >= 2) for (const c of campos) {
+			const v = valor(c);
+			for (const x of Array.isArray(v) ? v : [v]) {
+				if (typeof x !== 'string') continue;
+				const px = plano(x);
+				if (!px) continue;
+				// igual > lo pulsado está dentro del campo (un párrafo de un texto) > el campo está dentro de lo pulsado
+				const nota = px === q ? 3 : px.includes(q.slice(0, 80)) ? 2 : px.length >= 3 && q.includes(px) ? 1 : 0;
+				if (nota > mejor) { mejor = nota; el = c; }
+			}
+		}
+	}
+	// Un hueco de foto vacío: al primer campo de foto
+	if (!el && p.esFoto) el = campos.find((c) => c.querySelector('.f-img, .f-gal'));
+	if (!el) return;
+	const top = el.getBoundingClientRect().top - $body.getBoundingClientRect().top + $body.scrollTop - 24;
+	$body.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+	el.classList.remove('f-ir'); void el.offsetWidth; el.classList.add('f-ir');
+	setTimeout(() => el!.classList.remove('f-ir'), 1800);
+	const inp = el.querySelector<HTMLInputElement | HTMLTextAreaElement>('textarea, input:not([type=checkbox]):not([type=file]):not([type=search]), select');
+	if (!inp) return;
+	inp.focus({ preventScroll: true });
+	// En un texto largo, el cursor va al párrafo pulsado
+	if (inp instanceof HTMLTextAreaElement && p.texto) {
+		const palabras = p.texto.split(/\s+/).slice(0, 4).join(' ').toLowerCase();
+		const i = inp.value.toLowerCase().indexOf(palabras);
+		if (i >= 0) {
+			inp.setSelectionRange(i, i);
+			const lh = parseFloat(getComputedStyle(inp).lineHeight) || 20;
+			inp.scrollTop = Math.max(0, (inp.value.slice(0, i).split('\n').length - 2) * lh);
+		}
+	} else if (inp instanceof HTMLInputElement) inp.setSelectionRange?.(inp.value.length, inp.value.length);
+}
 
 /* ───────────── Esquema: qué hay en cada ruta ───────────── */
 
@@ -246,7 +329,14 @@ function open(path: string, scroll = true) {
 	} else {
 		if (target.index >= 0) $body.append(h(`<p class="adm-sub">${esc(target.list!.label)} · ${pad(target.index + 1)}</p>`));
 		if (target.index >= 0 && target.list?.reutilizar && vacio(getAt(target.path))) $body.append(reuseBox(target.list.reutilizar, target.path));
-		for (const f of target.schema.fields) $body.append(field(f, target.path ? `${target.path}.${f.key}` : f.key, target.path));
+		const obj = getAt(target.path) ?? data;
+		for (const f of target.schema.fields) {
+			if (f.si && !f.si(obj)) continue;
+			const ruta = target.path ? `${target.path}.${f.key}` : f.key;
+			const fe = field(f, ruta, target.path);
+			fe.dataset.campo = f.key; fe.dataset.ruta = ruta; // para ir a este campo al pulsar en la página
+			$body.append(fe);
+		}
 		if (target.index >= 0) $body.append(itemActions(target.listPath!, target.index));
 		if (target.path === '') $body.append(rootExtras());
 	}
@@ -319,27 +409,41 @@ function field(f: Field, path: string, ownerPath: string): HTMLElement {
 			const opts = f.options();
 			// Lo marcado que ya no existe (p. ej. se borró ese taller) se enseña igualmente para poder desmarcarlo
 			for (const id of sel) if (!opts.some((o) => o.value === id)) opts.push({ value: id, label: id, sub: 'ya no existe' });
-			const el = wrapField(f, `<div class="f-refs"${f.columnas ? ` style="grid-template-columns: repeat(${f.columnas}, 1fr)"` : ''}>${opts.map((o) => `
+			const el = wrapField(f, `${opts.length > 8 ? `<input class="f-in f-buscar" type="search" placeholder="Buscar… (Enter marca el primero)" autocomplete="off">` : ''}<div class="f-refs"${f.columnas ? ` style="grid-template-columns: repeat(${f.columnas}, 1fr)"` : ''}>${opts.map((o) => `
 				<label><input type="checkbox" value="${esc(o.value)}" ${sel.includes(o.value) ? 'checked' : ''}><span>${esc(o.label)}${o.sub ? ` <small>(${esc(o.sub)})</small>` : ''}</span></label>`).join('')
 				|| '<p class="f-h">Todavía no hay otros talleres creados. Crea uno con «+ Nuevo taller» y luego márcalo aquí.</p>'}</div>`);
 			el.querySelector('.f-refs')!.addEventListener('change', () => {
 				// se guardan en el orden de la lista
-				setAt(path, [...el.querySelectorAll<HTMLInputElement>('input:checked')].map((i) => i.value));
+				setAt(path, [...el.querySelectorAll<HTMLInputElement>('.f-refs input:checked')].map((i) => i.value));
 				schedule();
+			});
+			buscador(el, '.f-refs > label', (primero) => {
+				const c = primero.querySelector('input')!;
+				c.checked = !c.checked;
+				c.dispatchEvent(new Event('change', { bubbles: true }));
 			});
 			return el;
 		}
 		case 'check': {
 			const el = h(`<label class="f f-check"><input type="checkbox" ${v ? 'checked' : ''}><span class="f-l">${esc(f.label)}</span></label>`);
 			if (f.hint) el.append(h(`<small class="f-h">${esc(f.hint)}</small>`));
-			el.querySelector('input')!.addEventListener('change', (e) => { setAt(path, (e.target as HTMLInputElement).checked); schedule(); });
+			el.querySelector('input')!.addEventListener('change', (e) => {
+				const val = (e.target as HTMLInputElement).checked;
+				setAt(path, val);
+				f.alCambiar?.(ownerPath ? getAt(ownerPath) : data, val);
+				if (f.reabrir && current !== null) { renderPage(); open(current, false); } else schedule();
+			});
 			return el;
 		}
 		case 'select': {
 			const opts = f.options();
 			if (v && !opts.some((o) => o.value === v)) opts.push({ value: v, label: v });
 			const el = wrapField(f, `<select class="f-in">${opts.map((o) => `<option value="${esc(o.value)}"${o.value === (v ?? '') ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`);
-			el.querySelector('select')!.addEventListener('change', (e) => { setAt(path, (e.target as HTMLSelectElement).value); schedule(); });
+			el.querySelector('select')!.addEventListener('change', (e) => {
+				setAt(path, (e.target as HTMLSelectElement).value);
+				f.alCambiar?.(ownerPath ? getAt(ownerPath) : data, (e.target as HTMLSelectElement).value);
+				if (f.reabrir && current !== null) { renderPage(); open(current, false); } else schedule();
+			});
 			return el;
 		}
 		case 'tags': {
@@ -616,13 +720,18 @@ function reuseBox(r: Reutilizar, path: string) {
 
 function listField(f: ListField, path: string, standalone: boolean) {
 	const arr = (getAt(path) as any[]) ?? [];
+	// Miembros en orden automático: se listan como salen en la página y sin flechas
+	const auto = ordenAutomatico(path);
+	const filas = auto ? ordenarMiembros(auto.s).map(({ m, j }) => ({ x: m as any, i: j })) : arr.map((x, i) => ({ x, i }));
 	const el = wrapField(f, `
+		${arr.length > 8 ? `<input class="f-in f-buscar" type="search" placeholder="Buscar… (Enter abre el primero)" autocomplete="off">` : ''}
+		${auto ? `<small class="f-h adm-orden-auto">Orden ${NOMBRE_ORDEN[auto.s.orden] ?? 'automático'}. Para colocarlas a mano, marca «Ordenar a mano» arriba.</small>` : ''}
 		<div class="f-list">
-			${arr.map((x, i) => `
+			${filas.map(({ x, i }, k) => `
 			<div class="f-row">
-				<button type="button" class="f-row-go" data-go="${path}.${i}"><span class="idx">${pad(i + 1)}</span><span>${esc(f.item.title(x, i))}</span><span class="f-row-arr">›</span></button>
-				<button type="button" class="f-row-b" data-mv="${i}:-1" ${i === 0 ? 'disabled' : ''} title="Subir">↑</button>
-				<button type="button" class="f-row-b" data-mv="${i}:1" ${i === arr.length - 1 ? 'disabled' : ''} title="Bajar">↓</button>
+				<button type="button" class="f-row-go" data-go="${path}.${i}"><span class="idx">${pad(k + 1)}</span><span>${esc(f.item.title(x, i))}</span><span class="f-row-arr">›</span></button>
+				${auto ? '' : `<button type="button" class="f-row-b" data-mv="${i}:-1" ${i === 0 ? 'disabled' : ''} title="Subir">↑</button>
+				<button type="button" class="f-row-b" data-mv="${i}:1" ${i === arr.length - 1 ? 'disabled' : ''} title="Bajar">↓</button>`}
 			</div>`).join('') || '<p class="f-empty">Todavía no hay ninguno.</p>'}
 			<button type="button" class="adm-b f-add" data-addlist>+ ${esc(f.addLabel)}</button>
 			${f.reutilizar ? `<small class="f-h">Al añadir, puedes buscar a alguien de ${esc(f.reutilizar.donde)} y se añade con sus fotos.</small>` : ''}
@@ -636,7 +745,32 @@ function listField(f: ListField, path: string, standalone: boolean) {
 		if (mv) { const [i, d] = mv.split(':').map(Number); move(path, i, d); renderPage(); open(current!, false); return; }
 		if (t.closest('[data-addlist]')) addTo(path);
 	});
+	buscador(el, '.f-list > .f-row', (primero) => primero.querySelector<HTMLElement>('[data-go]')!.click());
 	return el;
+}
+
+/**
+ * Buscador de una lista del panel: al escribir, deja solo lo que coincide (sin importar tildes ni mayúsculas).
+ * Enter hace `alElegir` con el primero que queda.
+ */
+function buscador(el: HTMLElement, filas: string, alElegir: (primero: HTMLElement) => void) {
+	const q = el.querySelector<HTMLInputElement>('.f-buscar');
+	if (!q) return;
+	const nada = h(`<p class="f-h f-buscar-nada" hidden>No hay nada que coincida.</p>`);
+	q.after(nada);
+	const visibles = () => [...el.querySelectorAll<HTMLElement>(filas)].filter((x) => !x.hidden);
+	q.addEventListener('input', () => {
+		const t = plano(q.value);
+		el.querySelectorAll<HTMLElement>(filas).forEach((x) => { x.hidden = !!t && !plano(x.textContent ?? '').includes(t); });
+		nada.hidden = !t || visibles().length > 0;
+	});
+	q.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && q.value) { e.stopPropagation(); q.value = ''; q.dispatchEvent(new Event('input')); }
+		if (e.key !== 'Enter') return;
+		e.preventDefault();
+		const [primero] = visibles();
+		if (primero && q.value.trim()) { alElegir(primero); if (q.isConnected) { q.value = ''; q.dispatchEvent(new Event('input')); q.focus(); } }
+	});
 }
 
 function imagesField(f: Extract<Field, { type: 'images' }>, path: string) {
@@ -675,13 +809,26 @@ function confirmButton(label: string, confirmLabel: string, onConfirm: () => voi
 	return b;
 }
 
+/** Miembros: la sección de una lista «secciones.N.miembros» si su orden es automático (entonces no se puede mover a nadie) */
+function ordenAutomatico(listPath: string) {
+	const m = listPath.match(/^secciones\.(\d+)\.miembros$/);
+	if (K.kind !== 'miembros' || !m) return null;
+	const s = (data as Curso).secciones[Number(m[1])];
+	return s && !s.manual ? { s, path: `secciones.${m[1]}` } : null;
+}
+const NOMBRE_ORDEN: Record<string, string> = { cargo: 'por cargo', vocalia: 'por vocalía', alfabetico: 'alfabético' };
+
 function itemActions(listPath: string, index: number) {
 	const arr = getAt(listPath) as any[];
+	const auto = ordenAutomatico(listPath);
 	const el = h(`<div class="adm-actions">
-		<button type="button" class="adm-b" data-mv="-1" ${index === 0 ? 'disabled' : ''}>↑ Mover antes</button>
-		<button type="button" class="adm-b" data-mv="1" ${index === arr.length - 1 ? 'disabled' : ''}>↓ Mover después</button>
+		<button type="button" class="adm-b" data-mv="-1" ${index === 0 || auto ? 'disabled' : ''}>↑ Mover antes</button>
+		<button type="button" class="adm-b" data-mv="1" ${index === arr.length - 1 || auto ? 'disabled' : ''}>↓ Mover después</button>
+		${auto ? `<p class="f-h adm-orden-auto">«${esc(auto.s.titulo)}» va en orden ${NOMBRE_ORDEN[auto.s.orden] ?? 'automático'}. Para colocar a las personas a mano, <button type="button" class="adm-link" data-go="${auto.path}">marca «Ordenar a mano» en la sección</button>.</p>` : ''}
 	</div>`);
 	el.addEventListener('click', (e) => {
+		const go = (e.target as HTMLElement).closest<HTMLElement>('[data-go]')?.dataset.go;
+		if (go !== undefined) { open(go); return; }
 		const d = (e.target as HTMLElement).closest<HTMLElement>('[data-mv]')?.dataset.mv;
 		if (!d) return;
 		const j = move(listPath, index, Number(d));
@@ -729,7 +876,7 @@ function traerPersonas() {
 	const prev = cursoAnterior();
 	if (!prev) return 0;
 	const d = data as Curso;
-	if (!d.secciones.length) d.secciones.push({ titulo: 'Miembros', orden: 'alfabetico', miembros: [] });
+	if (!d.secciones.length) d.secciones.push({ titulo: 'Miembros', orden: 'alfabetico', manual: false, miembros: [] });
 	const ya = new Set(d.secciones.flatMap((s) => s.miembros.map((m) => m.nombre.trim().toLowerCase())));
 	const nuevas = R.personasDe(prev).filter((m) => !ya.has(m.nombre.trim().toLowerCase()));
 	d.secciones[R.seccionBase(d)].miembros.push(...nuevas);
@@ -757,7 +904,7 @@ function personasBox() {
 			${total ? `<input class="f-in adm-personas-q" type="search" placeholder="Buscar persona…" value="${esc(filtro)}">` : ''}
 			<div class="adm-personas-l">${d.secciones.map((s, si) => !s.miembros.length ? '' : `
 				<p class="adm-personas-sec">${esc(s.titulo)} · ${s.miembros.length}</p>
-				${s.miembros.map((m, mj) => ({ m, mj })).sort((a, b) => (s.orden === 'alfabetico' ? a.m.nombre.localeCompare(b.m.nombre, 'es') : 0)).map(({ m, mj }) => {
+				${s.miembros.map((m, mj) => ({ m, mj })).sort((a, b) => (s.orden !== 'manual' ? a.m.nombre.localeCompare(b.m.nombre, 'es') : 0)).map(({ m, mj }) => {
 					const av = R.aviso(d, si, mj);
 					return `
 					<div class="adm-persona${av ? ' con-aviso' : ''}" data-p="${si}.${mj}" data-q="${esc(m.nombre.toLowerCase())}">
@@ -899,7 +1046,7 @@ function asistenteCurso(prev: Curso) {
 
 	const terminar = (quienes: typeof gente) => {
 		const d = data as Curso;
-		if (!d.secciones.length) d.secciones.push({ titulo: 'Miembros', orden: 'alfabetico', miembros: [] });
+		if (!d.secciones.length) d.secciones.push({ titulo: 'Miembros', orden: 'alfabetico', manual: false, miembros: [] });
 		const nuevas = quienes.map((g) => ({ ...g.m, roles: g.rol ? [g.rol] : [], meses: [] }));
 		d.secciones[R.seccionBase(d)].miembros.push(...nuevas);
 		// Los que tienen cargo, a su sección
@@ -984,10 +1131,16 @@ function zonaEliminar(compacta = false): HTMLElement | null {
 	const ocultable = K.schema.fields.some((f) => f.key === 'oculto');
 	const zona = h(`<div class="adm-eliminar"><p class="f-h">${motivo ? esc(motivo) : 'Comprobando permisos…'}</p></div>`);
 	if (motivo) return compacta ? null : zona;
-	puedeBorrar().then((ok) => {
+	sesion().then((s) => puedeEliminar(s), () => false).then((ok) => {
 		zona.innerHTML = '';
 		if (!ok) {
-			zona.append(h(`<p class="f-h">Eliminar está reservado a la clave de administración.${ocultable ? ' Si ya no se usa, marca <b>Ocultar</b>: desaparece de la web pero no se pierde.' : ''}</p>`));
+			if (compacta) {
+				const pb = zona.closest('.adm-pagebar');
+				zona.remove();
+				if (pb && !pb.querySelector('.adm-pb-check')) { pb.remove(); pageBar = null; }
+				return;
+			}
+			zona.append(h(`<p class="f-h">Eliminar está reservado al nivel «Administración».${ocultable ? ' Si ya no se usa, marca <b>Ocultar</b>: desaparece de la web pero no se pierde.' : ''}</p>`));
 			return;
 		}
 		if (!compacta) zona.append(h(`<p class="f-h">${ocultable ? 'Si solo quieres quitarlo un tiempo, mejor marca <b>Ocultar</b>. ' : ''}Eliminar lo borra de la web al publicar. Si te equivocas, se puede recuperar desde el historial de GitHub.</p>`));
@@ -1029,7 +1182,7 @@ function syncBarraPagina() {
 
 /* ───────────── Añadir ───────────── */
 
-async function addTo(listPath: string) {
+async function addTo(listPath: string, valores?: Record<string, unknown>) {
 	const c = chain(listPath);
 	const node = c[c.length - 1];
 	if (node.type !== 'list' || node.path !== listPath) return;
@@ -1040,7 +1193,7 @@ async function addTo(listPath: string) {
 		return;
 	}
 	const arr = getAt(listPath) as any[];
-	arr.push(node.field.newItem());
+	arr.push({ ...node.field.newItem(), ...valores });
 	renderPage();
 	open(`${listPath}.${arr.length - 1}`);
 }
@@ -1055,7 +1208,13 @@ function authError(e: unknown) {
 }
 
 async function save() {
-	if (saving || !K) return;
+	if (saving || !K || soloLectura) return;
+	const s = await sesion().catch(() => null);
+	if (!s) { status('No se ha podido comprobar tu acceso. Revisa la conexión y vuelve a intentarlo.', 'error'); return; }
+	// Lo nuevo se apunta a nombre de quien lo crea (así los niveles básicos pueden seguir editándolo)
+	// (solo lo conservan proyectos, talleres, servicios, noticias y Cybertech; el resto lo ignora al normalizar)
+	if (isNew) data.creadoPor ??= s.login;
+	if (isNew ? !puedeCrear(s, K.kind) : !puedeEditar(s, K.kind, data)) { status(esc(motivoNoEditar(s, K.kind)), 'error'); return; }
 	const d = K.normalize(data);
 	const err = K.validate(d);
 	if (err) { status(err, 'error'); open(''); return; }
@@ -1094,7 +1253,9 @@ async function save() {
 		isNew = false;
 		if (root) { root.dataset.kind = K.kind; root.dataset.id = id; }
 		refreshBar();
-		watchDeploy(sha, joinBase(base, K.url(id)), wasNew || location.pathname.replace(/\/$/, '') !== joinBase(base, K.url(id)).replace(/\/$/, ''));
+		// Recién creado: la dirección pasa a ser la de lo guardado, para que recargar no cree otro nuevo (y no entrar en bucle)
+		if (wasNew && tipoNuevo) history.replaceState(null, '', `${joinBase(base, 'editar')}?tipo=${encodeURIComponent(tipoNuevo)}&id=${encodeURIComponent(id)}`);
+		watchDeploy(sha, joinBase(base, K.url(id)), wasNew || location.pathname.replace(/\/$/, '') !== joinBase(base, K.url(id)).replace(/\/$/, ''), wasNew);
 		if (current === '') open('', false);
 	} catch (e) {
 		status(`No se ha podido guardar: ${authError(e)}`, 'error');
@@ -1104,10 +1265,11 @@ async function save() {
 	}
 }
 
-async function watchDeploy(sha: string, url: string, showLink: boolean) {
+async function watchDeploy(sha: string, url: string, showLink: boolean, irAlTerminar = false) {
 	const link = showLink ? ` <a href="${url}">Ver la página</a>` : '';
 	if (sha === 'local') {
-		status(`Guardado en tus archivos ✓ Para publicarlo, haz commit y súbelo a GitHub.${link}`, 'ok');
+		status(`Guardado en tus archivos ✓ ${irAlTerminar ? 'Abriendo su página…' : 'Para publicarlo, haz commit y súbelo a GitHub.'}${link}`, 'ok');
+		if (irAlTerminar) irCuandoExista(url, 25);
 		return;
 	}
 	status('Guardado ✓ · Publicando en la web…', 'busy');
@@ -1117,14 +1279,18 @@ async function watchDeploy(sha: string, url: string, showLink: boolean) {
 		if (isDirty() || saving) return;
 		const s = await deployStatus(sha);
 		if (s === null) { status(`Guardado ✓ La web pública se actualizará en 1–2 minutos.${link}`, 'ok'); return; }
-		if (s === 'publicado') { status(`Publicado ✓ Ya está en la web.${link}`, 'ok'); return; }
+		if (s === 'publicado') {
+			status(`Publicado ✓ Ya está en la web.${irAlTerminar ? ' Abriendo su página…' : ''}${link}`, 'ok');
+			if (irAlTerminar) irCuandoExista(url, 15);
+			return;
+		}
 		if (s === 'error') { status('Guardado ✓ pero la publicación ha fallado. Revisa la pestaña "Actions" del repositorio en GitHub.', 'error'); return; }
 	}
 }
 
 async function removeDoc() {
 	if (!docId) return;
-	if (!(await puedeBorrar())) { status('Eliminar está reservado a la clave de administración.', 'error'); return; }
+	if (!puedeEliminar(await sesion())) { status('Eliminar está reservado al nivel «Administración».', 'error'); return; }
 	status('Eliminando…', 'busy');
 	try {
 		await commit([{ path: `${K.dir}/${docId}.json`, delete: true }], `Eliminar ${K.titulo(K.normalize(data))} desde la web`);
@@ -1140,10 +1306,34 @@ async function removeDoc() {
 
 /* ───────────── Arranque ───────────── */
 
+let tipoNuevo = ''; // en la página de crear: el tipo (?tipo=miembros…)
+
+/** Cuando la página de algo recién creado ya existe (en local, al momento; en GitHub, al publicarse), se va a ella */
+async function irCuandoExista(url: string, intentos: number) {
+	for (let i = 0; i < intentos; i++) {
+		try {
+			if ((await fetch(url, { method: 'HEAD', cache: 'no-store' })).ok) {
+				// No se sale si hay cambios sin guardar (antes de cargar nada, no hay cambios)
+				const ocupado = data !== undefined && (isDirty() || saving);
+				if (!ocupado) location.replace(url);
+				return !ocupado;
+			}
+		} catch {}
+		await new Promise((r) => setTimeout(r, 800));
+	}
+	return false;
+}
+
 async function boot() {
 	const kindAttr = root?.dataset.kind;
-	const kindKey = kindAttr === 'nuevo' ? new URLSearchParams(location.search).get('tipo') : kindAttr;
+	const params = new URLSearchParams(location.search);
+	const kindKey = kindAttr === 'nuevo' ? params.get('tipo') : kindAttr;
 	const kind = kindKey ? kinds[kindKey] : undefined;
+	// «editar?tipo=miembros&id=2026-27»: algo recién creado cuya página aún no está publicada. Se edita aquí (no se crea otro);
+	// si su página ya existe, se va directamente a ella.
+	const idGuardado = kindAttr === 'nuevo' ? params.get('id') : null;
+	if (kind && idGuardado && (await irCuandoExista(joinBase(base, kind.url(idGuardado)), 1))) return;
+	if (kindAttr === 'nuevo' && kindKey) tipoNuevo = kindKey;
 	if (!root || !kind) {
 		status(location.pathname.replace(/\/$/, '').endsWith('/fototeca')
 			? 'Fototeca: todas las fotos de la web. Aquí puedes ver dónde se usa cada una, subir fotos y eliminar las que sobren.'
@@ -1152,12 +1342,25 @@ async function boot() {
 	}
 	K = kind;
 	status('Cargando la última versión…', 'busy');
+	let s;
+	try { s = await sesion(); } catch (e) {
+		soloLectura = true;
+		// Código revocado: se cierra la sesión en este ordenador
+		if (e instanceof AccesoRevocado) { clearToken(); status(`${esc(e.message)} <a href="${joinBase(base, 'admin')}">Ir al acceso</a>`, 'error'); return; }
+		status(`No se ha podido comprobar tu acceso: ${authError(e)}`, 'error');
+		return;
+	}
+	if (kindAttr === 'nuevo' && !idGuardado && !puedeCrear(s, kind.kind)) {
+		soloLectura = true;
+		status(`Tu nivel de acceso es «${esc(nombreNivel(s.nivel))}»: no puedes crear ${esc(kind.nombre.endsWith('ón') ? `${kind.nombre.slice(0, -2)}ones` : `${kind.nombre}s`)}.`, 'error');
+		return;
+	}
 	try {
 		const [tagsText, files] = await Promise.all([readFile('src/data/etiquetas.json'), listDir(K.dir)]);
 		tagStore.data = tagsText ? JSON.parse(tagsText) : {};
 		existingIds = files.filter((f) => f.endsWith('.json')).map((f) => f.replace(/\.json$/, ''));
 
-		if (kindAttr === 'nuevo') {
+		if (kindAttr === 'nuevo' && !idGuardado) {
 			isNew = true;
 			data = K.nuevo(existingIds);
 			prevId = K.previo ? K.previo(existingIds, data) : [...existingIds].sort().pop();
@@ -1166,11 +1369,13 @@ async function boot() {
 			savedJson = JSON.stringify(data);
 			document.title = `${K.titulo(data)} · Reset`;
 		} else {
-			docId = root.dataset.id!;
+			docId = idGuardado ?? root.dataset.id!;
 			const txt = await readFile(`${K.dir}/${docId}.json`);
 			if (txt === null) throw new Error('Este contenido ya no existe en el repositorio (¿lo ha borrado alguien?).');
 			data = K.normalize(JSON.parse(txt));
 			savedJson = JSON.stringify(data);
+			// Recién creado y su página aún no está: en cuanto exista (en local, segundos; en GitHub, al publicarse) se va a ella
+			if (idGuardado) irCuandoExista(joinBase(base, K.url(idGuardado)), isLocal() ? 40 : 300);
 		}
 		if (K.kind === 'miembros') {
 			// Todos los cursos: de ellos se aprende de qué sección es cada cargo (Presidente → Junta…)
@@ -1179,6 +1384,13 @@ async function boot() {
 			R.aprenderDe([data, ...otrosCursos]);
 			// Curso nuevo: empieza con todas las personas del último curso, como miembros sin cargo
 			if (isNew) { const prev = cursoAnterior(); if (prev) asistenteCurso(prev); }
+		}
+		// Algo que ya existe y tu nivel no puede editar: se ve como en la web, sin controles
+		if (!isNew && !puedeEditar(s, K.kind, data)) {
+			soloLectura = true;
+			document.body.classList.add('adm-solo-lectura');
+			status(`${esc(motivoNoEditar(s, K.kind))} <a href="${joinBase(base, 'admin')}">Ver tu acceso</a>`, 'info');
+			return;
 		}
 		if (Array.isArray(data.etiquetas)) tagStore.seed(K.kind, data.etiquetas);
 		btn('general').hidden = false;

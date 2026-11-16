@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import sitio from '../data/sitio.json';
 import { getCursos, getEdiciones, href } from '../lib/data';
 const { owner, repo } = sitio.github;
+import { NIVELES } from '../admin/permisos';
 const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 ---
 
@@ -19,20 +20,41 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 
 			<div class="logged" hidden>
 				<p class="lede">Sesión iniciada en este ordenador. Navega por la web y verás los controles de edición abajo.</p>
+				<div class="quien" aria-live="polite"><p class="f-h">Comprobando tu acceso…</p></div>
+				<label class="probar" hidden>En local puedes probar el editor como si tuvieras otro nivel:
+					<select class="probar-sel">{NIVELES.map((n) => <option value={n.id}>{n.nombre}</option>)}</select>
+				</label>
 				<div class="go">
-					{cursos[0] && <a class="btn" href={cursos[0].url}>Editar {cursos[0].label} <span class="arr">→</span></a>}
-					{ediciones[0] && <a class="btn" href={ediciones[0].url}>Editar {ediciones[0].label} <span class="arr">→</span></a>}
-					<a class="btn primary" href={href('editar?tipo=miembros')}>+ Nuevo curso</a>
+					{cursos[0] && <a class="btn" href={cursos[0].url} data-nivel="editor">Editar {cursos[0].label} <span class="arr">→</span></a>}
+					{ediciones[0] && <a class="btn" href={ediciones[0].url} data-nivel="editor">Editar {ediciones[0].label} <span class="arr">→</span></a>}
+					<a class="btn primary" href={href('editar?tipo=proyectos')}>+ Nuevo proyecto</a>
 					<a class="btn primary" href={href('editar?tipo=cybertech')}>+ Nueva edición de Cybertech</a>
+					<a class="btn primary" href={href('editar?tipo=miembros')}>+ Nuevo curso</a>
 				</div>
+
+				<section class="accesos" hidden>
+					<h2>Códigos de acceso</h2>
+					<p class="f-h">Genera un código para cada persona y pásaselo (por privado). Con él entra aquí, sin cuenta de GitHub, y solo puede hacer lo de su nivel. Sus cambios salen en el historial con su nombre.</p>
+					<dl class="niveles">{NIVELES.map((n) => <div><dt>{n.nombre}</dt><dd>{n.desc}</dd></div>)}</dl>
+					<form class="acc-nuevo">
+						<label><span>Nombre de la persona</span><input class="f-in" name="nombre" placeholder="Ana Pérez" required autocomplete="off"></label>
+						<label><span>Nivel</span><select class="f-in" name="nivel">{NIVELES.map((n) => <option value={n.id}>{n.nombre}</option>)}</select></label>
+						<button class="btn primary" type="submit">Generar código</button>
+					</form>
+					<div class="acc-codigo" hidden></div>
+					<p class="msg acc-msg" aria-live="polite"></p>
+					<h3 class="acc-h">Códigos activos</h3>
+					<div class="acc-lista"></div>
+				</section>
+
 				<button type="button" class="logout">Cerrar sesión en este ordenador</button>
 			</div>
 
 			<form class="login" hidden>
-				<p class="lede">Pega la clave de acceso (token de GitHub) de la cuenta de Reset. Solo hace falta hacerlo una vez en cada ordenador.</p>
-				<label for="tk">Clave de acceso</label>
+				<p class="lede">Pega tu <b>código de acceso</b> (RST-…). Te lo da quien administra la web. Solo hace falta hacerlo una vez en cada ordenador.</p>
+				<label for="tk">Código de acceso</label>
 				<div class="row">
-					<input id="tk" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" required />
+					<input id="tk" type="password" autocomplete="off" spellcheck="false" placeholder="RST-XXXX-XXXX-XXXX-XXXX-XXXX" required />
 					<button class="btn primary" type="submit">Entrar <span class="arr">→</span></button>
 				</div>
 				<p class="msg" aria-live="polite"></p>
@@ -40,28 +62,32 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 		</div>
 
 		<aside class="help">
-			<h2>¿Cómo consigo la clave?</h2>
+			<h2>¿Cómo consigo acceso?</h2>
+			<p>Pide un <b>código de acceso</b> a quien administra la web. No necesitas cuenta de GitHub. Cada código tiene un nivel: crear proyectos, Cybertech, editar toda la web o administración.</p>
+			<h3>Para quien administra</h3>
 			<ol>
-				<li>Entra en GitHub con la cuenta que administra el repositorio <code>{owner}/{repo}</code>.</li>
-				<li>Ve a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Settings → Developer settings → Fine-grained tokens → Generate new token</a>.</li>
-				<li>Nombre: el de la persona que la va a usar (<i>Web Reset – Ana</i>), para poder quitársela cuando deje la asociación. Caducidad: 1 año.</li>
-				<li><b>Repository access</b> → <i>Only select repositories</i> → <code>{repo}</code>.</li>
-				<li><b>Permissions</b> → <i>Contents</i>: <b>Read and write</b>. Opcional: <i>Actions</i>: <b>Read-only</b> (para ver cuándo termina de publicarse).</li>
-				<li>Genera el token, cópialo y pégalo aquí.</li>
+				<li>Entra aquí con el <b>token maestro</b> de GitHub (pégalo en el mismo recuadro). Para crearlo: con la cuenta {owner}, <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Settings → Developer settings → Fine-grained tokens → Generate new token</a> → <i>Only select repositories</i>: <code>{repo}</code> → <i>Contents</i>: <b>Read and write</b> (y <i>Actions</i>: <b>Read-only</b>, para ver cuándo se publica). Caducidad: 1 año.</li>
+				<li>En «Códigos de acceso» escribe el nombre de la persona, elige su nivel y pulsa <b>Generar código</b>. Cópialo y pásaselo por privado: no se vuelve a mostrar.</li>
+				<li>Para quitarle el acceso, pulsa <b>Revocar</b> en su código.</li>
 			</ol>
-			<h3>Clave de administración</h3>
-			<p>Con una clave normal se puede editar, añadir y <b>ocultar</b> todo, pero no <b>eliminar</b> páginas enteras. Para poder eliminar, crea la clave igual y añade además <i>Administration</i>: <b>Read-only</b>. Dásela solo a la junta.</p>
-			<p class="note">La clave solo da acceso a este repositorio y se queda guardada únicamente en este navegador. No la compartas por chats ni la pegues en otros sitios. Si se pierde un portátil, bórrala desde GitHub y crea otra.</p>
+			<p class="note">Dentro de cada código va el token maestro, cifrado con el propio código: en el repositorio solo está la versión cifrada. Si caduca o cambias el token maestro, hay que generar los códigos de nuevo. Los niveles los aplica el editor (es un sistema de confianza): sirven para que nadie toque por error lo que no le toca, y todo cambio queda en el historial con el nombre de quien lo hizo y se puede deshacer.</p>
+			<p class="note">El código se queda guardado solo en este navegador. No lo publiques ni lo pegues en otros sitios.</p>
 		</aside>
 	</div>
 </Layout>
 
 <script>
 	import { checkToken, setToken, getToken, clearToken, enableLocal, isLocal, GitHubError } from '../admin/github';
+	import {
+		sesion, leerPermisos, guardarPermisos, crearCodigo, entrarConCodigo, pareceCodigo, puedeCrear, puedeGestionarAccesos,
+		nombreNivel, NIVELES, NIVEL_LOCAL_KEY, AccesoRevocado, type Codigo, type Nivel,
+	} from '../admin/permisos';
+
 	const form = document.querySelector<HTMLFormElement>('.login')!;
 	const logged = document.querySelector<HTMLElement>('.logged')!;
 	const msg = form.querySelector<HTMLElement>('.msg')!;
 	const localBox = document.querySelector<HTMLElement>('.local')!;
+	const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 	const active = () => document.documentElement.classList.contains('is-admin');
 	const show = () => {
 		if (isLocal()) { localBox.hidden = active(); logged.hidden = !active(); form.hidden = true; return; }
@@ -69,25 +95,128 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 	};
 	document.querySelector('.enable-local')!.addEventListener('click', () => { enableLocal(); location.reload(); });
 	show();
+
+	// Entrar: con un código de acceso (RST-…) o con el token maestro de GitHub
 	form.addEventListener('submit', async (e) => {
 		e.preventDefault();
-		const token = (form.querySelector('input') as HTMLInputElement).value.trim();
+		const valor = (form.querySelector('input') as HTMLInputElement).value.trim();
 		msg.textContent = 'Comprobando…';
 		msg.dataset.tone = '';
 		try {
-			await checkToken(token);
-			setToken(token);
+			if (pareceCodigo(valor)) await entrarConCodigo(valor);
+			else { await checkToken(valor); setToken(valor); }
 			location.reload();
 		} catch (err) {
 			msg.dataset.tone = 'error';
-			msg.textContent = err instanceof GitHubError && err.status === 401
-				? 'La clave no es válida o ha caducado.'
-				: err instanceof GitHubError && (err.status === 404 || err.status === 403)
-					? 'La clave no tiene acceso de escritura a este repositorio. Revisa los pasos 4 y 5.'
-					: 'No se ha podido comprobar la clave. ¿Hay conexión a internet?';
+			msg.textContent = !(err instanceof GitHubError) && err instanceof Error
+				? err.message
+				: err instanceof GitHubError && err.status === 401
+					? 'La clave no es válida o ha caducado.'
+					: err instanceof GitHubError && (err.status === 404 || err.status === 403)
+						? 'La clave no tiene acceso de escritura a este repositorio.'
+						: 'No se ha podido comprobar. ¿Hay conexión a internet?';
 		}
 	});
 	document.querySelector('.logout')!.addEventListener('click', () => { clearToken(); location.reload(); });
+
+	/* ── Tu acceso ── */
+	if (!logged.hidden) {
+		const $quien = logged.querySelector<HTMLElement>('.quien')!;
+		// En local: probar el editor con otro nivel
+		if (isLocal()) {
+			const pr = logged.querySelector<HTMLElement>('.probar')!;
+			const sel = pr.querySelector<HTMLSelectElement>('select')!;
+			pr.hidden = false;
+			try { sel.value = localStorage.getItem(NIVEL_LOCAL_KEY) || 'admin'; } catch {}
+			sel.addEventListener('change', () => { try { localStorage.setItem(NIVEL_LOCAL_KEY, sel.value); } catch {} location.reload(); });
+		}
+		sesion().then(async (s) => {
+			const n = NIVELES.find((x) => x.id === s.nivel)!;
+			const quien = s.login === 'local' ? 'En este ordenador' : s.login.startsWith('codigo:') ? `Has entrado como <b>${esc(s.nombre)}</b>` : `Has entrado con el token de <b>@${esc(s.login)}</b>`;
+			$quien.innerHTML = `<p class="quien-n">${quien} · nivel <b>${esc(nombreNivel(s.nivel))}</b></p><p class="f-h">${esc(n.desc)} <span class="quien-m">(${esc(s.motivo)})</span></p>`;
+			// Los botones de crear/editar: solo los de tu nivel
+			logged.querySelectorAll<HTMLAnchorElement>('.go a').forEach((a) => {
+				const tipo = new URL(a.href, location.href).searchParams.get('tipo');
+				a.hidden = tipo ? !puedeCrear(s, tipo) : a.dataset.nivel === 'editor' && !['editor', 'admin'].includes(s.nivel);
+			});
+			if (puedeGestionarAccesos(s)) montarAccesos(await leerPermisos());
+		}).catch((err) => {
+			if (err instanceof AccesoRevocado) { clearToken(); $quien.innerHTML = `<p class="f-h">${esc(err.message)}</p>`; logged.querySelector('.go')!.remove(); return; }
+			$quien.innerHTML = '<p class="f-h">No se ha podido comprobar tu acceso. ¿Hay conexión a internet?</p>';
+		});
+	}
+
+	/* ── Códigos de acceso (solo administración) ── */
+	function montarAccesos(inicial: { codigos: Codigo[] }) {
+		const box = logged.querySelector<HTMLElement>('.accesos')!;
+		const $lista = box.querySelector<HTMLElement>('.acc-lista')!;
+		const $msg = box.querySelector<HTMLElement>('.acc-msg')!;
+		const $nuevo = box.querySelector<HTMLFormElement>('.acc-nuevo')!;
+		const $codigo = box.querySelector<HTMLElement>('.acc-codigo')!;
+		let codigos = inicial.codigos;
+		box.hidden = false;
+		const aviso = (t: string, tono = '') => { $msg.textContent = t; $msg.dataset.tone = tono; };
+		const opciones = (nv: Nivel) => NIVELES.map((n) => `<option value="${n.id}"${n.id === nv ? ' selected' : ''}>${esc(n.nombre)}</option>`).join('');
+		const pintar = () => {
+			$lista.innerHTML = codigos.length ? codigos.map((c) => `
+				<div class="acc-row" data-id="${esc(c.id)}">
+					<div class="acc-who"><b>${esc(c.nombre || 'Sin nombre')}</b><small>Código ${esc(c.id)} · desde ${esc(c.creado)}</small></div>
+					<label><span>Nivel</span><select class="f-in" data-nivel>${opciones(c.nivel)}</select></label>
+					<button type="button" class="acc-rm" data-revocar>Revocar</button>
+				</div>`).join('') : '<p class="f-h">Todavía no hay ningún código.</p>';
+		};
+		// Cada cambio se guarda al momento (y se lee la lista más reciente antes, por si otra persona la ha cambiado)
+		async function cambiar(que: string, fn: (l: Codigo[]) => Codigo[]) {
+			aviso('Guardando…');
+			try {
+				const ultima = (await leerPermisos()).codigos;
+				const nueva = fn(ultima);
+				await guardarPermisos({ codigos: nueva }, que);
+				codigos = nueva;
+				pintar();
+				aviso(isLocal() ? `${que} ✓ (en este ordenador: haz commit para que valga en la web)` : `${que} ✓`, 'ok');
+				return true;
+			} catch (err) {
+				aviso(`No se ha podido guardar: ${(err as Error).message}`, 'error');
+				pintar();
+				return false;
+			}
+		}
+		$nuevo.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const nombre = ($nuevo.elements.namedItem('nombre') as HTMLInputElement).value.trim();
+			const nivel = ($nuevo.elements.namedItem('nivel') as HTMLSelectElement).value as Nivel;
+			const token = getToken();
+			if (!token) { aviso('Para generar códigos, entra en la web publicada con el token maestro de GitHub (en local no hay token que cifrar).', 'error'); return; }
+			const { codigo, guardado } = await crearCodigo(nombre, nivel, token, codigos.map((c) => c.id));
+			if (!(await cambiar(`Código para ${nombre} (${nombreNivel(nivel)})`, (l) => [...l, guardado]))) return;
+			$nuevo.reset();
+			$codigo.hidden = false;
+			$codigo.innerHTML = `
+				<p>Código de <b>${esc(nombre)}</b> (${esc(nombreNivel(nivel))}). <b>Cópialo ahora y pásaselo por privado: no se vuelve a mostrar.</b></p>
+				<div class="acc-cod-row"><code>${esc(codigo)}</code><button type="button" class="btn" data-copiar>Copiar</button></div>
+				<p class="f-h">Lo pega en ${esc(location.origin + location.pathname)}. Puede tardar 1–2 minutos en funcionar (lo que tarda en publicarse).</p>`;
+			$codigo.querySelector('[data-copiar]')!.addEventListener('click', (ev) => {
+				navigator.clipboard?.writeText(codigo).then(() => { (ev.target as HTMLElement).textContent = 'Copiado ✓'; });
+			});
+		});
+		$lista.addEventListener('change', (e) => {
+			const sel = (e.target as HTMLElement).closest<HTMLSelectElement>('[data-nivel]');
+			const id = sel?.closest<HTMLElement>('[data-id]')?.dataset.id;
+			if (!sel || !id) return;
+			const c = codigos.find((x) => x.id === id)!;
+			cambiar(`Nivel de ${c.nombre || id}: ${nombreNivel(sel.value as Nivel)}`, (l) => l.map((x) => (x.id === id ? { ...x, nivel: sel.value as Nivel } : x)));
+		});
+		$lista.addEventListener('click', (e) => {
+			const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-revocar]');
+			const id = b?.closest<HTMLElement>('[data-id]')?.dataset.id;
+			if (!b || !id) return;
+			const c = codigos.find((x) => x.id === id)!;
+			if (!b.classList.contains('is-confirm')) { b.classList.add('is-confirm'); b.textContent = '¿Seguro? Pulsa otra vez'; return; }
+			cambiar(`Código de ${c.nombre || id} revocado`, (l) => l.filter((x) => x.id !== id));
+		});
+		pintar();
+	}
 </script>
 
 <style>
@@ -108,5 +237,33 @@ const [cursos, ediciones] = await Promise.all([getCursos(), getEdiciones()]);
 	.help a { color: var(--azul); }
 	.help code { font-size: .85em; background: var(--papel-2); padding: .05em .3em; }
 	.note { margin: 1.2rem 0 0; padding-top: 1rem; border-top: 1px solid var(--linea); color: var(--gris); font-size: .84rem; }
+	.quien { margin: -1rem 0 1.6rem; max-width: 52ch; }
+	.quien-n { margin: 0 0 .3rem; }
+	.quien-m { color: var(--gris); }
+	.probar { margin: 0 0 1.6rem; font-weight: 400; color: var(--gris); }
+	.probar select { display: block; margin-top: .4rem; max-width: 260px; }
+	.go a[hidden] { display: none; }
+	.accesos { margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--linea); }
+	.accesos h2 { margin: 0 0 .5rem; font-size: 1.3rem; }
+	.niveles { display: grid; gap: .5rem; margin: 1.2rem 0 1.6rem; font-size: .88rem; }
+	.niveles div { display: grid; grid-template-columns: 11rem 1fr; gap: 1rem; }
+	.niveles dt { font-weight: 650; }
+	.niveles dd { margin: 0; color: var(--gris); }
+	.acc-lista { display: grid; gap: .6rem; }
+	.acc-lista :global(.acc-row) { display: grid; grid-template-columns: 1fr 13rem auto; gap: .8rem; align-items: end; padding: .7rem .8rem; background: var(--blanco); border: 1px solid var(--linea); }
+	.acc-lista :global(.acc-who) { display: grid; gap: .15rem; align-self: center; }
+	.acc-lista :global(.acc-who small) { font-family: var(--f-mono); font-size: .7rem; color: var(--gris); }
+	.acc-lista :global(.acc-row label), .acc-nuevo label { margin: 0; font-weight: 400; }
+	.acc-lista :global(.acc-row label span), .acc-nuevo label span { display: block; margin-bottom: .25rem; font-size: .74rem; color: var(--gris); }
+	.acc-lista :global(.acc-row .f-in), .acc-nuevo .f-in { width: 100%; padding: .55rem; border: 1px solid #bdb7aa; background: var(--blanco); font: inherit; font-size: .9rem; }
+	.acc-lista :global(.acc-rm) { height: 2.3rem; padding: 0 .8rem; border: 1px solid #bdb7aa; background: none; cursor: pointer; font: inherit; font-size: .82rem; }
+	.acc-lista :global(.acc-rm:hover), .acc-lista :global(.acc-rm.is-confirm) { border-color: #b8432c; color: #b8432c; }
+	.acc-nuevo { display: grid; grid-template-columns: 1fr 13rem auto; gap: .8rem; align-items: end; }
+	.acc-codigo { margin-top: 1rem; padding: 1rem 1.1rem; border: 2px solid var(--naranja); background: var(--blanco); }
+	.acc-codigo p { margin: 0 0 .6rem; font-size: .92rem; }
+	.acc-codigo :global(.acc-cod-row) { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; margin-bottom: .6rem; }
+	.acc-codigo :global(code) { font-family: var(--f-mono); font-size: 1.05rem; letter-spacing: .04em; padding: .4rem .6rem; background: var(--papel-2); user-select: all; }
+	.acc-h { margin: 2rem 0 .7rem; font-size: 1rem; }
 	@media (max-width: 860px) { .adm-login { grid-template-columns: 1fr; } }
+	@media (max-width: 640px) { .acc-lista :global(.acc-row), .acc-nuevo { grid-template-columns: 1fr; } .niveles div { grid-template-columns: 1fr; gap: 0; } }
 </style>

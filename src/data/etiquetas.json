@@ -14,7 +14,6 @@
     "Vocal de Impresiones",
     "Vocal de Marketing",
     "Vocal de Redes",
-    "Vocal de Redes Sociales",
     "Vocal de Taller",
     "Vocal Web"
   ],
@@ -32,5 +31,16 @@
     "Cybertech",
     "Noticia",
     "Talleres"
+  ],
+  "roles@Junta": [
+    "Logista",
+    "Presidenta",
+    "Presidente",
+    "Secretaria",
+    "Secretario",
+    "Tesorera",
+    "Tesorero",
+    "Vicepresidenta",
+    "Vicepresidente"
   ]
 }

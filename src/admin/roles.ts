@@ -8,7 +8,7 @@
  * - Nadie puede tener a la vez cargos de dos secciones (p. ej. de Junta y de Vocales).
  */
 import { tagStore } from './tags';
-import type { Curso, Miembro, SeccionMiembros } from '../lib/render';
+import { ordenPorDefecto, type Curso, type Miembro, type SeccionMiembros } from '../lib/render';
 
 const PREFIJO = 'roles@';
 const igual = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -33,18 +33,18 @@ export function asignarSeccion(rol: string, seccion: string) {
 export function aprenderDe(cursos: Curso[]) {
 	for (const c of cursos) for (const s of c.secciones) for (const m of s.miembros) for (const r of m.roles) {
 		tagStore.seed('roles', [r]);
-		if (!seccionDeRol(r) && s.orden === 'manual') tagStore.seed(PREFIJO + s.titulo, [r]);
+		if (!seccionDeRol(r) && (s.orden !== 'alfabetico' || /junta|vocal/i.test(s.titulo))) tagStore.seed(PREFIJO + s.titulo, [r]);
 	}
 }
 
-/** La sección general, donde va quien no tiene cargo: la primera en orden alfabético (Miembros), o la última */
-export function seccionBase(d: Curso): number {
-	const i = d.secciones.findIndex((s) => s.orden === 'alfabetico');
-	return i >= 0 ? i : d.secciones.length - 1;
-}
-
 /** ¿Es una sección de cargos (Junta, Vocales…)? */
-export const esDeCargos = (s: SeccionMiembros) => s.orden === 'manual' && (seccionesConCargos().some((t) => igual(t, s.titulo)) || /junta|vocal/i.test(s.titulo));
+export const esDeCargos = (s: SeccionMiembros) => seccionesConCargos().some((t) => igual(t, s.titulo)) || /junta|vocal/i.test(s.titulo);
+
+/** La sección general, donde va quien no tiene cargo (Miembros): la última que no es de cargos */
+export function seccionBase(d: Curso): number {
+	for (let i = d.secciones.length - 1; i >= 0; i--) if (!esDeCargos(d.secciones[i])) return i;
+	return d.secciones.length - 1;
+}
 
 /** Aviso para el panel: está en una sección de cargos sin cargo, o con cargos de otra sección */
 export function aviso(d: Curso, si: number, mj: number): string {
@@ -69,7 +69,7 @@ export function colocar(d: Curso, si: number, mj: number): { si: number; mj: num
 		destino = d.secciones.findIndex((x) => igual(x.titulo, t));
 		if (destino < 0) {
 			// Esa sección no existe en este curso: se crea, antes de la general
-			const nueva: SeccionMiembros = { titulo: t, orden: 'manual', miembros: [] };
+			const nueva: SeccionMiembros = { titulo: t, orden: ordenPorDefecto(t), manual: false, miembros: [] };
 			const base = seccionBase(d);
 			d.secciones.splice(base, 0, nueva);
 			destino = base;

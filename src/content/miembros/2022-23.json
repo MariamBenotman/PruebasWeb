@@ -1,11 +1,13 @@
 {
   "curso": "2022/23",
   "intro": "",
-  "fotoGrupo": "",
+  "fotosGrupo": [
+    "fotos/miembros/2022-23/grupo.jpg"
+  ],
   "secciones": [
     {
       "titulo": "Junta",
-      "orden": "manual",
+      "orden": "cargo",
       "miembros": [
         {
           "nombre": "Antonio Cameo",
@@ -56,7 +58,7 @@
     },
     {
       "titulo": "Vocales",
-      "orden": "manual",
+      "orden": "vocalia",
       "miembros": [
         {
           "nombre": "Jorge Martínez",
@@ -65,6 +67,15 @@
           ],
           "foto": "fotos/miembros/2022-23/jorge-martinez.jpg",
           "fotoHover": "fotos/miembros/2022-23/jorge-martinez-2.jpg",
+          "meses": []
+        },
+        {
+          "nombre": "David Pastor",
+          "roles": [
+            "Vocal de Cybertech"
+          ],
+          "foto": "fotos/miembros/2022-23/david-pastor.jpg",
+          "fotoHover": "fotos/miembros/2022-23/david-pastor-2.jpg",
           "meses": []
         },
         {
@@ -92,25 +103,9 @@
           ],
           "foto": "fotos/miembros/2022-23/alberto-sevilla.jpg",
           "fotoHover": "fotos/miembros/2022-23/alberto-sevilla-2.jpg",
-          "meses": []
-        },
-        {
-          "nombre": "David Pastor",
-          "roles": [
-            "Vocal de Cybertech"
-          ],
-          "foto": "fotos/miembros/2022-23/david-pastor.jpg",
-          "fotoHover": "fotos/miembros/2022-23/david-pastor-2.jpg",
-          "meses": []
-        },
-        {
-          "nombre": "Celia Ibáñez",
-          "roles": [
-            "Vocal de Redes Sociales"
-          ],
-          "foto": "fotos/miembros/2022-23/celia-ibanez.jpg",
-          "fotoHover": "fotos/miembros/2022-23/celia-ibanez-2.jpg",
-          "meses": []
+          "meses": [
+            "septiembre"
+          ]
         },
         {
           "nombre": "Rocío García",
@@ -119,7 +114,9 @@
           ],
           "foto": "fotos/miembros/2022-23/rocio-garcia.jpg",
           "fotoHover": "fotos/miembros/2022-23/rocio-garcia-2.jpg",
-          "meses": []
+          "meses": [
+            "febrero"
+          ]
         },
         {
           "nombre": "Lucía Honrubia",
@@ -128,6 +125,15 @@
           ],
           "foto": "fotos/miembros/2022-23/lucia-honrubia.jpg",
           "fotoHover": "fotos/miembros/2022-23/lucia-honrubia-2.jpg",
+          "meses": []
+        },
+        {
+          "nombre": "Celia Ibáñez",
+          "roles": [
+            "Vocal de Redes"
+          ],
+          "foto": "fotos/miembros/2022-23/celia-ibanez.jpg",
+          "fotoHover": "fotos/miembros/2022-23/celia-ibanez-2.jpg",
           "meses": []
         }
       ]
@@ -151,7 +157,7 @@
           "meses": []
         },
         {
-          "nombre": "Miguel Ángel García",
+          "nombre": "Miguel Ángel García de Vicente",
           "roles": [],
           "foto": "fotos/miembros/2022-23/miguel-angel-garcia.jpg",
           "fotoHover": "fotos/miembros/2022-23/miguel-angel-garcia-2.jpg",

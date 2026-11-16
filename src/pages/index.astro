@@ -217,29 +217,24 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 			origenY = origen.top + scrollY; // posición en la página, sin scroll
 		};
 		const suave = (t: number) => t * t * (3 - 2 * t); // empieza y termina despacio
-		// El avance que se ve (p) persigue al que marca el scroll en cada fotograma: así no va a saltos
-		// aunque la rueda del ratón mueva la página de golpe.
-		let p = 0, corriendo = false;
-		const objetivo = () => Math.min(1, Math.max(0, scrollY / Math.max(160, origenY + origen.height * 0.6)));
+		// En vertical el logo va pegado a la página: sube exactamente lo que sube la ventana, como cualquier otro
+		// contenido. Mientras sube, se encoge y se desplaza en horizontal hacia el logo de la cabecera, y llega justo
+		// cuando su borde de arriba alcanza el de la cabecera; desde ahí se queda fijo en ella.
 		const pintar = () => {
 			const destino = peque.getBoundingClientRect();
+			const arriba = origenY - scrollY;                    // dónde está su borde de arriba sin moverlo (sube con la página)
+			const recorrido = Math.max(1, origenY - destino.top); // cuánto tiene que subir hasta la cabecera
+			const p = Math.min(1, Math.max(0, scrollY / recorrido));
 			const e = suave(p);
 			const escala = 1 + (destino.width / origen.width - 1) * e;
 			const x = (destino.left - origen.left) * e;
-			const yAhora = origenY - scrollY; // dónde estaría sin moverlo
-			const y = (origenY + (destino.top - origenY) * e) - yAhora;
+			const y = Math.max(0, destino.top - arriba);          // 0 mientras sube con la página; luego, lo justo para quedarse en la cabecera
 			grande.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${escala})`;
-			raiz.classList.toggle('logo-llegado', p >= 0.999);
+			raiz.classList.toggle('logo-llegado', p >= 1);
 		};
-		const bucle = () => {
-			const t = objetivo();
-			p += (t - p) * 0.22;
-			if (Math.abs(t - p) < 0.001) p = t;
-			pintar();
-			if (p !== t) requestAnimationFrame(bucle); else corriendo = false;
-		};
-		const pedir = () => { if (!corriendo) { corriendo = true; requestAnimationFrame(bucle); } };
-		const preparar = () => { medir(); p = objetivo(); pintar(); };
+		let pendiente = 0;
+		const pedir = () => { pendiente ||= requestAnimationFrame(() => { pendiente = 0; pintar(); }); };
+		const preparar = () => { medir(); pintar(); };
 		if (grande.complete) preparar(); else grande.addEventListener('load', preparar, { once: true });
 		addEventListener('scroll', pedir, { passive: true });
 		addEventListener('resize', preparar);

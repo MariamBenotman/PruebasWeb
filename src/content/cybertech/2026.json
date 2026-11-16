@@ -1,16 +1,82 @@
 {
   "anio": 2026,
-  "lema": "",
-  "tematica": "",
-  "fechas": "",
-  "lugar": "",
-  "portada": "",
-  "intro": "",
+  "lema": "La mayor competición de robótica de la UPM",
+  "tematica": "Harry Potter",
+  "fechas": "13–17 de abril de 2026",
+  "lugar": "Pabellón de deportes de la ETSII",
+  "portada": "fotos/cybertech/2026/cartel-presentacion.jpg",
+  "intro": "Cybertech es la competición de robótica más grande de la [UPM](http://www.upm.es/), con **3000 € en premios**. Se celebra en la [Escuela Técnica Superior de Ingenieros Industriales](http://www.etsii.upm.es/) y está organizada por la asociación de estudiantes Reset.\n\nCybertech 2026 se celebró en el pabellón de deportes de la ETSII del 13 al 17 de abril de 2026, con la magia de Harry Potter como temática.\n\nEl concurso tuvo cuatro categorías: Classic, Pro, Sumo y Formula Reset.",
   "inscripcionDesde": "",
   "inscripcionHasta": "",
   "inscripcionEnlace": "",
-  "datos": [],
-  "categorias": [],
+  "datos": [
+    {
+      "valor": "3000 €",
+      "etiqueta": "en premios"
+    },
+    {
+      "valor": "4",
+      "etiqueta": "categorías"
+    },
+    {
+      "valor": "13–17 abr",
+      "etiqueta": "de 2026"
+    }
+  ],
+  "categorias": [
+    {
+      "nombre": "Classic",
+      "descripcion": "Destinada a quienes nunca han participado: un tutor guía al equipo a lo largo de diversos talleres y Reset proporciona el material para competir en dos pruebas, Laberinto y Rastreador/Siguelíneas.",
+      "media": "fotos/cybertech/2026/cartel-classic.jpg",
+      "pruebas": [
+        {
+          "nombre": "Siguelíneas",
+          "descripcion": "Los robots deben recorrer un circuito de cinta negra, sorteando obstáculos, cambiando de carril e incluso haciendo adelantamientos.",
+          "media": ""
+        },
+        {
+          "nombre": "Laberinto",
+          "descripcion": "Los robots deben abrirse paso, de forma completamente autónoma, a través de diversos laberintos, tanto conocidos como desconocidos.",
+          "media": ""
+        }
+      ]
+    },
+    {
+      "nombre": "Pro",
+      "descripcion": "Con los clásicos Siguelíneas Velocista y laberinto Micromouse, inspirados en las normas internacionales.",
+      "media": "fotos/cybertech/2026/cartel-pro.jpg",
+      "pruebas": [
+        {
+          "nombre": "Siguelíneas Velocista",
+          "descripcion": "Prueba clásica inspirada en las normas internacionales.",
+          "media": ""
+        },
+        {
+          "nombre": "Micromouse",
+          "descripcion": "Laberinto clásico inspirado en las normas internacionales.",
+          "media": ""
+        }
+      ]
+    },
+    {
+      "nombre": "Sumo",
+      "descripcion": "Los robots teleoperados luchan en combates 1 contra 1 y todos contra todos, siguiendo un sistema suizo, tratando de inmovilizar o sacar del escenario al robot contrario. El escenario de batalla incluye un foso de piedras, pinchos metálicos y una ruleta de la muerte.",
+      "media": "fotos/cybertech/2026/cartel-sumo.jpg",
+      "pruebas": []
+    },
+    {
+      "nombre": "Formula Reset",
+      "descripcion": "",
+      "media": "fotos/cybertech/2026/cartel-formula-reset.jpg",
+      "pruebas": []
+    }
+  ],
   "secciones": [],
-  "galeria": []
+  "galeria": [
+    "fotos/cybertech/2026/cartel-presentacion.jpg",
+    "fotos/cybertech/2026/cartel-classic.jpg",
+    "fotos/cybertech/2026/cartel-pro.jpg",
+    "fotos/cybertech/2026/cartel-sumo.jpg",
+    "fotos/cybertech/2026/cartel-formula-reset.jpg"
+  ]
 }

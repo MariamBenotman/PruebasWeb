@@ -193,12 +193,21 @@ html.js .sec-head.reveal.is-in .rule { transform: scaleX(1); }
 /* ═══════════════ MIEMBROS ═══════════════ */
 
 .m-page { padding-bottom: 6rem; }
-.group-photo { margin: 0 0 5rem; }
 .m-sec { margin-top: 4.5rem; }
-/* La primera sección, justo debajo de la cabecera (o de la foto de grupo): sin el hueco grande entre secciones */
+/* La primera sección, justo debajo de la cabecera: sin el hueco grande entre secciones */
 .m-page > .pg-head { padding-bottom: clamp(1.6rem, 3vw, 2.6rem); }
-.m-page > .pg-head + .m-sec, .m-page > .group-photo + .m-sec { margin-top: 0; }
-.m-page > .group-photo { margin-bottom: clamp(2rem, 4vw, 3rem); }
+.m-page > .pg-head + .m-sec { margin-top: 0; }
+/* Fotos de grupo, abajo del todo. Con varias, una encima de otra y se van fundiendo (Layout.astro: [data-rotar]) */
+.m-grupo { margin-top: clamp(4rem, 8vw, 6rem); }
+.m-grupo-fotos { display: grid; }
+.m-grupo-fotos > .frame { grid-area: 1 / 1; }
+.m-grupo-fotos[data-rotar] > .frame { opacity: 0; visibility: hidden; transition: opacity .9s var(--ease), visibility 0s .9s; }
+.m-grupo-fotos[data-rotar] > .frame.is-on { opacity: 1; visibility: visible; transition: opacity .9s var(--ease), visibility 0s; }
+.m-grupo-dots { display: flex; justify-content: center; gap: .55rem; margin-top: 1rem; }
+.m-grupo-dots button { width: .7rem; height: .7rem; padding: 0; border: 1.5px solid var(--negro); border-radius: 50%; background: none; cursor: pointer; transition: background .2s; }
+.m-grupo-dots button[aria-current] { background: var(--naranja); border-color: var(--naranja); }
+.m-grupo-dots button:focus-visible { outline: 2px solid var(--azul); outline-offset: 3px; }
+.m-grupo .adm-add-wide { margin-top: 1rem; }
 .m-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 2.4rem 1.6rem; margin: 0; padding: 0; list-style: none; }
 .m-sec.is-lead .m-grid { grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 2.8rem 2rem; }
 .m-sec.is-plain .m-grid { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 1.8rem 1.3rem; }
@@ -438,3 +447,29 @@ a.en-autor:hover .frame { transform: translate(-3px, -3px); box-shadow: var(--so
 .rdm-leyenda { display: flex; align-items: center; gap: .45rem; margin: 0; font-family: var(--f-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--gris); }
 .rdm-ico { display: inline-grid; place-items: center; width: 16px; height: 16px; color: var(--naranja); filter: drop-shadow(0 0 .6px rgba(0, 0, 0, .75)) drop-shadow(0 0 .3px rgba(0, 0, 0, .5)); }
 .rdm-ico svg { width: 100%; height: 100%; }
+
+/* Al pasar el ratón por un engranaje: de qué mes es («Noviembre 2026») */
+.m-photo .rdm i { position: relative; }
+/* La tarjeta con el ratón encima pasa por delante de las de al lado, para que la etiqueta no quede tapada */
+.m-card:has(.rdm i:hover) { z-index: 30; }
+.m-photo .rdm i[data-mes]::after { content: attr(data-mes); position: absolute; top: calc(100% + 6px); right: -2px; transform: translateY(-3px); z-index: 5;
+	padding: .3rem .5rem; background: var(--negro); color: var(--blanco); font-family: var(--f-mono); font-size: .66rem; font-style: normal; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+	opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s; }
+.m-photo .rdm i[data-mes]:hover::after { opacity: 1; transform: translateY(0); }
+
+/* ───── Secciones libres de una entrada: texto, fotos y foto con texto ───── */
+.en-sec { margin-top: clamp(3rem, 6vw, 5rem); }
+.en-sec > .sec-head { margin-bottom: 1.6rem; }
+.en-b + .en-b { margin-top: clamp(1.8rem, 3.5vw, 2.8rem); }
+.en-b-texto .prose { max-width: 70ch; }
+/* Una foto sola: a su tamaño (sin franjas a los lados), como mucho 980 px de ancho y algo menos que la pantalla de alto */
+.en-b-foto > .frame { width: fit-content; max-width: min(100%, 980px); min-height: 0; }
+.en-b-foto > .frame > img { width: auto; max-width: 100%; max-height: 75vh; background: none; }
+.en-ft { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
+.en-ft.foto-derecha > .frame, .en-ft.foto-derecha > .adm-vacio { order: 2; }
+.en-ft.sin-foto { grid-template-columns: 1fr; }
+.en-ft .prose { max-width: 60ch; }
+@media (max-width: 760px) {
+	.en-ft { grid-template-columns: 1fr; }
+	.en-ft.foto-derecha > .frame, .en-ft.foto-derecha > .adm-vacio { order: 0; }
+}

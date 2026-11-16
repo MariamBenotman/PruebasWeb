@@ -42,8 +42,14 @@ const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 			window.__img = function (el) {
 				if (window.__imgAdmin && window.__imgAdmin(el)) return;
 				var fb = (el.getAttribute('data-fb') || '').split('|').filter(Boolean);
-				if (fb.length) { el.src = fb.shift(); el.setAttribute('data-fb', fb.join('|')); return; }
-				var p = el.parentElement; el.remove(); if (p) p.classList.add('is-missing');
+				if (fb.length) {
+					el.src = fb.shift(); el.setAttribute('data-fb', fb.join('|'));
+					if (el.parentElement && el.parentElement.classList.contains('frame')) el.parentElement.classList.add('es-prestada');
+					return;
+				}
+				// (la foto de «al pasar el ratón» que falla no cuenta: la principal puede estar bien)
+				var p = el.parentElement, alt = el.classList.contains('alt'); el.remove();
+				if (p && !alt) { p.classList.add('is-missing'); p.classList.remove('es-prestada'); }
 			};
 		</script>
 	</head>
@@ -164,6 +170,32 @@ const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 			};
 			marcarRdm();
 			document.addEventListener('reset:rendered', marcarRdm);
+
+			// Fotos que van rotando ([data-rotar], p. ej. las fotos de grupo de un curso): cada 5 s, con fundido.
+			// Se paran con el ratón encima, con la pestaña oculta o si el sistema pide menos movimiento; los puntos eligen una.
+			const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+			let relojes: number[] = [];
+			const rotar = () => {
+				relojes.forEach(clearInterval); relojes = [];
+				document.querySelectorAll<HTMLElement>('[data-rotar]').forEach((caja) => {
+					const fotos = [...caja.children].filter((x): x is HTMLElement => x.classList.contains('frame'));
+					const puntos = [...(caja.nextElementSibling?.querySelectorAll<HTMLButtonElement>('[data-i]') ?? [])];
+					if (fotos.length < 2) return;
+					let i = Math.max(0, fotos.findIndex((f) => f.classList.contains('is-on')));
+					const ir = (n: number) => {
+						i = (n + fotos.length) % fotos.length;
+						fotos.forEach((f, k) => f.classList.toggle('is-on', k === i));
+						puntos.forEach((p, k) => p.toggleAttribute('aria-current', k === i));
+					};
+					puntos.forEach((p, k) => p.addEventListener('click', () => ir(k)));
+					let encima = false;
+					caja.addEventListener('mouseenter', () => { encima = true; });
+					caja.addEventListener('mouseleave', () => { encima = false; });
+					if (!quieto) relojes.push(window.setInterval(() => { if (!encima && !document.hidden) ir(i + 1); }, 5000));
+				});
+			};
+			rotar();
+			document.addEventListener('reset:rendered', rotar);
 
 			// Modo edición: solo se descarga si hay sesión iniciada
 			if (document.documentElement.classList.contains('is-admin')) import('../admin/main');
