@@ -1,0 +1,17 @@
+{
+  "titulo": "Heracles",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Robot siguelíneas y resolvedor de laberintos para las competiciones, controlable desde una app de Android.",
+  "portada": "",
+  "cuerpo": "Heracles era el **robot siguelíneas y resolvedor de laberintos** de Reset para las competiciones. Usaba una **Maple Mini** y se comunicaba por **Bluetooth** con una aplicación de Android para controlarlo a mano y ajustar sus parámetros (como las constantes del PID) en tiempo real mientras se probaban distintos algoritmos.\n\n- **Agosto de 2012**: un módulo Bluetooth muy pequeño y barato, configurado y con el código en C para la Maple Mini.\n- **Septiembre de 2012**: una app de Android para ver la comunicación, ajustar parámetros y manejar el robot con joysticks en la pantalla del móvil.",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2011/12",
+    "2012/13"
+  ],
+  "autores": [],
+  "otrosAutores": "Colaboradores: Juan Herrero Macías y Miguel Sánchez de León («Peque»)."
+}

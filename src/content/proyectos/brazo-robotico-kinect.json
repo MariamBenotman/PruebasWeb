@@ -1,0 +1,20 @@
+{
+  "titulo": "Brazo robótico controlado con Kinect",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "¡Controla un brazo robótico con tu propio brazo! Módulos impresos en 3D, servos, Arduino y la cámara Kinect.",
+  "portada": "fotos/proyectos/brazo-robotico-kinect/brazo.jpg",
+  "cuerpo": "Los objetivos de este proyecto eran:\n\n- Diseñar un brazo robótico con **módulos imprimibles en 3D**, y construirlo y montarlo.\n- Con la cámara **Kinect**, obtener la posición en el espacio de las articulaciones de una persona.\n- Con esos datos, desarrollar la **cinemática inversa** del brazo.\n- Conectar el ordenador con Kinect a un **Arduino** que mueve los servomotores.\n- Divertirse con un robot teleoperado sin cables.\n\nEn marzo de 2012 se planteó el diseño: un manipulador con los 4 primeros grados de libertad y una pinza con otros 2, servomotores como «músculos» y el control con Kinect, que reconstruye en 3D el espacio observado (con Linux y ROS).",
+  "galeria": [
+    "fotos/proyectos/brazo-robotico-kinect/grados-de-libertad.png",
+    "fotos/proyectos/brazo-robotico-kinect/servo.jpg",
+    "fotos/proyectos/brazo-robotico-kinect/kinect.png"
+  ],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2011/12"
+  ],
+  "autores": [],
+  "otrosAutores": "Colaboradores: Dani Casares, Jesús Arroyo y Juan González."
+}

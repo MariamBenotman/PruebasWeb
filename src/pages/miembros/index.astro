@@ -35,6 +35,16 @@ const personas = (c: (typeof cursos)[number]) => c.data.secciones.reduce((n, s) 
 					</a>
 				</li>
 			))}
+			<!-- A modo de recuerdo: quienes crearon Reset -->
+			<li class="reveal cur-fund" style={`--d:${cursos.length % 6}`}>
+				<a href={href('fundadores')}>
+					<figure class="frame cur-foto" data-label="2010"></figure>
+					<div class="cur-txt">
+						<h2>Fundadores</h2>
+						<p class="cur-meta"><span>Quienes crearon Reset, hacia 2010</span></p>
+					</div>
+				</a>
+			</li>
 			<li class="adm-only cur-add"><a class="adm-add" href={href('editar?tipo=miembros')}><span>+</span>Nuevo curso</a></li>
 		</ol>
 	</div>

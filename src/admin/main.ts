@@ -366,6 +366,15 @@ function field(f: Field, path: string, ownerPath: string): HTMLElement {
 			});
 			return el;
 		}
+		case 'rango': {
+			const val = Number(v) || f.porDefecto;
+			const el = wrapField(f, `<div class="f-rango"><input type="range" min="${f.min}" max="${f.max}" step="${f.paso ?? 1}" value="${val}"><output>${val}${esc(f.unidad ?? '')}</output><button type="button" class="f-rango-x" title="Volver al de siempre">↺</button></div>`);
+			const r = el.querySelector<HTMLInputElement>('input[type=range]')!, o = el.querySelector('output')!;
+			const poner = (n: number) => { r.value = String(n); o.textContent = `${n}${f.unidad ?? ''}`; setAt(path, n); schedule(); };
+			r.addEventListener('input', () => poner(Number(r.value)));
+			el.querySelector('.f-rango-x')!.addEventListener('click', () => poner(f.porDefecto));
+			return el;
+		}
 		case 'markdown': {
 			const el = wrapField(f, `
 				<div class="f-md">
@@ -438,7 +447,7 @@ function field(f: Field, path: string, ownerPath: string): HTMLElement {
 		case 'select': {
 			const opts = f.options();
 			if (v && !opts.some((o) => o.value === v)) opts.push({ value: v, label: v });
-			const el = wrapField(f, `<select class="f-in">${opts.map((o) => `<option value="${esc(o.value)}"${o.value === (v ?? '') ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`);
+			const el = wrapField(f, `<select class="f-in">${opts.map((o) => `<option value="${esc(o.value)}"${o.value === (v ?? f.porDefecto ?? '') ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>`);
 			el.querySelector('select')!.addEventListener('change', (e) => {
 				setAt(path, (e.target as HTMLSelectElement).value);
 				f.alCambiar?.(ownerPath ? getAt(ownerPath) : data, (e.target as HTMLSelectElement).value);

@@ -11,81 +11,103 @@ import { getCollection } from 'astro:content';
 import { getCursos, getEdiciones, getEntradas, href, img, fecha, BASE } from '../lib/data';
 import { normalizeInicio, renderInicio } from '../lib/render';
 
-const [ediciones, cursos, noticias, inicio] = await Promise.all([getEdiciones(), getCursos(), getEntradas('noticias'), getCollection('inicio')]);
+const [ediciones, cursos, noticias, proyectos, inicio] = await Promise.all([getEdiciones(), getCursos(), getEntradas('noticias'), getEntradas('proyectos'), getCollection('inicio')]);
 const ct = ediciones[0];
 const curso = cursos[0];
 const ultimas = noticias.filter((n) => !n.data.oculto).slice(0, 3);
 const datos = normalizeInicio(inicio.find((x) => x.id === 'portada')?.data);
 
-// La parte editable, partida por los huecos que se rellenan aquí
+// La parte editable, partida por los huecos que se rellenan aquí: [html, hueco, html, hueco, …, html]
 const html = renderInicio(datos, { base: BASE });
-const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/);
+const partes = html.split(/<(?:div|span|p) data-keep="([^"]+)"><\/(?:div|span|p)>/);
+
+// Cifras de Reset bajo el lema (si no hay GIF/vídeos ahí). Salen de los datos de la web, así que siempre son ciertas.
+const clave = (n: string) => n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const personas = new Set(cursos.flatMap((c) => c.data.secciones.flatMap((s) => s.miembros.map((m) => clave(m.nombre))))).size;
+// Premios: de la edición más reciente que los tenga (la nueva puede no tenerlos aún)
+const conPremio = ediciones.find((e) => e.data.datos.some((d) => /premio/i.test(d.etiqueta)));
+const premio = conPremio?.data.datos.find((d) => /premio/i.test(d.etiqueta));
+const cifras = [
+	{ valor: String(proyectos.filter((x) => !x.data.oculto).length), etiqueta: 'proyectos', url: href('proyectos') },
+	{ valor: String(personas), etiqueta: `personas en ${cursos.length} cursos`, url: href('miembros') },
+	...(premio ? [{ valor: premio.valor, etiqueta: `${premio.etiqueta} en Cybertech`, url: conPremio!.url }] : []),
+];
 ---
 
 <Layout>
 	<div class="inicio">
-		<!-- RESET en grande: al hacer scroll se encoge y vuela hasta el logo de la cabecera -->
-		<div class="wrap inicio-logo">
-			<div class="inicio-logo-in" aria-hidden="true"><Logo /></div>
-			<!-- Instituciones, en el hueco que deja el símbolo encima de la palabra RESET. Se desvanecen al bajar. -->
-			<p class="inicio-inst">{INSTITUCIONES.map((i) => <a href={i.url} target="_blank" rel="noopener" title={i.nombre}><img src={href(`marca/${i.logo}-negro.png`)} alt={i.nombre} onerror="this.parentNode.remove()" /></a>)}</p>
+		<!-- RESET en grande, en la misma fila que las instituciones: al hacer scroll se encoge y vuela hasta el logo de la cabecera -->
+		<!-- Zona azul que continúa la barra de arriba. Su borde de abajo sube en un escalón a 45° y lo sigue una pista de
+		     circuito que acaba en un punto naranja (como las pistas de una placa). -->
+		<div class="inicio-cabeza">
+			<div class="inicio-cabeza-fondo" aria-hidden="true"></div>
+			<div class="wrap inicio-logo">
+				<div class="inicio-logo-in" aria-hidden="true"><Logo tono="blanco" /></div>
+				<!-- Instituciones, a la derecha del logo. Se desvanecen al bajar. -->
+				<p class="inicio-inst">{INSTITUCIONES.map((i) => <a href={i.url} target="_blank" rel="noopener" title={i.nombre}><img src={href(`marca/${i.logo}-blanco.png`)} alt={i.nombre} onerror="this.parentNode.remove()" /></a>)}</p>
+			</div>
+			<i class="pista-tramo" aria-hidden="true"></i>
+			<svg class="pista-codo" viewBox="0 0 200 72" aria-hidden="true" focusable="false"><path d="M 0 64 H 6.6 L 54.6 16 H 188" /><circle cx="190" cy="16" r="6.5" /></svg>
 		</div>
 		<!-- Invita a bajar: lleva al carrusel. Desaparece en cuanto se hace scroll. -->
 		<button class="baja" type="button" aria-label="Ir a la siguiente sección"><i class="baja-pista"></i><i class="baja-flecha"></i></button>
 
 		<div id="page-root" data-kind="inicio" data-id="portada">
-			<Fragment set:html={trozos[0]} />
-			<span data-keep="cta-cybertech">{ct && <a class="btn primary" href={ct.url}>{ct.label} <span class="arr">→</span></a>}</span>
-			<Fragment set:html={trozos[1]} />
-			<p data-keep="curso">{curso && <a href={curso.url}>Conoce al equipo del curso {curso.data.curso} →</a>}</p>
-			<Fragment set:html={trozos[2]} />
-			<div data-keep="cybertech">
-				{ct && (
-					<section class="ct-band">
-						<div class="ct-band-grid" aria-hidden="true"></div>
-						<div class="wrap ct-band-in">
-							<div>
-								<p class="kicker on-dark"><span>Competición</span><span>Edición {ct.data.anio}</span></p>
-								<h2 class="ct-band-t">Cyber<br />tech<span>{String(ct.data.anio).slice(2)}</span></h2>
-							</div>
-							<div class="ct-band-r">
-								<p class="ct-band-lema">{ct.data.lema || 'La competición de robótica más grande de la UPM.'}</p>
-								{ct.data.categorias.length > 0 && (
-									<ul class="ct-band-cats">{ct.data.categorias.map((c, i) => <li><span class="idx">{String(i + 1).padStart(2, '0')}</span>{c.nombre}</li>)}</ul>
-								)}
-								{(ct.data.inscripcionDesde || ct.data.inscripcionHasta) && (
-									<p class="ct-inscripcion" data-plazo={`${ct.data.inscripcionDesde}|${ct.data.inscripcionHasta}`} hidden>
-										{ct.data.inscripcionEnlace && <a class="btn primary" href={ct.data.inscripcionEnlace} target={/^https?:/.test(ct.data.inscripcionEnlace) ? '_blank' : undefined} rel="noopener">Inscríbete <span class="arr">→</span></a>}
-										<span>Inscripciones abiertas</span>
-									</p>
-								)}
-								<a class="btn primary" href={ct.url}>Ver las pruebas <span class="arr">→</span></a>
-								<p class="ct-band-hist">Ediciones anteriores: {ediciones.slice(1).map((e) => <a href={e.url}>{e.data.anio}</a>)}</p>
-							</div>
-						</div>
-					</section>
-				)}
-			</div>
-			<Fragment set:html={trozos[3]} />
-			<div data-keep="noticias">
-				{ultimas.length > 0 && (
-					<section class="wrap news">
-						<header class="sec-head reveal"><span class="idx">§03</span><h2>Noticias</h2><span class="rule"></span><a class="more" href={href('noticias')}>Todas →</a></header>
-						<div class="news-grid">
-							{ultimas.map((n, i) => (
-								<a class="news-card reveal" style={`--d:${i}`} href={n.url}>
-									<figure class="frame" data-label={n.data.etiquetas[0] ?? 'Reset'}>
-										{n.data.portada && <img src={img(n.data.portada)} alt="" loading="lazy" onerror="__img(this)" />}
-									</figure>
-									<p class="news-meta">{n.data.fecha && <time datetime={n.data.fecha}>{fecha(n.data.fecha)}</time>}{n.data.etiquetas[0] && <span>{n.data.etiquetas[0]}</span>}</p>
-									<h3>{n.data.titulo}</h3>
-								</a>
-							))}
-						</div>
-					</section>
-				)}
-			</div>
-			<Fragment set:html={trozos[4]} />
+			{partes.map((x, i) => i % 2 === 0 ? <Fragment set:html={x} />
+				: x === 'cifras' ? (
+					<ul data-keep="cifras" class="hero-cifras">{cifras.map((c) => <li><a href={c.url}><strong>{c.valor}</strong><span>{c.etiqueta}</span></a></li>)}</ul>
+				) : x === 'cta-cybertech' ? (
+					<span data-keep="cta-cybertech">{ct && <a class="btn primary" href={ct.url}>{ct.label} <span class="arr">→</span></a>}</span>
+				) : x === 'curso' ? (
+					<p data-keep="curso">{curso && <a href={curso.url}>Conoce al equipo del curso {curso.data.curso} →</a>}</p>
+				) : x === 'cybertech' ? (
+					<div data-keep="cybertech">
+						{ct && (
+							<section class="ct-band">
+								<div class="ct-band-grid" aria-hidden="true"></div>
+								<div class="wrap ct-band-in">
+									<div>
+										<p class="kicker on-dark"><span>Competición</span><span>Edición {ct.data.anio}</span></p>
+										<h2 class="ct-band-t">Cyber<br />tech<span>{String(ct.data.anio).slice(2)}</span></h2>
+									</div>
+									<div class="ct-band-r">
+										<p class="ct-band-lema">{ct.data.lema || 'La competición de robótica más grande de la UPM.'}</p>
+										{ct.data.categorias.length > 0 && (
+											<ul class="ct-band-cats">{ct.data.categorias.map((c, k) => <li><span class="idx">{String(k + 1).padStart(2, '0')}</span>{c.nombre}</li>)}</ul>
+										)}
+										{(ct.data.inscripcionDesde || ct.data.inscripcionHasta) && (
+											<p class="ct-inscripcion" data-plazo={`${ct.data.inscripcionDesde}|${ct.data.inscripcionHasta}`} hidden>
+												{ct.data.inscripcionEnlace && <a class="btn primary" href={ct.data.inscripcionEnlace} target={/^https?:/.test(ct.data.inscripcionEnlace) ? '_blank' : undefined} rel="noopener">Inscríbete <span class="arr">→</span></a>}
+												<span>Inscripciones abiertas</span>
+											</p>
+										)}
+										<a class="btn primary" href={ct.url}>Ver las pruebas <span class="arr">→</span></a>
+										<p class="ct-band-hist">Ediciones anteriores: {ediciones.slice(1).map((e) => <a href={e.url}>{e.data.anio}</a>)}</p>
+									</div>
+								</div>
+							</section>
+						)}
+					</div>
+				) : x === 'noticias' ? (
+					<div data-keep="noticias">
+						{ultimas.length > 0 && (
+							<section class="wrap news">
+								<header class="sec-head reveal"><span class="idx">§03</span><h2>Noticias</h2><span class="rule"></span><a class="more" href={href('noticias')}>Todas →</a></header>
+								<div class="news-grid">
+									{ultimas.map((n, k) => (
+										<a class="news-card reveal" style={`--d:${k}`} href={n.url}>
+											<figure class="frame" data-label={n.data.etiquetas[0] ?? 'Reset'}>
+												{n.data.portada && <img src={img(n.data.portada)} alt="" loading="lazy" onerror="__img(this)" />}
+											</figure>
+											<p class="news-meta">{n.data.fecha && <time datetime={n.data.fecha}>{fecha(n.data.fecha)}</time>}{n.data.etiquetas[0] && <span>{n.data.etiquetas[0]}</span>}</p>
+											<h3>{n.data.titulo}</h3>
+										</a>
+									))}
+								</div>
+							</section>
+						)}
+					</div>
+				) : null)}
 		</div>
 	</div>
 </Layout>
@@ -163,11 +185,16 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 		if (m && car?.__ir) car.__ir(Number(m[1]));
 	});
 
-	/* ───── Las secciones aparecen al entrar en pantalla (de desenfocadas a nítidas), una vez ───── */
+	/* ───── Las secciones aparecen al entrar en pantalla (de desenfocadas a nítidas) y, si se vuelve a subir y quedan
+	   por debajo, se desdibujan otra vez (arriba del todo, el carrusel vuelve a ser solo un anticipo) ───── */
 	const SECCIONES_INICIO = ['[data-car]', '.inicio .areas', '.inicio .about', '.inicio [data-keep="cybertech"] > section', '.inicio .services', '.inicio [data-keep="noticias"] > section', '.inicio .join'];
 	if (!document.documentElement.classList.contains('is-admin') && !reducido) {
 		const ver = new IntersectionObserver((entries) => {
-			for (const e of entries) if (e.isIntersecting) { e.target.classList.add('visto'); ver.unobserve(e.target); }
+			for (const e of entries) {
+				if (e.isIntersecting) e.target.classList.add('visto');
+				// Solo se esconde si ha salido por abajo (al subir); si sale por arriba (al bajar) se queda nítida
+				else if (e.boundingClientRect.top > 0) e.target.classList.remove('visto');
+			}
 		}, { rootMargin: '0px 0px -30% 0px' }); // al pasar su borde superior del 70% de la pantalla (arriba del todo, el carrusel aún no)
 		document.querySelectorAll<HTMLElement>(SECCIONES_INICIO.join(',')).forEach((el) => { el.classList.add('aparece'); ver.observe(el); });
 	}
@@ -195,11 +222,65 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 	});
 
 
+	/* ───── Primera pantalla: el carrusel empieza justo debajo del borde de la pantalla (que no asome un trozo) ───── */
+	const carrusel0 = document.querySelector<HTMLElement>('[data-car]');
+	if (carrusel0 && !document.documentElement.classList.contains('is-admin')) {
+		const hueco = () => {
+			carrusel0.style.marginTop = '';
+			// offsetTop: sin contar el desplazamiento de la animación de entrada
+			let y = 0; for (let n: HTMLElement | null = carrusel0; n; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
+			const falta = innerHeight - y + 24;
+			if (falta > 0) carrusel0.style.marginTop = `${falta}px`;
+		};
+		hueco();
+		addEventListener('resize', hueco);
+		document.fonts?.ready.then(hueco);
+		addEventListener('load', hueco);
+	}
+
+	/* ───── Logos de las instituciones a la altura de las letras de RESET (en el logo, del 35,7 % al 83,1 % de su alto) ───── */
+	const instFila = document.querySelector<HTMLElement>('.inicio-inst');
+	const logoImg = document.querySelector<HTMLImageElement>('.inicio-logo .logo img');
+	const logoCaja = document.querySelector<HTMLElement>('.inicio-logo-in');
+	if (instFila && logoImg && logoCaja) {
+		let altoPuesto = 0;
+		const alinear = () => {
+			// Las instituciones, del alto que tenían las letras antes de agrandar el logo un 10 %, y centradas en las letras de ahora
+			// (con valores redondeados a medio píxel y sin tocar nada si no cambia: las instituciones y el hueco del logo se
+			// miden el uno al otro, y con decimales sueltos se quedaban rebotando 1 px en cada fotograma: la pantalla temblaba)
+			const proporcion = logoImg.naturalWidth ? logoImg.naturalHeight / logoImg.naturalWidth : 0.2587;
+			let alto = logoCaja.offsetWidth * proporcion; // sin el 10 % de más ni la transformación del vuelo
+			if (!alto) return;
+			if (Math.abs(alto - altoPuesto) < 2) alto = altoPuesto; // cambios de 1 px: los provoca este mismo ajuste
+			altoPuesto = alto;
+			const centroLetras = logoImg.offsetTop - logoCaja.offsetTop + alto * 1.1 * 0.594;
+			const top = `${Math.round(centroLetras - alto * 0.237)}px`, h = `${Math.round(alto * 0.474)}px`;
+			if (instFila.style.getPropertyValue('--wm-top') !== top) instFila.style.setProperty('--wm-top', top);
+			if (instFila.style.getPropertyValue('--wm-h') !== h) instFila.style.setProperty('--wm-h', h);
+			// El escalón del borde azul, centrado en el hueco entre RESET y las instituciones (si se ven: en el móvil no)
+			const cabeza = instFila.closest<HTMLElement>('.inicio-cabeza');
+			const fila = instFila.parentElement!;
+			if (cabeza && instFila.offsetParent) {
+				const finLogo = fila.offsetLeft + logoCaja.offsetLeft + logoCaja.offsetWidth;
+				const inicioInst = fila.offsetLeft + instFila.offsetLeft;
+				cabeza.style.setProperty('--paso', `${Math.round((finLogo + inicioInst) / 2 - 24)}px`);
+			} else cabeza?.style.removeProperty('--paso');
+		};
+		if (logoImg.complete) alinear(); else logoImg.addEventListener('load', alinear, { once: true });
+		addEventListener('resize', alinear);
+		new ResizeObserver(alinear).observe(logoCaja);
+	}
+
 	/* ───── Logos de las instituciones: se desvanecen en cuanto se empieza a bajar ───── */
 	const inst = document.querySelector<HTMLElement>('.inicio-inst');
 	if (inst) {
 		let pend = 0;
-		const fundir = () => { pend = 0; inst.style.setProperty('--inst-p', String(Math.min(1, scrollY / 140))); inst.style.visibility = scrollY > 140 ? 'hidden' : ''; };
+		const fundir = () => {
+			pend = 0;
+			inst.style.setProperty('--inst-p', String(Math.min(1, scrollY / 140)));
+			inst.classList.toggle('saliendo', scrollY > 0);
+			inst.style.visibility = scrollY > 140 ? 'hidden' : '';
+		};
 		addEventListener('scroll', () => { pend ||= requestAnimationFrame(fundir); }, { passive: true });
 		fundir();
 	}
@@ -243,16 +324,44 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 
 <style is:global>
 	/* ───── RESET grande ───── */
-	.inicio-logo { padding-top: clamp(2rem, 5vw, 4rem); position: relative; container-type: inline-size; }
-	/* Logos de la ETSII, la UPM y el CAR: arriba a la derecha, sobre la palabra RESET (medidas en proporción al logo) */
-	.inicio-inst { position: absolute; top: clamp(2rem, 5vw, 4rem); right: 0; margin: 0; display: flex; align-items: center; gap: 2.4rem; height: 7cqi; max-height: 86px;
-		opacity: calc(1 - var(--inst-p, 0)); filter: blur(calc(var(--inst-p, 0) * 8px)); transform: translateY(calc(var(--inst-p, 0) * -14px)); }
-	.inicio-inst a { height: 100%; opacity: .8; transition: opacity .2s; }
-	.inicio-inst a:hover { opacity: 1; }
+	/* ───── Zona azul de arriba con borde de circuito ───── */
+	/* --paso: dónde sube el borde (entre el logo y las instituciones). Sube 48 px en 45° (48 px en horizontal también) */
+	.inicio-cabeza { --paso: 58%; position: relative; color: #fff; padding-bottom: calc(48px + 18px + clamp(.5rem, 1.2vw, .9rem)); margin-bottom: 24px; }
+	/* (empieza 2 px más arriba para tapar la juntura con la barra) */
+	.inicio-cabeza-fondo { position: absolute; inset: -2px 0 0; background: var(--azul);
+		clip-path: polygon(0 0, 100% 0, 100% calc(100% - 48px), calc(var(--paso) + 48px) calc(100% - 48px), var(--paso) 100%, 0 100%); }
+	/* La pista: paralela al borde, 16 px por debajo, y acaba en un punto naranja.
+	   Tramo recto (hasta el codo) + el codo de 45° y el final con el punto (SVG con origen en el codo, 48 px por encima del borde) */
+	.pista-tramo { position: absolute; left: 0; top: calc(100% + 15px); width: calc(var(--paso) + 7px); height: 2px; background: var(--azul); pointer-events: none; }
+	.pista-codo { position: absolute; left: var(--paso); top: calc(100% - 48px); width: 200px; height: 72px; overflow: visible; pointer-events: none; }
+	.pista-codo path { stroke: var(--azul); stroke-width: 2; fill: none; }
+	.pista-codo circle { fill: var(--naranja); stroke: var(--papel); stroke-width: 3; }
+	@media (max-width: 700px) { .inicio-cabeza { --paso: calc(100% - 250px); } }
+	.inicio-cabeza { overflow-x: clip; overflow-y: visible; }
+
+	/* Una fila: RESET ocupa todo lo que dejan libre los logos de las instituciones, a su derecha */
+	.inicio-logo { padding-top: clamp(.4rem, 1vw, .75rem); position: relative; container-type: inline-size; display: flex; align-items: flex-start; justify-content: space-between; gap: clamp(96px, 9cqi, 130px); } /* el hueco siempre cabe el escalón (48 px) con margen */
+	/* RESET hasta 720 px de ancho; las instituciones, a la derecha. En escritorio el logo baja 36 px hacia la parte
+	   honda del azul (bajo él el borde está 48 px más abajo que bajo las instituciones), así no crece la cabecera */
+	.inicio-logo-in { flex: 0 1 720px; min-width: 0; }
+	@media (min-width: 701px) { .inicio-logo-in { margin-bottom: -36px; } }
+	/* En escritorio la fila sube y la punta del símbolo entra en la barra de arriba (a la izquierda no hay nada con
+	   lo que se solape): así RESET y las instituciones quedan lejos del escalón sin que la cabecera crezca */
+	@media (min-width: 701px) { .inicio-logo { margin-top: -9px; } .inicio-cabeza { padding-bottom: calc(48px + 18px + 24px + clamp(.5rem, 1.2vw, .9rem)); } }
+	/* Logos de la ETSII, la UPM y el CAR (medidas en proporción al ancho) */
+	/* Arriba y abajo a la misma altura que las letras de RESET (sin el símbolo): lo mide el script (--wm-top, --wm-h) */
+	.inicio-inst { flex: none; margin: var(--wm-top, 4cqi) 0 0; display: flex; align-items: center; gap: clamp(1.2rem, 2.6cqi, 2.4rem); height: var(--wm-h, clamp(40px, 6cqi, 82px));
+		opacity: calc(1 - var(--inst-p, 0)); }
+	/* El desenfoque y el desplazamiento, solo mientras se desvanecen: en reposo, sin filtros (si no, el navegador
+	   los dibuja como una capa aparte y se ven algo borrosos) */
+	.inicio-inst.saliendo { filter: blur(calc(var(--inst-p, 0) * 8px)); transform: translateY(calc(var(--inst-p, 0) * -14px)); }
+	.inicio-inst a { height: 100%; }
 	.inicio-inst img { display: block; height: 100%; width: auto; }
 	@media (max-width: 700px) { .inicio-inst { display: none; } }
 	.inicio-logo .logo { display: block; height: auto; }
-	.inicio-logo .logo img { display: block; width: min(100%, 980px); height: auto; transform-origin: 0 0; will-change: transform; position: relative; z-index: 60; }
+	.inicio-logo .logo img { display: block; width: min(100%, 980px); height: auto; transform-origin: 0 0; will-change: transform; position: relative; z-index: 60; pointer-events: none; } /* decorativo: que no tape los menús */
+	/* Un 10 % más grande que su hueco (crece hacia la derecha y hacia abajo; el alto es el 25,87 % del ancho) */
+	@media (min-width: 701px) { html .inicio-logo .logo img { width: 110% !important; max-width: none; margin-bottom: -2.588%; } }
 	/* Con un desplegable abierto, el logo pasa por debajo de la cabecera: el menú siempre delante */
 	html:has(.nav-item:hover, .nav-item:focus-within, .nav.is-open) .inicio-logo .logo img { z-index: 1; }
 	.inicio-logo .logo-txt { font-size: clamp(3rem, 14vw, 9rem); }
@@ -276,6 +385,11 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 	.baja:hover { box-shadow: 5px 5px 0 var(--naranja); }
 	.baja:focus-visible { outline: 2px solid var(--naranja); outline-offset: 3px; }
 	.baja.fuera { opacity: 0; transform: translate(-50%, 12px); pointer-events: none; }
+	/* Móvil y pantallas bajas (portátiles): abajo a la derecha, para no tapar el texto ni los botones */
+	@media (max-width: 760px), (max-height: 820px) {
+		.baja { left: auto; right: 16px; bottom: 16px; transform: none; }
+		.baja.fuera { transform: translateY(12px); }
+	}
 	/* Pista de circuito con un punto naranja que baja por ella */
 	.baja-pista { position: relative; display: block; width: 2px; height: 26px; background: linear-gradient(var(--negro) 0 0) center / 1px 100% no-repeat; }
 	.baja-pista::after { content: ''; position: absolute; left: 50%; top: 0; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--naranja); animation: baja-punto 1.8s var(--ease) infinite; }
@@ -284,11 +398,41 @@ const trozos = html.split(/<(?:div|span|p) data-keep="[^"]+"><\/(?:div|span|p)>/
 	@media (prefers-reduced-motion: reduce) { .baja-pista::after { animation: none; top: 50%; } }
 	html.is-admin .baja { display: none; }
 	/* ───── Lema + carrusel ───── */
-	.inicio .hero { padding: clamp(1.5rem, 3vw, 2.5rem) 0 clamp(3rem, 6vw, 4.5rem); border-bottom: 1px solid var(--negro); }
-	.inicio .hero-copy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem 4rem; align-items: end; margin-bottom: clamp(1.8rem, 4vw, 2.8rem); }
-	.inicio .hero-t { margin: 0; font-family: var(--f-display); font-stretch: 118%; font-weight: 800; text-transform: uppercase; font-size: clamp(1.9rem, 3.6vw, 3.3rem); line-height: .95; letter-spacing: -.03em; }
+	.inicio .hero { padding: clamp(2.2rem, 3.6vw, 3.2rem) 0 clamp(3rem, 6vw, 4.5rem); border-bottom: 1px solid var(--negro); }
+	.inicio .hero-copy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem 4rem; align-items: start; margin-bottom: clamp(1.8rem, 4vw, 2.8rem); }
+	.inicio .hero-t { margin: 0; font-family: var(--f-display); font-stretch: 118%; font-weight: 800; text-transform: uppercase; font-size: calc(clamp(1.9rem, 3.6vw, 3.3rem) * var(--lema-k, 1)); line-height: .95; letter-spacing: -.03em; }
 	.inicio .hero-t em { font-style: normal; color: var(--naranja); }
-	.inicio .hero-lede { margin: 0 0 1.4rem; font-size: 1.05rem; color: #3b3a36; max-width: 52ch; }
+	.inicio .hero-lede { margin: 0 0 1.4rem; font-size: 1.05rem; color: #3b3a36; max-width: 54ch; }
+	.inicio .hero-lede p { margin: 0 0 .85rem; }
+	/* Bajo el lema: las cifras de Reset o, si se ponen, GIF/vídeos que van rotando */
+	.inicio .hero-main { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(1.8rem, 3.5vw, 2.8rem); align-content: start; }
+	.inicio .hero-cifras { display: flex; flex-wrap: wrap; gap: 1.2rem clamp(1.4rem, 3vw, 2.8rem); margin: 0; padding: 0; list-style: none; }
+	.inicio .hero-cifras a { display: grid; gap: .3rem; padding-left: .9rem; border-left: 3px solid var(--naranja); text-decoration: none; color: inherit; }
+	.inicio .hero-cifras strong { font-family: var(--f-display); font-stretch: 118%; font-weight: 800; font-size: clamp(2rem, 3.4vw, 3rem); line-height: 1; letter-spacing: -.02em; }
+	.inicio .hero-cifras span { font-family: var(--f-mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--gris); }
+	.inicio .hero-cifras a:hover strong { color: var(--naranja); }
+	/* Apaisado y bajito (cabe en la primera pantalla), con un efecto de pantalla:
+	   líneas de barrido, bordes oscurecidos en azul y una franja de luz que lo recorre despacio */
+	.inicio .hero-media { display: grid; position: relative; max-width: 480px; }
+	.inicio .hero-media > .frame { grid-area: 1 / 1; aspect-ratio: 2 / 1; }
+	.inicio .hero-media > .frame > video, .inicio .hero-media > .frame > img { filter: saturate(.85) contrast(1.05); }
+	.inicio .hero-media::before, .inicio .hero-media::after { content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+	.inicio .hero-media::before {
+		background:
+			repeating-linear-gradient(to bottom, rgba(6, 34, 58, .1) 0 1px, transparent 1px 4px),
+			radial-gradient(130% 110% at 50% 45%, transparent 50%, rgba(6, 34, 58, .6) 100%),
+			linear-gradient(to top, rgba(11, 52, 89, .35), transparent 40%);
+	}
+	.inicio .hero-media::after {
+		background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, .09) 45%, rgba(255, 255, 255, .16) 50%, transparent 55%) 0 0 / 100% 300% no-repeat;
+		animation: hero-barrido 7s linear infinite;
+	}
+	@keyframes hero-barrido { from { background-position: 0 100%; } to { background-position: 0 0; } }
+	@media (prefers-reduced-motion: reduce) { .inicio .hero-media::after { animation: none; display: none; } }
+	.inicio .hero-media[data-rotar] > .frame { opacity: 0; visibility: hidden; transition: opacity .9s var(--ease), visibility 0s .9s; }
+	.inicio .hero-media[data-rotar] > .frame.is-on { opacity: 1; visibility: visible; transition: opacity .9s var(--ease), visibility 0s; }
+	.inicio .hero-lede p:last-child { margin-bottom: 0; }
+	.inicio .hero-lede strong { color: var(--negro); }
 	.inicio .hero-cta { display: flex; flex-wrap: wrap; gap: 1rem; }
 	.inicio .hero-cta [data-keep] { display: contents; }
 	@media (max-width: 860px) { .inicio .hero-copy { grid-template-columns: 1fr; } }

@@ -3,7 +3,7 @@
  * Para añadir un campo nuevo: añádelo aquí, en src/lib/render.ts (normalize + render) y listo.
  */
 import {
-	normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, normalizeInicio, renderCurso, renderEdicion, renderEntrada, renderPagina, renderInicio, cursoSlug, cursoCorto, slugify,
+	normalizeCurso, normalizeEdicion, normalizeEntrada, normalizePagina, normalizeInicio, LEMA, renderCurso, renderEdicion, renderEntrada, renderPagina, renderInicio, cursoSlug, cursoCorto, slugify,
 	SECCIONES, MESES_CURSO, type Curso, type Edicion, type Entrada, type Pagina, type Inicio, type Persona, type SeccionKey, type RenderCtx,
 	ordenarMiembros,
 } from '../lib/render';
@@ -19,11 +19,12 @@ export type Field = ComunCampo & (
 	| { key: string; label: string; type: 'refs'; hint?: string; /** Opciones en columnas (p. ej. los 12 meses en 3 columnas) */ columnas?: number; options: () => { value: string; label: string; sub?: string }[] }
 	| { key: string; label: string; type: 'text'; hint?: string; placeholder?: string }
 	| { key: string; label: string; type: 'number'; hint?: string }
+	| { key: string; label: string; type: 'rango'; hint?: string; min: number; max: number; paso?: number; porDefecto: number; unidad?: string }
 	| { key: string; label: string; type: 'date'; hint?: string }
 	| { key: string; label: string; type: 'markdown'; hint?: string; rows?: number }
 	| { key: string; label: string; type: 'image'; hint?: string; media?: boolean; maxSize?: number; /** Proporción esperada: avisa al subir si no encaja */ formato?: 'retrato' | 'cartel' }
 	| { key: string; label: string; type: 'tags'; group: string; hint?: string; placeholder?: string }
-	| { key: string; label: string; type: 'select'; hint?: string; options: () => { value: string; label: string }[] }
+	| { key: string; label: string; type: 'select'; hint?: string; porDefecto?: string; options: () => { value: string; label: string }[] }
 	| { key: string; label: string; type: 'list'; hint?: string; item: ObjSchema; addLabel: string; newItem: () => any; reutilizar?: Reutilizar }
 	| { key: string; label: string; type: 'images'; hint?: string; maxSize?: number }
 );
@@ -505,7 +506,9 @@ export const inicioKind: DocKind<Inicio> = {
 		title: () => 'Portada',
 		fields: [
 			{ key: 'lema', label: 'Lema', type: 'text', hint: 'Lo que pongas entre *asteriscos* sale en naranja. Ejemplo: Tocar, entender y *construir.*' },
-			{ key: 'intro', label: 'Presentación', type: 'text', hint: 'Una o dos frases al lado del lema.' },
+			{ key: 'tamLema', label: 'Tamaño de letra del lema', type: 'rango', min: LEMA.min, max: LEMA.max, paso: 1, porDefecto: LEMA.normal, unidad: 'px', hint: `El de siempre es ${LEMA.normal} px. En pantallas más estrechas se reduce en proporción, y si alguna palabra no cabe en su columna, se ajusta sola para no tocar el texto de al lado.` },
+			{ key: 'intro', label: 'Presentación', type: 'markdown', rows: 7, hint: 'Al lado del lema, en la primera pantalla. Separa los párrafos con una línea en blanco.' },
+			{ key: 'mediaLema', label: 'GIF o vídeos junto al lema (opcional)', type: 'images', hint: 'Debajo del lema, en la primera pantalla. Con varios, van rotando. Si no pones ninguno, ahí salen las cifras de Reset (proyectos, personas…), que se calculan solas.' },
 			{
 				key: 'diapositivas', label: 'Carrusel de fotos', type: 'list', addLabel: 'Añadir diapositiva',
 				hint: 'Pasan solas cada 6 segundos. Usa fotos horizontales y grandes (mínimo 1600 px de ancho).',

@@ -1,0 +1,19 @@
+{
+  "titulo": "Impresora 3D (Prusa Mendel)",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "La primera impresora 3D de Reset: una Prusa Mendel open hardware, construida para que la usara cualquier estudiante de la Escuela.",
+  "portada": "fotos/proyectos/impresora-3d-prusa/prusa-mendel.jpg",
+  "cuerpo": "Reset construyó una **impresora 3D open hardware**, una Prusa Mendel: la impresora libre más utilizada entonces, estable y bien documentada, con el diseño, la electrónica, el software e incluso las piezas libres (¡y a su vez imprimibles!).\n\nEl objetivo era construir una o más impresoras (bajo el proyecto *The clone wars*) y enseñar a los alumnos cómo funcionan, cómo construirlas y cómo usarlas, para que después pudiera utilizarlas cualquier estudiante de la Escuela: *Open Use*. Para ello se organizaron talleres gratuitos y un equipo de trabajo abierto a cualquiera.\n\n### Cómo fue\n\n- **Octubre de 2012**: llega el material, preparado para montar al menos dos impresoras. Las piezas de plástico se imprimieron con otra impresora, la «X-Wing».\n- **Febrero de 2013**: tras el Octubre Robótico, Cybertech y los exámenes, se retoma el montaje, quedando los viernes por la tarde en el Departamento de Automática.",
+  "galeria": [
+    "fotos/proyectos/impresora-3d-prusa/prusa-iteracion-2.jpg",
+    "fotos/proyectos/impresora-3d-prusa/prusa-kit.jpg"
+  ],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2012/13"
+  ],
+  "autores": [],
+  "otrosAutores": "Colaboradores: Jesús Arroyo, Jorge Arráez, Alejandro Yunta y Pablo Bretones."
+}

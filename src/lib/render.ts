@@ -281,8 +281,7 @@ export function renderCurso(d: Curso, ctx: RenderCtx): string {
 				cls: 'm-photo',
 				alt: m.nombre,
 				respaldo: ctx.fotosDe?.(m.nombre),
-				extra: frameAlt(m.fotoHover, ctx, ctx.hoverDe?.(m.nombre) ?? []) + engranajes(m)
-					+ (ctx.admin ? '<span class="adm-prestada" title="No tiene foto en este curso: se muestra la de otro. Pulsa en la tarjeta para poner la de este curso.">Foto de otro curso</span>' : ''),
+				extra: frameAlt(m.fotoHover, ctx, ctx.hoverDe?.(m.nombre) ?? []) + engranajes(m),
 			})}
 			<div class="m-meta">
 				<h3>${esc(m.nombre) || '<span class="muted">Sin nombre</span>'}</h3>
@@ -733,10 +732,17 @@ export function renderPagina(d: Pagina, ctx: RenderCtx): string {
 
 export interface Diapositiva { imagen: string; titulo: string; texto: string; enlaceTexto: string; enlace: string }
 export interface Bloque { titulo: string; texto: string; enlace: string }
+/** Tamaño del lema (px en pantalla ancha; en las estrechas se reduce en proporción). 52 es el de siempre */
+export const LEMA = { min: 28, max: 96, normal: 52 };
+
 export interface Inicio {
 	/** Lema grande. Lo que va entre *asteriscos* sale en naranja. */
 	lema: string;
+	/** Tamaño de letra del lema, en px (pantalla ancha) */
+	tamLema: number;
 	intro: string;
+	/** GIF o vídeos cortos bajo el lema (van rotando). Si no hay, salen las cifras de Reset. */
+	mediaLema: string[];
 	diapositivas: Diapositiva[];
 	areas: Bloque[];
 	quienesDestacado: string;
@@ -751,7 +757,9 @@ export function normalizeInicio(raw: any = {}): Inicio {
 	const bloque = (b: any): Bloque => ({ titulo: str(b?.titulo), texto: str(b?.texto), enlace: str(b?.enlace) });
 	return {
 		lema: str(raw.lema),
+		tamLema: Math.min(LEMA.max, Math.max(LEMA.min, Number(raw.tamLema) || LEMA.normal)),
 		intro: str(raw.intro),
+		mediaLema: arr(raw.mediaLema, str).filter(Boolean),
 		diapositivas: arr(raw.diapositivas, (s) => ({ imagen: str(s?.imagen), titulo: str(s?.titulo), texto: str(s?.texto), enlaceTexto: str(s?.enlaceTexto), enlace: str(s?.enlace) })),
 		areas: arr(raw.areas, bloque),
 		quienesDestacado: str(raw.quienesDestacado),
@@ -813,9 +821,16 @@ export function renderInicio(d: Inicio, ctx: RenderCtx): string {
 	<section class="hero"${editAttr(ctx, '')}>
 		<div class="wrap hero-in">
 			<div class="hero-copy">
-				<h1 class="hero-t">${resaltar(d.lema) || (ctx.admin ? '<span class="muted">Lema de la portada</span>' : '')}</h1>
+				<div class="hero-main">
+					<h1 class="hero-t" data-encajar${d.tamLema !== LEMA.normal ? ` style="--lema-k: ${+(d.tamLema / LEMA.normal).toFixed(3)}"` : ''}>${resaltar(d.lema) || (ctx.admin ? '<span class="muted">Lema de la portada</span>' : '')}</h1>
+					${d.mediaLema.length
+						// GIF o vídeos cortos (con varios, van rotando: Layout.astro, [data-rotar])
+						? `<div class="hero-media"${d.mediaLema.length > 1 ? ' data-rotar' : ''}${editAttr(ctx, 'mediaLema')}>${d.mediaLema.map((f, k) => frame(f, ctx, { label: 'Reset', cls: k === 0 ? 'is-on' : '', eager: k === 0 })).join('')}</div>`
+						// Si no, las cifras de Reset (las calcula la portada con los datos de la web)
+						: hueco('cifras')}
+				</div>
 				<div class="hero-side">
-					${d.intro ? `<p class="hero-lede">${esc(d.intro)}</p>` : ''}
+					${d.intro ? `<div class="hero-lede">${md(d.intro)}</div>` : ''}
 					<div class="hero-cta">${hueco('cta-cybertech', 'span')}<a class="btn" href="${esc(joinBase(ctx.base, 'participa'))}">Únete a Reset <span class="arr">→</span></a></div>
 				</div>
 			</div>

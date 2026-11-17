@@ -14,7 +14,10 @@
             "Presidente"
           ],
           "foto": "",
-          "fotoHover": ""
+          "fotoHover": "",
+          "meses": [
+            "febrero"
+          ]
         },
         {
           "nombre": "Elena Muñoz-Bellido",
@@ -116,7 +119,10 @@
           "nombre": "Montse Díaz-Carrasco",
           "roles": [],
           "foto": "",
-          "fotoHover": ""
+          "fotoHover": "",
+          "meses": [
+            "marzo"
+          ]
         },
         {
           "nombre": "Jaime Bravo",

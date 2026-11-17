@@ -1,6 +1,10 @@
 {
   "lema": "Robótica hecha por *estudiantes.*",
-  "intro": "Somos la asociación de robótica, electrónica, automática e informática de la ETSII-UPM. Hacemos proyectos propios, damos talleres gratuitos y organizamos Cybertech, la competición de robótica más grande de la UPM.",
+  "tamLema": 42,
+  "intro": "Somos la asociación de robótica, electrónica, automática e informática de la **ETSII-UPM**. Hacemos proyectos propios, damos talleres gratuitos y organizamos **Cybertech**, la competición de robótica más grande de la UPM.\n\nNacimos de la necesidad de tener un sitio donde poner en práctica lo que aprendemos en la carrera: fomentar la **creatividad**, el trabajo en equipo y los **proyectos de ingeniería** de verdad.\n\nMuchos de nosotros entramos en la carrera queriendo convertirnos en MacGyver, con ganas de cacharrear, de tocar, entender y construir. Si este es tu caso, **Reset es tu lugar**.",
+  "mediaLema": [
+    "fotos/inicio/galeria-lty4.mp4"
+  ],
   "diapositivas": [
     {
       "imagen": "fotos/inicio/cybertech.jpg",

@@ -1,0 +1,14 @@
+{
+  "titulo": "Virtual Cybertech",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Un simulador de robots basado en la nube para Cybertech.",
+  "portada": "fotos/proyectos/virtual-cybertech/virtual-cybertech.png",
+  "cuerpo": "La idea era **programar un simulador de robots en la nube** para poder probar los robots de Cybertech sin tenerlos delante. De él se conserva su presentación y su imagen.",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [],
+  "autores": [],
+  "otrosAutores": "Colaboradores: Jesús Arroyo."
+}

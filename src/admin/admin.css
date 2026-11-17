@@ -19,11 +19,6 @@ body.adm-on { padding-bottom: 64px; }
 html.is-admin .frame:not(:has(img, video)) > .adm-ruta { display: block; position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 1; text-align: center;
 	font-family: var(--f-mono); font-size: .6rem; line-height: 1.35; color: rgba(255, 255, 255, .6); overflow-wrap: anywhere; pointer-events: none; }
 html.is-admin .frame.m-photo:not(:has(img, video))::before { padding-bottom: 22%; }
-/* Foto prestada de otro curso (la persona no tiene foto en este): aviso solo en modo edición */
-.adm-prestada { display: none; }
-html.is-admin .frame.es-prestada:has(img) > .adm-prestada { display: block; position: absolute; left: 6px; bottom: 6px; z-index: 2;
-	padding: .2rem .45rem; border-radius: 4px; background: rgba(10, 20, 40, .78); color: #fff;
-	font-family: var(--f-mono); font-size: .6rem; letter-spacing: .02em; pointer-events: none; }
 
 .adm-add {
 	display: inline-flex; align-items: center; justify-content: center; gap: .55rem; cursor: pointer;
@@ -110,6 +105,10 @@ a.adm-b { display: block; text-align: center; text-decoration: none; }
 .f-h { display: block; margin-top: .4rem; font-size: .75rem; line-height: 1.45; color: var(--gris); }
 .f-in { width: 100%; padding: .65rem .75rem; border: 1px solid #bdb7aa; background: var(--blanco); font-size: .95rem; border-radius: 0; }
 .f-in:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(11, 53, 88, .15); }
+.f-rango { display: flex; align-items: center; gap: .75rem; }
+.f-rango input[type=range] { flex: 1; accent-color: var(--naranja); }
+.f-rango output { min-width: 3.4em; font-family: var(--f-mono); font-size: .85rem; text-align: right; }
+.f-rango-x { border: 1px solid #bdb7aa; background: var(--blanco); width: 2rem; height: 2rem; cursor: pointer; }
 textarea.f-in { resize: vertical; line-height: 1.5; font-size: .9rem; min-height: 4.5rem; }
 .f-md-tools { display: flex; gap: 1px; background: #bdb7aa; border: 1px solid #bdb7aa; border-bottom: 0; }
 .f-md-tools button { flex: 1; padding: .35rem; border: 0; background: var(--papel); cursor: pointer; font-size: .78rem; }

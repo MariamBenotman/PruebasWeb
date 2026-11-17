@@ -143,7 +143,7 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 </div>
 <header class="nav" id="top">
 	<div class="wrap nav-in">
-		<a class="nav-logo" href={href()} aria-label="Reset, inicio"><Logo /></a>
+		<a class="nav-logo" href={href()} aria-label="Reset, inicio"><Logo tono="blanco" /></a>
 		<button class="nav-toggle" type="button" aria-expanded="false" aria-controls="menu"><span></span><span></span><span></span><span class="sr-only">Menú</span></button>
 		<nav id="menu" class="nav-menu" aria-label="Principal">
 			<ul>
@@ -218,14 +218,16 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 </script>
 
 <style>
-	.strip { background: var(--azul); color: #b9cde0; font-family: var(--f-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; }
+	.strip { background: #06223a; color: #b9cde0; font-family: var(--f-mono); font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; }
 	.strip .wrap { display: flex; justify-content: space-between; gap: 1rem; padding-block: .45rem; }
 	.strip-r { display: flex; gap: 1.2rem; }
 	.strip a { text-decoration: none; }
 	.strip a:hover { color: var(--naranja-vivo); }
 	@media (max-width: 640px) { .strip-r { display: none; } }
 
-	.nav { position: sticky; top: 0; z-index: 50; background: var(--papel); border-bottom: 1px solid var(--negro); }
+	/* Barra en azul Reset, con el logo y los enlaces en blanco (los desplegables siguen blancos).
+	   La franja de arriba, en un azul más oscuro: se distinguen por el tono, sin líneas */
+	.nav { position: sticky; top: 0; z-index: 50; background: var(--azul); color: #fff; }
 	.nav-in { display: flex; align-items: center; gap: 2rem; height: 72px; }
 	.nav-logo { height: 46px; display: flex; text-decoration: none; margin-right: auto; }
 	.nav-menu { display: flex; align-items: center; gap: 1.6rem; height: 100%; }
@@ -244,7 +246,7 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 		position: absolute; top: 100%; left: 0; width: max-content; min-width: 170px; max-width: 340px; padding-top: 1px;
 		opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity .2s, transform .25s var(--ease), visibility 0s .25s;
 	}
-	.sub ul { margin: 0; padding: .4rem; list-style: none; background: var(--blanco); border: 1px solid var(--negro); box-shadow: var(--sombra); }
+	.sub ul { margin: 0; padding: .4rem; list-style: none; background: var(--blanco); color: var(--negro); border: 1px solid var(--negro); box-shadow: var(--sombra); }
 	.nav-item:hover .sub, .nav-item:focus-within .sub { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
 	.sub a { display: block; padding: .5rem .7rem; text-decoration: none; font-size: .9rem; }
 	.sub a:hover { background: var(--papel-2); }
@@ -304,12 +306,12 @@ const tieneSub = (m: Entrada) => m.hijos.length > 0 || !!m.noticias?.length;
 	.nav-toggle { display: none; }
 
 	@media (max-width: 1080px) {
-		.nav-toggle { display: grid; gap: 5px; width: 44px; height: 44px; place-content: center; border: 1px solid var(--negro); background: none; cursor: pointer; }
-		.nav-toggle span:not(.sr-only) { width: 20px; height: 2px; background: var(--negro); transition: transform .25s var(--ease), opacity .2s; }
+		.nav-toggle { display: grid; gap: 5px; width: 44px; height: 44px; place-content: center; border: 1px solid rgba(255, 255, 255, .6); background: none; cursor: pointer; }
+		.nav-toggle span:not(.sr-only) { width: 20px; height: 2px; background: #fff; transition: transform .25s var(--ease), opacity .2s; }
 		.nav.is-open .nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 		.nav.is-open .nav-toggle span:nth-child(2) { opacity: 0; }
 		.nav.is-open .nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-		.nav-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; height: auto; max-height: calc(100vh - 72px); overflow-y: auto; flex-direction: column; align-items: stretch; padding: 1rem var(--gutter) 2rem; background: var(--papel); border-bottom: 1px solid var(--negro); }
+		.nav-menu { display: none; position: absolute; top: 100%; left: 0; right: 0; height: auto; max-height: calc(100vh - 72px); overflow-y: auto; flex-direction: column; align-items: stretch; padding: 1rem var(--gutter) 2rem; background: var(--papel); color: var(--negro); border-bottom: 1px solid var(--negro); }
 		.nav.is-open .nav-menu { display: flex; }
 		.nav-menu > ul { flex-direction: column; height: auto; }
 		.nav-item { flex-direction: column; align-items: stretch; border-bottom: 1px solid var(--linea); }

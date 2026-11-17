@@ -197,6 +197,20 @@ const vistaPrevia: string = import.meta.env.PUBLIC_VISTA_PREVIA ?? '';
 			rotar();
 			document.addEventListener('reset:rendered', rotar);
 
+			// Textos que no pueden salirse de su columna ([data-encajar], p. ej. el lema de la portada): si alguna palabra
+			// no cabe con el tamaño elegido, se reduce la letra lo justo para que quepa
+			const encajarTexto = () => {
+				document.querySelectorAll<HTMLElement>('[data-encajar]').forEach((t) => {
+					t.style.removeProperty('font-size');
+					const base = parseFloat(getComputedStyle(t).fontSize);
+					for (let k = 0.98; t.scrollWidth > t.clientWidth + 1 && k > 0.4; k -= 0.02) t.style.fontSize = `${base * k}px`;
+				});
+			};
+			encajarTexto();
+			addEventListener('resize', encajarTexto);
+			document.fonts?.ready.then(encajarTexto);
+			document.addEventListener('reset:rendered', encajarTexto);
+
 			// Modo edición: solo se descarga si hay sesión iniciada
 			if (document.documentElement.classList.contains('is-admin')) import('../admin/main');
 		</script>

@@ -1,0 +1,16 @@
+{
+  "titulo": "Excavadora inalámbrica",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Una excavadora con servos controlada a distancia: Arduino, módulos XBee y un mando de PSone «hackeado».",
+  "portada": "",
+  "cuerpo": "Proyecto y tutorial para aprender a **comunicar varios Arduino con módulos XBee** y a **hackear un mando de PSone** para usarlo en proyectos de robótica. Tenía tres partes:\n\n- Diseño mecánico de la excavadora con servos trucados y su control.\n- Hackear el mando de PSone.\n- Comunicación inalámbrica con XBee.\n\nComo siempre en Reset, apostando por la libre transferencia de conocimientos, con enlaces a dónde aprender más.",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2014/15"
+  ],
+  "autores": [],
+  "otrosAutores": ""
+}

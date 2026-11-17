@@ -1,0 +1,16 @@
+{
+  "titulo": "La web de Reset (2012)",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Nuestra primera web también era un proyecto: multilingüe, adaptada al móvil y generada como páginas estáticas.",
+  "portada": "",
+  "cuerpo": "La primera web de Reset se hizo como un proyecto más de la asociación. Sus objetivos eran:\n\n- Una web completa, **en varios idiomas** y **adaptada al móvil**, con HTML5 y CSS3.\n- Integrar un **foro** y una base de usuarios con edición de contenidos en línea.\n- Un generador que escribiera todas las páginas como **estáticas**, sin PHP: más seguras y más rápidas.\n- Divertirse y aprender sobre desarrollo web y administración de servidores.\n\nEn otoño de 2012 el servidor ya elegía el idioma automáticamente y se estaba programando el generador de páginas a partir de los textos en formato «WikiReset».",
+  "galeria": [],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2012/13"
+  ],
+  "autores": [],
+  "otrosAutores": "Colaboradores: Miguel Sánchez de León («Peque») y Jesús Arroyo Torrens."
+}

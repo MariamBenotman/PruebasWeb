@@ -1,0 +1,18 @@
+{
+  "titulo": "CEABOT",
+  "fecha": "",
+  "etiquetas": [],
+  "resumen": "Programar y mejorar un robot humanoide (Robonova) para competir en el concurso CEABOT.",
+  "portada": "fotos/proyectos/ceabot/robonova.jpg",
+  "cuerpo": "Los objetivos del proyecto eran **aprender a programar un robot humanoide**, el Robonova, **mejorar su hardware y su software** y **competir en el concurso CEABOT**, que tenía tres pruebas:\n\n- **Movilidad**: ida y vuelta esquivando obstáculos colocados al azar.\n- **Escalera**: un recorrido de ida subiendo y bajando una escalera.\n- **Lucha** contra otro robot.\n\nEn noviembre de 2012 el robot ya estaba montado y tocaba revisar el estado de los motores, los sensores y la electrónica, y mejorarlos.",
+  "galeria": [
+    "fotos/proyectos/ceabot/robonova-espalda.jpg"
+  ],
+  "secciones": [],
+  "activo": false,
+  "cursos": [
+    "2012/13"
+  ],
+  "autores": [],
+  "otrosAutores": "Colaboradores: Miguel Sánchez de León («Peque»)."
+}
